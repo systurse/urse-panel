@@ -127,8 +127,8 @@
     width: `calc(100% - ${drawerWidth.value}px)`,
   }))
 
-  function handleLogout () {
-    authStore.logout()
+  async function handleLogout () {
+    await authStore.logout()
     router.push('/login')
   }
 </script>

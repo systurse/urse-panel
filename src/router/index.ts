@@ -7,6 +7,7 @@
 // Composables
 import { createRouter, createWebHistory } from 'vue-router'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
+import AuthCallback from '@/pages/auth-callback.vue'
 import CreateTicket from '@/pages/create-ticket.vue'
 import Fields from '@/pages/fields.vue'
 import FormFields from '@/pages/form-fields.vue'
@@ -74,11 +75,20 @@ const router = createRouter({
       component: Login,
       meta: { guest: true },
     },
+    {
+      path: '/auth/callback',
+      component: AuthCallback,
+      meta: { public: true },
+    },
   ],
 })
 
 router.beforeEach(to => {
   const token = localStorage.getItem('auth_token')
+
+  if (to.meta.public) {
+    return
+  }
 
   if (to.meta.requiresAuth && !token) {
     return { path: '/login' }
