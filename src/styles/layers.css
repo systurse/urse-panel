@@ -1,0 +1,31 @@
+/*
+  Vuetify 4 CSS Cascade Layers Architecture
+
+  Layer order (lowest to highest priority):
+  1. vuetify-core: CSS reset, fonts, base styles
+  2. vuetify-components: All component styles
+  3. vuetify-overrides: Contextual overrides for nested components
+  4. vuetify-utilities: Theme, spacing, display, flex, etc.
+     Sublayers: reset > base > display > sizing > spacing > typography > flex > grid > positioning > borders > backgrounds > effects > transitions
+  5. vuetify-final: Transitions and critical rules that must always win
+
+  Third-party layers:
+  - tailwind-theme: Tailwind theme tokens
+  - tailwind-reset: Tailwind reset (preflight)
+  - tailwind-utilities: Tailwind utility classes
+
+  Custom styles without @layer will always override Vuetify's styles.
+*/
+
+@layer vuetify-core;
+@layer vuetify-components;
+@layer vuetify-overrides;
+
+@layer tailwind-theme;
+@layer tailwind-reset;
+
+@layer vuetify-utilities;
+
+@layer tailwind-utilities;
+
+@layer vuetify-final;

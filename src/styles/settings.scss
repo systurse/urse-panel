@@ -1,0 +1,85 @@
+/**
+ * src/styles/settings.scss
+ *
+ * Configures SASS variables and Vuetify overwrites
+ */
+
+@use 'vuetify/settings' with (
+  $color-pack: false,
+
+  // Enable utilities (spacing, display, flex, etc.)
+  // Set to false only if you want to disable ALL Vuetify utility classes
+  $utilities: (
+    'align': null,
+    'baseline': null,
+    'border-color': null,
+    'border-radius': null,
+    'border-style': null,
+    'border-width': null,
+    'borders': null,
+    'bottom': null,
+    'box-shadow': null,
+    'box-sizing': null,
+    'cursor': null,
+    'display': null,
+    'elevation': null,
+    'flex': null,
+    'flex-basis': null,
+    'flex-direction': null,
+    'flex-grow': null,
+    'flex-shrink': null,
+    'flex-wrap': null,
+    'float': null,
+    'font-family': null,
+    'font-weight': null,
+    'gap': null,
+    'height': null,
+    'justify': null,
+    'left': null,
+    'line-height': null,
+    'lists': null,
+    'margin': null,
+    'max-height': null,
+    'max-width': null,
+    'min-height': null,
+    'min-width': null,
+    'order': null,
+    'overflow': null,
+    'padding': null,
+    'position': null,
+    'right': null,
+    'rounded': null,
+    'sizing': null,
+    'spacing': null,
+    'text-align': null,
+    'text-decoration': null,
+    'text-overflow': null,
+    'text-transform': null,
+    'top': null,
+    'transition': null,
+    'truncate': null,
+    'typography': null,
+    'user-select': null,
+    'visibility': null,
+    'white-space': null,
+    'width': null,
+  ),
+
+  $heading-font-family: var(--font-heading),
+  $body-font-family: var(--font-body),
+
+  $grid-breakpoints: (
+    'xs': 0,
+    'sm': 600px,
+    'md': 840px,
+    'lg': 1145px,
+    'xl': 1545px,
+    'xxl': 2138px,
+  ),
+  $container-max-widths: (
+    'md': 700px,
+    'lg': 1000px,
+    'xl': 1400px,
+    'xxl': 2000px,
+  ),
+);

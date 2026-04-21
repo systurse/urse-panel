@@ -1,0 +1,4 @@
+interface:
+  display_name: "Vuetify 4 Components"
+  short_description: "Referencia ampliable de componentes Vuetify 4"
+  default_prompt: "Use $vuetify4-components to document or apply Vuetify 4 components correctly."

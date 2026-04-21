@@ -1,0 +1,4 @@
+interface:
+  display_name: "Vuetify 4 Components"
+  short_description: "Reference for Vuetify 4 component props, variants, patterns, and best practices in Vue applications."
+  default_prompt: "Use the vuetify4-components skill to document or apply Vuetify 4 components correctly, following established patterns and references."

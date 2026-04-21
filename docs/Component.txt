@@ -1,0 +1,189 @@
+Text fields
+Text field components are used for collecting user provided information.
+Usage
+A simple text field with placeholder and/or label.
+Default
+<v-text-field label="Label"></v-text-field>
+Variant
+<v-text-field label="Label" variant="underlined"></v-text-field>
+Anatomy
+The recommended placement of elements inside of v-text-field is:
+
+Place a v-icon at the start of the input or label
+Place label after prepended content
+1. Container	The Text field container contains the v-input and v-field components
+2. Prepend icon	A custom icon that is located before v-field
+3. Prepend-inner icon	A custom icon that is located at the start of v-field
+4. Label	A content area for displaying text to users that correlates to the input
+5. Append-inner icon	A custom icon that is located at the end of v-field component
+6. Append icon	A custom icon that is located after v-field component
+
+Guide
+The v-text-field component is a versatile <input type="text"> field which combines both the v-input and v-field components into a single offering. It is a commonly used element that provides the baseline for other form inputs; such as v-select, v-autocomplete, v-combobox. In this guide you learn the basic fundamentals of v-text-field and how its various properties interact with each other.
+
+Props
+The v-text-field component has an massive API with numerous options to modify the display, functionality, or style of your inputs. Many of the configurable options are also available through slots.
+
+Labeling
+The label prop displays custom text for identifying an input’s purpose. The following code snippet is an example of a basic v-text-field component:
+
+<v-text-field label="First name"></v-text-field>
+Using this baseline makes it easy to put together quick mock implementations of your interface without needing to hook up any functional logic.
+
+The following code snippet is an example of a simple form for for collecting a user’s First name:
+
+Placeholders
+Sometimes a label alone doesn’t convey enough information and you need to expose more. For those use-cases, use the placeholder property with or without the label or hint properties.
+
+In the following snippet, we improve the user experience of a v-text-field that is capturing an email address:
+
+<v-text-field
+  label="Email address"
+  placeholder="johndoe@gmail.com"
+  type="email"
+></v-text-field>
+When the user focuses the input, the placeholder fades in as the label translates up. The added visual element improves the user experience when using multiple field inputs.
+Hints & messages
+The label and placeholder props are useful for providing context to the input but are typically concise. For longer textual information, all Vuetify inputs contain a details section that is used to provide hints, regular messages, and error-messages. In the following example watch the custom hint message display when you focus the input:
+
+<template>
+  <v-responsive
+    class="mx-auto"
+    max-width="344"
+  >
+    <v-text-field
+      hint="Enter your password to access this website"
+      label="Password"
+      type="input"
+    ></v-text-field>
+  </v-responsive>
+</template>
+Password
+If you want to make the hint visible at all times, use the persistent-hint property. The following example demonstrates how to force a hint to show in the input’s details:
+
+<v-text-field
+  hint="Enter your password to access this website"
+  label="Password"
+  persistent-hint
+  type="input"
+></v-text-field>
+In addition to persistent-hint, there are 3 other properties that support a persistent state:
+
+persistent-clear - always show the input clear icon when a value is present
+persistent-counter - always show input character length element
+persistent-placeholder - always show placeholder, causes label to automatically elevate
+Clearable
+The clearable prop appends an inner v-icon that clears the v-text-field when clicked. When an input is cleared, it resets the current v-text-field value. The following example displays an interactive icon when the mouse hovers over the input:
+template>
+  <v-responsive
+    class="mx-auto"
+    max-width="344"
+  >
+    <v-text-field
+      v-model="model"
+      hide-details="auto"
+      label="Last name"
+      clearable
+    ></v-text-field>
+  </v-responsive>
+</template>
+
+Note that readonly will not remove the clear icon, to prevent readonly inputs from being cleared you should also disable clearable.
+
+Sometimes you may need to perform an action when the user clears an input. By using a custom Vue Event Handler, you can bind a custom function that is invoked whenever the v-text-field is cleared by the user. The following example demonstrates how to use a a custom event handler to invoke the onClear method:
+
+ Component.vue
+<template>
+  <v-text-field
+    clearable
+    label="Last name"
+    placeholder="Doe"
+    persistent-clear
+    @click:clear="onClear"
+  ></v-text-field>
+</template>
+
+<script setup>
+  onClear () {
+    alert('User cleared the input')
+  }
+</script>
+
+Validation & rules
+When working with inputs you often need to validate the user’s input in some manner; i.e. Email, Password. Use the rules property to invoke custom functions based upon the v-text-field’s state. It accepts an array of functions that return either true or a string. In the following example, enter a value into the field and then clear it:
+
+<template>
+  <v-responsive
+    class="mx-auto"
+    max-width="344"
+  >
+    <v-text-field
+      :rules="[rules.required]"
+      label="Last name"
+      clearable
+    ></v-text-field>
+  </v-responsive>
+</template>
+
+Examples
+The following is a collection of v-text-field examples that demonstrate how different the properties work in an application.
+
+Custom colors
+The color prop provides an easy way to change the color of textual content; label, prefix, suffix, etc. This color is applied as long as v-text-field is focused.
+
+<template>
+  <v-card
+    class="mx-auto"
+    max-width="344"
+    title="User Registration"
+  >
+    <v-container>
+      <v-text-field
+        v-model="first"
+        color="primary"
+        label="First name"
+        variant="underlined"
+      ></v-text-field>
+
+      <v-text-field
+        v-model="last"
+        color="primary"
+        label="Last name"
+        variant="underlined"
+      ></v-text-field>
+
+      <v-text-field
+        v-model="email"
+        color="primary"
+        label="Email"
+        variant="underlined"
+      ></v-text-field>
+
+      <v-text-field
+        v-model="password"
+        color="primary"
+        label="Password"
+        placeholder="Enter your password"
+        variant="underlined"
+      ></v-text-field>
+
+      <v-checkbox
+        v-model="terms"
+        color="secondary"
+        label="I agree to site terms and conditions"
+      ></v-checkbox>
+    </v-container>
+
+    <v-divider></v-divider>
+
+    <v-card-actions>
+      <v-spacer></v-spacer>
+
+      <v-btn color="success">
+        Complete Registration
+
+        <v-icon icon="mdi-chevron-right" end></v-icon>
+      </v-btn>
+    </v-card-actions>
+  </v-card>
+</template>

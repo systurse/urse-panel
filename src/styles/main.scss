@@ -1,0 +1,25 @@
+// URSE theme CSS variables — garantizan que los componentes Vuetify
+// siempre resuelvan los colores del tema, sin importar el orden de capas.
+.v-theme--light {
+  --v-theme-primary:        250, 178, 26;
+  --v-theme-on-primary:     0, 0, 0;
+  --v-theme-secondary:      0, 0, 0;
+  --v-theme-on-secondary:   250, 178, 26;
+  --v-theme-accent:         250, 178, 26;
+  --v-theme-on-accent:      0, 0, 0;
+}
+
+.v-theme--dark {
+  --v-theme-primary:        250, 178, 26;
+  --v-theme-on-primary:     0, 0, 0;
+  --v-theme-secondary:      255, 255, 255;
+  --v-theme-on-secondary:   0, 0, 0;
+  --v-theme-accent:         250, 178, 26;
+  --v-theme-on-accent:      0, 0, 0;
+}
+
+@layer vuetify-overrides {
+  code, pre, .v-code {
+    font-family: var(--font-mono);
+  }
+}
