@@ -1,365 +1,252 @@
 <template>
-  <div class="dashboard-grid">
-    <section class="hero-card">
-      <div>
-        <div class="section-kicker">Operación diaria</div>
-        <h2 class="hero-title">Supervisión centralizada del sistema URSE</h2>
-        <p class="hero-copy">
-          Consulta el estado general, detecta incidencias y mantén control sobre accesos,
-          trámites y actividad reciente desde un solo panel.
-        </p>
-      </div>
-
-      <div class="hero-stats">
-        <div class="hero-stat">
-          <span class="hero-stat-value">128</span>
-          <span class="hero-stat-label">Solicitudes activas</span>
-        </div>
-        <div class="hero-stat">
-          <span class="hero-stat-value">24</span>
-          <span class="hero-stat-label">Requieren revisión</span>
-        </div>
+  <div class="modules-container">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="hero-content">
+        <h1 class="hero-title">Bienvenido al Portal URSE</h1>
+        <p class="hero-subtitle">Selecciona un módulo para comenzar</p>
       </div>
     </section>
 
-    <section class="metrics-grid">
-      <v-card
-        v-for="metric in metrics"
-        :key="metric.title"
-        class="metric-card"
-        rounded="xl"
-        variant="flat"
+    <!-- Módulos Grid -->
+    <section class="modules-grid">
+      <router-link
+        v-for="module in modules"
+        :key="module.id"
+        :to="module.path"
+        class="module-card-link"
       >
-        <div class="metric-header">
-          <v-avatar :color="metric.color" size="42" variant="tonal">
-            <v-icon :icon="metric.icon" />
-          </v-avatar>
-          <span class="metric-trend">{{ metric.trend }}</span>
-        </div>
-
-        <div class="metric-value">{{ metric.value }}</div>
-        <div class="metric-title">{{ metric.title }}</div>
-        <div class="metric-description">{{ metric.description }}</div>
-      </v-card>
-    </section>
-
-    <section class="content-columns">
-      <v-card class="panel-card" rounded="xl" variant="flat">
-        <div class="panel-head">
-          <div>
-            <div class="section-kicker">Actividad reciente</div>
-            <h3 class="panel-title">Movimientos del sistema</h3>
-          </div>
-        </div>
-
-        <div class="activity-list">
-          <div v-for="event in activity" :key="event.title" class="activity-item">
-            <div class="activity-dot" />
-            <div>
-              <div class="activity-title">{{ event.title }}</div>
-              <div class="activity-meta">{{ event.meta }}</div>
+        <v-card
+          class="module-card"
+          rounded="xl"
+          elevation="0"
+        >
+          <!-- Imagen/Icono del módulo -->
+          <div class="module-image-container">
+            <div class="module-icon-wrapper" :style="{ backgroundColor: module.color }">
+              <v-icon :icon="module.icon" size="48" color="white" />
             </div>
           </div>
-        </div>
-      </v-card>
 
-      <v-card class="panel-card panel-card-accent" rounded="xl" variant="flat">
-        <div class="section-kicker">Resumen rápido</div>
-        <h3 class="panel-title">Pendientes estratégicos</h3>
+          <!-- Contenido del módulo -->
+          <div class="module-content">
+            <h3 class="module-title">{{ module.title }}</h3>
+            <p class="module-description">{{ module.description }}</p>
 
-        <div class="summary-stack">
-          <div v-for="item in summary" :key="item.label" class="summary-item">
-            <div>
-              <div class="summary-label">{{ item.label }}</div>
-              <div class="summary-caption">{{ item.caption }}</div>
+            <!-- Características rápidas -->
+            <div class="module-features">
+              <div v-for="feature in module.features" :key="feature" class="feature-item">
+                <v-icon icon="mdi-check-circle" size="16" color="#FAB21A" />
+                <span>{{ feature }}</span>
+              </div>
             </div>
-            <div class="summary-value">{{ item.value }}</div>
           </div>
-        </div>
-      </v-card>
+
+          <!-- Footer con CTA -->
+          <div class="module-footer">
+            <span class="cta-text">Acceder al módulo</span>
+            <v-icon icon="mdi-arrow-right" size="20" color="#FAB21A" />
+          </div>
+        </v-card>
+      </router-link>
     </section>
   </div>
 </template>
 
 <script lang="ts" setup>
-  const metrics = [
+  const modules = [
     {
-      title: 'Usuarios conectados',
-      value: '86',
-      trend: '+12%',
-      description: 'Sesiones con actividad en la última hora.',
-      icon: 'mdi-account-multiple-outline',
+      id: 'sacc',
+      title: 'SACC',
+      fullName: 'Sistema de Apartado del Centro de Cómputo',
+      description: 'Administra y controla las reservas de equipos de cómputo',
+      path: '/sacc',
+      icon: 'mdi-desktop-classic',
       color: '#FAB21A',
+      features: ['Reservas en tiempo real', 'Control de equipos', 'Reportes de uso'],
     },
     {
-      title: 'Trámites procesados',
-      value: '1,240',
-      trend: '+8%',
-      description: 'Registros atendidos durante esta semana.',
-      icon: 'mdi-file-document-outline',
-      color: '#000000',
+      id: 'ssm',
+      title: 'SSM',
+      fullName: 'Sistema de Servicios y Mantenimiento',
+      description: 'Gestiona servicios, mantenimiento preventivo y correctivo',
+      path: '/ssm',
+      icon: 'mdi-toolbox-outline',
+      color: '#1a1a1a',
+      features: ['Órdenes de trabajo', 'Programación', 'Seguimiento'],
     },
     {
-      title: 'Alertas abiertas',
-      value: '07',
-      trend: '-3%',
-      description: 'Eventos pendientes de revisión por el equipo.',
-      icon: 'mdi-alert-circle-outline',
+      id: 'sps',
+      title: 'SPS',
+      fullName: 'Sistema de Permisos de Salida',
+      description: 'Controla y autoriza permisos de salida del personal',
+      path: '/sps',
+      icon: 'mdi-badge-account-outline',
       color: '#c89215',
-    },
-  ]
-
-  const activity = [
-    {
-      title: 'Actualización de permisos en módulo de usuarios',
-      meta: 'Hace 12 minutos por Super Admin',
-    },
-    {
-      title: 'Sincronización de expedientes completada',
-      meta: 'Hace 34 minutos por Proceso automático',
-    },
-    {
-      title: 'Nuevo acceso registrado desde oficina central',
-      meta: 'Hace 1 hora por Módulo de autenticación',
-    },
-  ]
-
-  const summary = [
-    {
-      label: 'Solicitudes por validar',
-      caption: 'Prioridad alta para turno matutino',
-      value: '18',
-    },
-    {
-      label: 'Equipos con mantenimiento',
-      caption: 'Programados para esta semana',
-      value: '05',
-    },
-    {
-      label: 'Integraciones activas',
-      caption: 'Servicios conectados actualmente',
-      value: '09',
+      features: ['Solicitud de permisos', 'Autorizaciones', 'Historial'],
     },
   ]
 </script>
 
 <style scoped>
-.dashboard-grid {
+.modules-container {
   display: grid;
-  gap: 24px;
+  gap: 40px;
 }
 
-.hero-card {
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 28px;
-  border-radius: 28px;
-  background:
-    radial-gradient(circle at top right, rgb(250 178 26 / 0.28), transparent 32%),
-    linear-gradient(135deg, #000000 0%, #1a1a1a 55%, #2a2a2a 100%);
-  color: white;
+.hero-section {
+  padding: 40px 0;
+  text-align: center;
 }
 
-.section-kicker {
-  margin-bottom: 10px;
-  color: #FAB21A;
-  font-size: 0.8rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.hero-card .section-kicker {
-  color: #FAB21A;
+.hero-content {
+  max-width: 640px;
+  margin: 0 auto;
 }
 
 .hero-title {
-  max-width: 640px;
   margin: 0;
-  font-size: clamp(1.9rem, 2vw, 2.7rem);
+  font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 800;
-  line-height: 1.05;
+  color: #000000;
+  letter-spacing: -0.5px;
 }
 
-.hero-copy {
-  max-width: 680px;
-  margin: 16px 0 0;
-  color: rgb(255 255 255 / 0.82);
-  font-size: 1rem;
-  line-height: 1.7;
+.hero-subtitle {
+  margin: 12px 0 0;
+  font-size: 1.1rem;
+  color: #5e5e5e;
+  font-weight: 500;
 }
 
-.hero-stats {
+.modules-grid {
   display: grid;
-  gap: 14px;
-  min-width: 220px;
-}
-
-.hero-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 18px 20px;
-  border: 1px solid rgb(250 178 26 / 0.28);
-  border-radius: 22px;
-  background: rgb(255 255 255 / 0.06);
-  backdrop-filter: blur(8px);
-}
-
-.hero-stat-value {
-  color: #FAB21A;
-  font-size: 1.8rem;
-  font-weight: 800;
-}
-
-.hero-stat-label {
-  color: rgb(255 255 255 / 0.74);
-}
-
-.metrics-grid {
-  display: grid;
-  gap: 20px;
+  gap: 28px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.metric-card {
-  padding: 22px;
-  background: #ffffff;
-  border: 1px solid rgb(0 0 0 / 0.06);
+.module-card-link {
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.metric-header {
+.module-card-link:hover {
+  transform: translateY(-8px);
+}
+
+.module-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #ffffff;
+  border: 1px solid rgb(0 0 0 / 0.08);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.module-card-link:hover .module-card {
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.12);
+  border-color: rgb(250 178 26 / 0.3);
+}
+
+.module-image-container {
+  padding: 32px 24px 24px;
+  background: linear-gradient(135deg, rgb(250 178 26 / 0.08) 0%, rgb(0 0 0 / 0.02) 100%);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
 }
 
-.metric-trend {
-  color: #2f7b4d;
-  font-size: 0.85rem;
-  font-weight: 700;
+.module-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0 0 0 / 0.1);
 }
 
-.metric-value {
-  margin-top: 18px;
-  color: #000000;
-  font-size: 2rem;
+.module-content {
+  flex: 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.module-title {
+  margin: 0;
+  font-size: 1.5rem;
   font-weight: 800;
+  color: #000000;
 }
 
-.metric-title {
-  margin-top: 6px;
-  color: #1a1a1a;
-  font-weight: 700;
-}
-
-.metric-description {
-  margin-top: 8px;
+.module-description {
+  margin: 0;
+  font-size: 0.95rem;
   color: #5e5e5e;
   line-height: 1.6;
 }
 
-.content-columns {
+.module-features {
   display: grid;
-  gap: 20px;
-  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr);
+  gap: 8px;
+  margin-top: 8px;
 }
 
-.panel-card {
-  padding: 24px;
-  background: #ffffff;
-  border: 1px solid rgb(0 0 0 / 0.06);
-}
-
-.panel-card-accent {
-  background:
-    radial-gradient(circle at top, rgb(250 178 26 / 0.18), transparent 28%),
-    #ffffff;
-  border: 1px solid rgb(250 178 26 / 0.3);
-}
-
-.panel-head {
+.feature-item {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.panel-title {
-  margin: 0;
-  color: #000000;
-  font-size: 1.3rem;
-  font-weight: 800;
-}
-
-.activity-list,
-.summary-stack {
-  display: grid;
-  gap: 16px;
-  margin-top: 20px;
-}
-
-.activity-item,
-.summary-item {
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
-  padding: 16px 0;
-  border-bottom: 1px solid rgb(0 0 0 / 0.08);
-}
-
-.activity-item:last-child,
-.summary-item:last-child {
-  border-bottom: 0;
-  padding-bottom: 0;
-}
-
-.activity-dot {
-  width: 12px;
-  height: 12px;
-  margin-top: 5px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #000000, #FAB21A);
-}
-
-.activity-title,
-.summary-label {
-  color: #000000;
-  font-weight: 700;
-}
-
-.activity-meta,
-.summary-caption {
-  margin-top: 4px;
-  color: #5e5e5e;
-  line-height: 1.5;
-}
-
-.summary-item {
-  justify-content: space-between;
   align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #404040;
 }
 
-.summary-value {
+.feature-item :deep(.v-icon) {
+  flex-shrink: 0;
+}
+
+.module-footer {
+  padding: 16px 24px;
+  border-top: 1px solid rgb(0 0 0 / 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgb(250 178 26 / 0.04) 0%, transparent 100%);
+  transition: background 0.2s ease;
+}
+
+.module-card-link:hover .module-footer {
+  background: linear-gradient(135deg, rgb(250 178 26 / 0.08) 0%, transparent 100%);
+}
+
+.cta-text {
+  font-weight: 700;
   color: #FAB21A;
-  font-size: 1.5rem;
-  font-weight: 800;
+  font-size: 0.9rem;
 }
 
+/* Responsive */
 @media (max-width: 1200px) {
-  .metrics-grid,
-  .content-columns {
+  .modules-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .modules-grid {
     grid-template-columns: 1fr;
   }
-}
 
-@media (max-width: 960px) {
-  .hero-card {
-    flex-direction: column;
+  .hero-title {
+    font-size: clamp(1.5rem, 3vw, 2rem);
   }
 
-  .hero-stats {
-    min-width: 0;
+  .module-card {
+    flex-direction: column;
   }
 }
 </style>

@@ -7,6 +7,7 @@
 // Composables
 import { createRouter, createWebHistory } from 'vue-router'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
+import ModulesLayout from '@/layouts/ModulesLayout.vue'
 import AuthCallback from '@/pages/auth-callback.vue'
 import CreateTicket from '@/pages/create-ticket.vue'
 import Fields from '@/pages/fields.vue'
@@ -19,6 +20,9 @@ import Reports from '@/pages/reports.vue'
 import Roles from '@/pages/roles.vue'
 import Settings from '@/pages/settings.vue'
 import Users from '@/pages/users.vue'
+import SACC from '@/pages/sacc.vue'
+import SSM from '@/pages/ssm.vue'
+import SPS from '@/pages/sps.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,11 +30,116 @@ const router = createRouter({
     {
       path: '/',
       meta: { requiresAuth: true },
-      component: DashboardLayout,
+      component: ModulesLayout,
       children: [
         {
           path: '',
           component: Index,
+        },
+      ],
+    },
+    {
+      path: '/sacc',
+      meta: { requiresAuth: true },
+      component: DashboardLayout,
+      children: [
+        {
+          path: '',
+          component: SACC,
+        },
+        {
+          path: 'crear-ticket',
+          component: CreateTicket,
+        },
+        {
+          path: 'reportes',
+          component: Reports,
+        },
+        {
+          path: 'campos',
+          component: Fields,
+        },
+        {
+          path: 'formularios/campos',
+          component: FormFields,
+        },
+        {
+          path: 'formularios',
+          component: Forms,
+        },
+        {
+          path: 'roles',
+          component: Roles,
+        },
+        {
+          path: 'usuarios',
+          component: Users,
+        },
+        {
+          path: 'permisos',
+          component: Permissions,
+        },
+        {
+          path: 'configuracion',
+          component: Settings,
+        },
+      ],
+    },
+    {
+      path: '/ssm',
+      meta: { requiresAuth: true },
+      component: DashboardLayout,
+      children: [
+        {
+          path: '',
+          component: SSM,
+        },
+        {
+          path: 'crear-ticket',
+          component: CreateTicket,
+        },
+        {
+          path: 'reportes',
+          component: Reports,
+        },
+        {
+          path: 'campos',
+          component: Fields,
+        },
+        {
+          path: 'formularios/campos',
+          component: FormFields,
+        },
+        {
+          path: 'formularios',
+          component: Forms,
+        },
+        {
+          path: 'roles',
+          component: Roles,
+        },
+        {
+          path: 'usuarios',
+          component: Users,
+        },
+        {
+          path: 'permisos',
+          component: Permissions,
+        },
+        {
+          path: 'configuracion',
+          component: Settings,
+        },
+      ],
+    },
+    {
+      path: '/sps',
+      meta: { requiresAuth: true },
+      component: DashboardLayout,
+      children: [
+        {
+          path: '',
+          component: SPS,
         },
         {
           path: 'crear-ticket',
