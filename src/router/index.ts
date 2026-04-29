@@ -8,6 +8,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import ModulesLayout from '@/layouts/ModulesLayout.vue'
+import Administration from '@/pages/administracion.vue'
 import AuthCallback from '@/pages/auth-callback.vue'
 import CreateTicket from '@/pages/create-ticket.vue'
 import Fields from '@/pages/fields.vue'
@@ -18,11 +19,11 @@ import Login from '@/pages/login.vue'
 import Permissions from '@/pages/permissions.vue'
 import Reports from '@/pages/reports.vue'
 import Roles from '@/pages/roles.vue'
-import Settings from '@/pages/settings.vue'
-import Users from '@/pages/users.vue'
 import SACC from '@/pages/sacc.vue'
-import SSM from '@/pages/ssm.vue'
+import Settings from '@/pages/settings.vue'
 import SPS from '@/pages/sps.vue'
+import SSM from '@/pages/ssm.vue'
+import Users from '@/pages/users.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -68,18 +69,6 @@ const router = createRouter({
           component: Forms,
         },
         {
-          path: 'roles',
-          component: Roles,
-        },
-        {
-          path: 'usuarios',
-          component: Users,
-        },
-        {
-          path: 'permisos',
-          component: Permissions,
-        },
-        {
           path: 'configuracion',
           component: Settings,
         },
@@ -113,18 +102,6 @@ const router = createRouter({
         {
           path: 'formularios',
           component: Forms,
-        },
-        {
-          path: 'roles',
-          component: Roles,
-        },
-        {
-          path: 'usuarios',
-          component: Users,
-        },
-        {
-          path: 'permisos',
-          component: Permissions,
         },
         {
           path: 'configuracion',
@@ -162,20 +139,31 @@ const router = createRouter({
           component: Forms,
         },
         {
-          path: 'roles',
-          component: Roles,
+          path: 'configuracion',
+          component: Settings,
+        },
+      ],
+    },
+    {
+      path: '/administracion',
+      meta: { requiresAuth: true },
+      component: DashboardLayout,
+      children: [
+        {
+          path: '',
+          component: Administration,
         },
         {
           path: 'usuarios',
           component: Users,
         },
         {
-          path: 'permisos',
-          component: Permissions,
+          path: 'roles',
+          component: Roles,
         },
         {
-          path: 'configuracion',
-          component: Settings,
+          path: 'permisos',
+          component: Permissions,
         },
       ],
     },

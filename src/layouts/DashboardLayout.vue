@@ -38,86 +38,107 @@
   const drawer = ref(true)
   const rail = ref(false)
 
-  const navigationItems = [
-    {
-      title: 'Inicio',
-      to: '/',
-      icon: 'mdi-view-dashboard-outline',
-      subtitle: 'Resumen general del sistema y actividad reciente.',
-    },
-    {
-      title: 'Reportes',
-      to: '/reportes',
-      icon: 'mdi-chart-box-outline',
-      subtitle: 'Indicadores operativos, seguimiento y productividad.',
-    },
-    {
-      title: 'separator',
-      divider: true,
-    },
-    {
-      title: 'Usuarios',
-      to: '/usuarios',
-      icon: 'mdi-account-group-outline',
-      subtitle: 'Gestión de usuarios, roles y estado de acceso.',
-    },
-    {
-      title: 'Roles',
-      to: '/roles',
-      icon: 'mdi-shield-account-outline',
-      subtitle: 'Gestión de roles y permisos del sistema.',
-    },
-    {
-      title: 'Permisos',
-      to: '/permisos',
-      icon: 'mdi-lock-outline',
-      subtitle: 'Listado de permisos y accesos del sistema.',
-    },
-    {
-      title: 'Formularios',
-      to: '/formularios',
-      icon: 'mdi-form-select',
-      subtitle: 'Administración de formularios y tipos de captura.',
-    },
-    {
-      title: 'Campos',
-      to: '/campos',
-      icon: 'mdi-view-list-outline',
-      subtitle: 'Gestión de campos reutilizables para formularios.',
-    },
-    {
-      title: 'Campos por formulario',
-      to: '/formularios/campos',
-      icon: 'mdi-clipboard-list-outline',
-      subtitle: 'Vincula campos existentes a formularios específicos.',
-    },
-    {
-      title: 'separator',
-      divider: true,
-    },
-    {
-      title: 'Crear ticket',
-      to: '/crear-ticket',
-      icon: 'mdi-file-plus-outline',
-      subtitle: 'Genera un nuevo ticket de soporte o seguimiento.',
-    },
-    {
-      title: 'separator',
-      divider: true,
-    },
-    {
-      title: 'Configuración',
-      to: '/configuracion',
-      icon: 'mdi-cog-outline',
-      subtitle: 'Parámetros generales e integraciones del panel.',
-    },
-  ]
+  const moduleBase = computed(() => `/${route.path.split('/')[1]}`)
+
+  const navigationItems = computed(() => {
+    if (moduleBase.value === '/administracion') {
+      return [
+        {
+          title: 'Inicio',
+          to: '/',
+          icon: 'mdi-home-outline',
+          subtitle: 'Vista general del panel de control.',
+        },
+        {
+          title: 'Resumen',
+          to: '/administracion',
+          icon: 'mdi-view-dashboard-outline',
+          subtitle: 'Vista general del módulo de administración.',
+        },
+        {
+          title: 'Usuarios',
+          to: '/administracion/usuarios',
+          icon: 'mdi-account-group-outline',
+          subtitle: 'Gestión de usuarios, acceso y estado de cuentas.',
+        },
+        {
+          title: 'Roles',
+          to: '/administracion/roles',
+          icon: 'mdi-shield-account-outline',
+          subtitle: 'Definición de roles disponibles dentro del sistema.',
+        },
+        {
+          title: 'Permisos',
+          to: '/administracion/permisos',
+          icon: 'mdi-lock-outline',
+          subtitle: 'Listado de permisos y capacidades asociadas.',
+        },
+      ]
+    }
+
+    return [
+      {
+        title: 'Inicio',
+        to: moduleBase.value,
+        icon: 'mdi-view-dashboard-outline',
+        subtitle: 'Resumen general del sistema y actividad reciente.',
+      },
+      {
+        title: 'Reportes',
+        to: `${moduleBase.value}/reportes`,
+        icon: 'mdi-chart-box-outline',
+        subtitle: 'Indicadores operativos, seguimiento y productividad.',
+      },
+      {
+        title: 'separator',
+        divider: true,
+      },
+      {
+        title: 'Formularios',
+        to: `${moduleBase.value}/formularios`,
+        icon: 'mdi-form-select',
+        subtitle: 'Administración de formularios y tipos de captura.',
+      },
+      {
+        title: 'Campos',
+        to: `${moduleBase.value}/campos`,
+        icon: 'mdi-view-list-outline',
+        subtitle: 'Gestión de campos reutilizables para formularios.',
+      },
+      {
+        title: 'Campos por formulario',
+        to: `${moduleBase.value}/formularios/campos`,
+        icon: 'mdi-clipboard-list-outline',
+        subtitle: 'Vincula campos existentes a formularios específicos.',
+      },
+      {
+        title: 'separator',
+        divider: true,
+      },
+      {
+        title: 'Crear ticket',
+        to: `${moduleBase.value}/crear-ticket`,
+        icon: 'mdi-file-plus-outline',
+        subtitle: 'Genera un nuevo ticket de soporte o seguimiento.',
+      },
+      {
+        title: 'separator',
+        divider: true,
+      },
+      {
+        title: 'Configuración',
+        to: `${moduleBase.value}/configuracion`,
+        icon: 'mdi-cog-outline',
+        subtitle: 'Parámetros generales e integraciones del panel.',
+      },
+    ]
+  })
 
   const currentSection = computed(() => {
-    const section = navigationItems.find(item => 'to' in item && item.to === route.path)
+    const section = navigationItems.value.find(item => 'to' in item && item.to === route.path)
     return section && 'to' in section
       ? { title: section.title, subtitle: section.subtitle ?? '' }
-      : { title: navigationItems[0].title, subtitle: (navigationItems[0] as { subtitle?: string }).subtitle ?? '' }
+      : { title: navigationItems.value[0].title, subtitle: (navigationItems.value[0] as { subtitle?: string }).subtitle ?? '' }
   })
 
   const drawerWidth = computed(() => (rail.value ? 88 : 280))

@@ -14,6 +14,14 @@ export interface LoginResponse {
   token?: string
   token_type?: string
   user?: AuthUser
+  role?: string | null
+  permissions?: string[]
+}
+
+export interface AuthenticatedUserResponse {
+  user: AuthUser
+  role: string | null
+  permissions: string[]
 }
 
 export interface MicrosoftRedirectResponse {
@@ -31,7 +39,7 @@ export async function microsoftRedirectRequest () {
 }
 
 export async function fetchAuthenticatedUser () {
-  const { data } = await http.get<AuthUser>('/api/auth/user')
+  const { data } = await http.get<AuthenticatedUserResponse>('/api/auth/user')
   return data
 }
 
