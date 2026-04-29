@@ -1,8 +1,17 @@
 <template>
   <div class="modules-container">
-    <!-- Hero Section -->
+    <!-- Hero Section con Logo -->
     <section class="hero-section">
       <div class="hero-content">
+        <div class="logo-container">
+          <v-img
+            alt="URSE - Universidad Regional del Sureste"
+            class="hero-logo"
+            contain
+            max-width="300"
+            src="@/assets/logo.png"
+          />
+        </div>
         <h1 class="hero-title">Bienvenido al Portal URSE</h1>
         <p class="hero-subtitle">Selecciona un módulo para comenzar</p>
       </div>
@@ -13,18 +22,18 @@
       <router-link
         v-for="module in modules"
         :key="module.id"
-        :to="module.path"
         class="module-card-link"
+        :to="module.path"
       >
         <v-card
           class="module-card"
-          rounded="xl"
           elevation="0"
+          rounded="xl"
         >
           <!-- Imagen/Icono del módulo -->
           <div class="module-image-container">
             <div class="module-icon-wrapper" :style="{ backgroundColor: module.color }">
-              <v-icon :icon="module.icon" size="48" color="white" />
+              <v-icon color="white" :icon="module.icon" size="48" />
             </div>
           </div>
 
@@ -36,7 +45,7 @@
             <!-- Características rápidas -->
             <div class="module-features">
               <div v-for="feature in module.features" :key="feature" class="feature-item">
-                <v-icon icon="mdi-check-circle" size="16" color="#FAB21A" />
+                <v-icon color="#FAB21A" icon="mdi-check-circle" size="16" />
                 <span>{{ feature }}</span>
               </div>
             </div>
@@ -45,7 +54,7 @@
           <!-- Footer con CTA -->
           <div class="module-footer">
             <span class="cta-text">Acceder al módulo</span>
-            <v-icon icon="mdi-arrow-right" size="20" color="#FAB21A" />
+            <v-icon color="#FAB21A" icon="mdi-arrow-right" size="20" />
           </div>
         </v-card>
       </router-link>
@@ -95,28 +104,59 @@
 }
 
 .hero-section {
-  padding: 40px 0;
+  padding: 20px 0 40px;
   text-align: center;
 }
 
 .hero-content {
   max-width: 640px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 24px;
+  padding: 28px 24px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  background: #ffffff;
+  border: 2px solid rgba(250, 178, 26, 0.65);
+  border-radius: 16px;
+  padding: 14px 18px;
+  max-width: 380px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.hero-logo {
+  height: 80px;
+  width: auto;
+  filter: drop-shadow(0 2px 4px rgba(0 0 0 / 0.08));
 }
 
 .hero-title {
   margin: 0;
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 800;
-  color: #000000;
+  color: #101010;
   letter-spacing: -0.5px;
+  text-align: center;
 }
 
 .hero-subtitle {
-  margin: 12px 0 0;
+  margin: 0;
   font-size: 1.1rem;
-  color: #5e5e5e;
+  color: #444444;
   font-weight: 500;
+  text-align: center;
 }
 
 .modules-grid {

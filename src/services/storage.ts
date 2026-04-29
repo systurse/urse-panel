@@ -10,6 +10,7 @@ export interface AuthUser {
   is_active: boolean
   created_at: string
   updated_at: string
+  role?: string
 }
 
 export function getAuthToken () {
