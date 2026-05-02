@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
   import { onMounted, ref } from 'vue'
-  import { useRoute, useRouter } from 'vue-router'
+  import { useRoute, useRouter, type LocationQueryValue } from 'vue-router'
   import { useAuthStore } from '@/stores/auth'
 
   const route = useRoute()
@@ -48,7 +48,7 @@
 
   const errorMessage = ref<string | null>(null)
 
-  function pickQueryParam (value: string | string[] | null | undefined) {
+  function pickQueryParam (value: LocationQueryValue | LocationQueryValue[] | null | undefined) {
     if (!value) return null
     return Array.isArray(value) ? value[0] ?? null : value
   }

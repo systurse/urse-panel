@@ -1,21 +1,21 @@
-import httpClient from '@/services/http'
+import { httpClient } from '@/services/http'
 
 const SSM_API = '/api/ssm'
 
 export const ssmService = {
   async getWorkOrders () {
     const response = await httpClient.get(`${SSM_API}/ordenes-trabajo`)
-    return response.data
+    return response
   },
 
   async createWorkOrder (data: any) {
     const response = await httpClient.post(`${SSM_API}/ordenes-trabajo`, data)
-    return response.data
+    return response
   },
 
   async updateWorkOrder (id: string, data: any) {
     const response = await httpClient.put(`${SSM_API}/ordenes-trabajo/${id}`, data)
-    return response.data
+    return response
   },
 
   async deleteWorkOrder (id: string) {
@@ -24,11 +24,11 @@ export const ssmService = {
 
   async getServices () {
     const response = await httpClient.get(`${SSM_API}/servicios`)
-    return response.data
+    return response
   },
 
   async getMaintenanceSchedule () {
     const response = await httpClient.get(`${SSM_API}/mantenimiento/cronograma`)
-    return response.data
+    return response
   },
 }
