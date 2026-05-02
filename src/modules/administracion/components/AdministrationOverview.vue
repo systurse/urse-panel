@@ -60,11 +60,11 @@
   import { formatRoleLabel } from '@/utils/auth'
 
   const authStore = useAuthStore()
-  const { permissions, role } = storeToRefs(authStore)
+  const { permissions, roles } = storeToRefs(authStore)
   const { sections } = useAdministration()
 
   const permissionsCount = computed(() => permissions.value.length)
-  const roleLabel = computed(() => formatRoleLabel(role.value))
+  const roleLabel = computed(() => formatRoleLabel(roles.value[0]))
 </script>
 
 <style scoped>
