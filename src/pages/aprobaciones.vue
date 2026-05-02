@@ -7,15 +7,25 @@
           <div class="section-kicker">Encargado</div>
           <h2 class="card-title">Cola de aprobaciones</h2>
         </div>
-        <v-btn
-          color="#FAB21A"
-          prepend-icon="mdi-refresh"
-          variant="tonal"
-          :loading="loading"
-          @click="loadApprovals"
-        >
-          Actualizar
-        </v-btn>
+        <div class="card-head-actions">
+          <v-switch
+            v-model="includeSigned"
+            color="#FAB21A"
+            density="compact"
+            hide-details
+            label="Mostrar firmados"
+            @update:model-value="loadApprovals"
+          />
+          <v-btn
+            color="#FAB21A"
+            prepend-icon="mdi-refresh"
+            variant="tonal"
+            :loading="loading"
+            @click="loadApprovals"
+          >
+            Actualizar
+          </v-btn>
+        </div>
       </div>
 
       <v-alert
@@ -37,7 +47,7 @@
 
       <div v-else-if="!loading && approvals.length === 0" class="approvals-state approvals-state--empty">
         <v-icon color="#FAB21A" icon="mdi-check-circle-outline" size="32" />
-        <span>No hay órdenes pendientes de aprobación.</span>
+        <span>{{ includeSigned ? 'No hay órdenes registradas.' : 'No hay órdenes pendientes de aprobación.' }}</span>
       </div>
 
       <v-table v-else class="mt-6" density="comfortable">
@@ -49,13 +59,26 @@
             <th class="text-left">Solicitante</th>
             <th class="text-left">Área</th>
             <th class="text-left">Solicitud</th>
-            <th class="text-center">Firmar</th>
+            <th class="text-center">Acciones</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="deal in approvals" :key="deal.id">
             <td class="approval-folio">#{{ deal.folio ?? deal.id }}</td>
-            <td class="approval-title">{{ deal.title }}</td>
+            <td class="approval-title">
+              {{ deal.title }}
+              <v-chip
+                v-if="deal.modification_requests?.length"
+                class="ml-2"
+                color="warning"
+                density="comfortable"
+                :prepend-icon="'mdi-history'"
+                size="x-small"
+                variant="tonal"
+              >
+                {{ deal.modification_requests.length }} rechazo{{ deal.modification_requests.length > 1 ? 's' : '' }}
+              </v-chip>
+            </td>
             <td>
               <div class="user-chip">
                 <v-avatar color="#f1ddd0" size="26">
@@ -68,16 +91,33 @@
             <td>{{ deal.area_atencion ?? '—' }}</td>
             <td class="text-date">{{ formatDate(deal.approval_requested_at) }}</td>
             <td class="text-center">
-              <v-btn
-                color="#FAB21A"
-                density="comfortable"
-                prepend-icon="mdi-draw-pen"
-                size="small"
-                variant="flat"
-                @click="openSignDialog(deal)"
-              >
-                Firmar
-              </v-btn>
+              <div v-if="deal.status === 'signed'" class="signed-info">
+                <v-icon color="success" icon="mdi-check-circle-outline" size="18" />
+                <span class="signed-by">{{ deal.signed_by_name ?? 'Encargado' }}</span>
+                <span class="signed-at">{{ formatDate(deal.signed_at) }}</span>
+              </div>
+              <div v-else class="action-group">
+                <v-btn
+                  color="warning"
+                  density="comfortable"
+                  prepend-icon="mdi-message-alert-outline"
+                  size="small"
+                  variant="tonal"
+                  @click="openModificationsDialog(deal)"
+                >
+                  Pedir cambios
+                </v-btn>
+                <v-btn
+                  color="#FAB21A"
+                  density="comfortable"
+                  prepend-icon="mdi-draw-pen"
+                  size="small"
+                  variant="flat"
+                  @click="openSignDialog(deal)"
+                >
+                  Firmar
+                </v-btn>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -195,6 +235,67 @@
       </template>
     </v-card>
 
+    <!-- Request modifications dialog -->
+    <v-dialog v-model="modificationsDialog" max-width="520" persistent>
+      <v-card rounded="xl">
+        <v-card-title class="pt-6 px-6">Solicitar modificaciones</v-card-title>
+        <v-card-text class="px-6">
+          <p class="mb-4 text-body-2 text-medium-emphasis">
+            Indica al técnico qué cambios debe realizar en la orden
+            <strong>{{ modificationsDeal?.title }}</strong>.
+          </p>
+
+          <!-- Previous rejections history -->
+          <template v-if="modificationsDeal?.modification_requests?.length">
+            <p class="mb-2 text-body-2 font-weight-bold">Rechazos anteriores:</p>
+            <div class="prev-modifications mb-4">
+              <div
+                v-for="mod in modificationsDeal!.modification_requests"
+                :key="mod.id"
+                class="prev-modification-entry"
+              >
+                <span class="prev-mod-meta">{{ mod.requested_by_name ?? 'Encargado' }} · {{ formatDate(mod.created_at) }}</span>
+                <p class="prev-mod-notes">{{ mod.notes }}</p>
+              </div>
+            </div>
+          </template>
+
+          <v-textarea
+            v-model="modificationNotes"
+            auto-grow
+            density="comfortable"
+            label="Notas para el técnico"
+            maxlength="2000"
+            rows="4"
+            variant="outlined"
+          />
+          <v-alert
+            v-if="modificationError"
+            class="mt-2"
+            color="error"
+            density="comfortable"
+            variant="tonal"
+          >
+            {{ modificationError }}
+          </v-alert>
+        </v-card-text>
+        <v-card-actions class="px-6 pb-6 gap-2">
+          <v-spacer />
+          <v-btn :disabled="requestingModifications" variant="text" @click="closeModificationsDialog">Cancelar</v-btn>
+          <v-btn
+            color="warning"
+            :disabled="!modificationNotes.trim()"
+            :loading="requestingModifications"
+            prepend-icon="mdi-message-alert-outline"
+            variant="flat"
+            @click="handleRequestModifications"
+          >
+            Solicitar cambios
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Sign dialog -->
     <v-dialog v-model="signDialog" max-width="440" persistent>
       <v-card rounded="xl">
@@ -238,7 +339,19 @@
   import { useApprovals } from '@/modules/approvals/useApprovals'
   import { useSshKey } from '@/modules/encargado/useSshKey'
 
-  const { approvals, error, loadApprovals, loading, sign, signError, signing } = useApprovals()
+  const {
+    approvals,
+    error,
+    includeSigned,
+    loadApprovals,
+    loading,
+    modificationError,
+    requestModifications,
+    requestingModifications,
+    sign,
+    signError,
+    signing,
+  } = useApprovals()
   const { changingKey, error: keyError, keyInfo, loading: keyLoading, removeKey, success: keySuccess, uploadKey } = useSshKey()
 
   // SSH key form
@@ -253,6 +366,31 @@
 
   async function handleDeleteKey () {
     await removeKey()
+  }
+
+  // Modifications dialog
+  const modificationsDialog = ref(false)
+  const modificationsDeal = ref<LocalDeal | null>(null)
+  const modificationNotes = ref('')
+
+  function openModificationsDialog (deal: LocalDeal) {
+    modificationsDeal.value = deal
+    modificationNotes.value = ''
+    modificationsDialog.value = true
+  }
+
+  function closeModificationsDialog () {
+    modificationsDialog.value = false
+    modificationsDeal.value = null
+    modificationNotes.value = ''
+  }
+
+  async function handleRequestModifications () {
+    if (!modificationsDeal.value) return
+    const ok = await requestModifications(modificationsDeal.value.id, modificationNotes.value)
+    if (ok) {
+      closeModificationsDialog()
+    }
   }
 
   // Sign dialog
@@ -423,6 +561,67 @@
 
 .gap-2 {
   gap: 8px;
+}
+
+.card-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.action-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.signed-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #2e7d32;
+}
+
+.signed-by {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.signed-at {
+  font-size: 0.78rem;
+  color: #5e5e5e;
+  white-space: nowrap;
+}
+
+.prev-modifications {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: #f8f8f8;
+  border-radius: 10px;
+}
+
+.prev-modification-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.prev-mod-meta {
+  font-size: 0.78rem;
+  color: #888;
+}
+
+.prev-mod-notes {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #333;
+  white-space: pre-wrap;
 }
 
 @media (max-width: 960px) {

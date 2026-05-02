@@ -1,4 +1,11 @@
-export type DealStatus = 'pending' | 'approval_requested' | 'approved' | 'signed'
+export type DealStatus = 'pending' | 'approval_requested' | 'modifications_requested' | 'approved' | 'signed'
+
+export interface ModificationRequest {
+  id: number
+  notes: string
+  requested_by_name: string | null
+  created_at: string
+}
 
 export interface LocalDeal {
   id: number
@@ -29,10 +36,12 @@ export interface LocalDeal {
   signed_by_name: string | null
   can_download: boolean
   synced_at: string | null
+  modification_requests: ModificationRequest[] | null
 }
 
 export interface TicketsPort {
   list: (onlyMine?: boolean) => Promise<LocalDeal[]>
   requestApproval: (dealId: number) => Promise<void>
+  syncFromBitrix: (dealId: number) => Promise<void>
   downloadSigned: (dealId: number) => Promise<Blob>
 }

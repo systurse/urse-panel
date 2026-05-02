@@ -1,12 +1,22 @@
 import type { ApprovalsPort } from '@/modules/approvals/port'
-import type { LocalDeal } from '@/modules/tickets/port'
+import type { LocalDeal, ModificationRequest } from '@/modules/tickets/port'
 import type { HttpClient } from '@/services/http'
 import { httpClient } from '@/services/http'
 
 type ApiDeal = Record<string, unknown>
+type ApiModificationRequest = Record<string, unknown>
 
 interface LaravelCollectionResponse<TItem> {
   data?: TItem[]
+}
+
+function mapModificationRequest (raw: ApiModificationRequest): ModificationRequest {
+  return {
+    id: raw.id as number,
+    notes: typeof raw.notes === 'string' ? raw.notes : '',
+    requested_by_name: typeof raw.requested_by_name === 'string' ? raw.requested_by_name : null,
+    created_at: typeof raw.created_at === 'string' ? raw.created_at : '',
+  }
 }
 
 function mapDeal (raw: ApiDeal): LocalDeal {
@@ -39,6 +49,9 @@ function mapDeal (raw: ApiDeal): LocalDeal {
     signed_by_name: typeof raw.signed_by_name === 'string' ? raw.signed_by_name : null,
     can_download: raw.can_download === true,
     synced_at: typeof raw.synced_at === 'string' ? raw.synced_at : null,
+    modification_requests: Array.isArray(raw.modification_requests)
+      ? (raw.modification_requests as ApiModificationRequest[]).map(mapModificationRequest)
+      : null,
   }
 }
 
@@ -51,13 +64,18 @@ function unwrapDeals (response: ApiDeal[] | LaravelCollectionResponse<ApiDeal>):
 export class HttpApprovalsAdapter implements ApprovalsPort {
   constructor (private readonly client: HttpClient) {}
 
-  async list () {
-    const response = await this.client.get<ApiDeal[] | LaravelCollectionResponse<ApiDeal>>('/api/v1/approvals')
+  async list (includeSigned = false) {
+    const config = includeSigned ? { params: { include_signed: true } } : undefined
+    const response = await this.client.get<ApiDeal[] | LaravelCollectionResponse<ApiDeal>>('/api/v1/approvals', config)
     return unwrapDeals(response).map(mapDeal)
   }
 
   async sign (dealId: number) {
     await this.client.post<unknown, Record<string, never>>(`/api/v1/approvals/${dealId}/sign`, {})
+  }
+
+  async requestModifications (dealId: number, notes: string) {
+    await this.client.post<unknown, { notes: string }>(`/api/v1/approvals/${dealId}/request-modifications`, { notes })
   }
 }
 

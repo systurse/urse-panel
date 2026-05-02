@@ -94,6 +94,42 @@
                 Solicitar aprobación
               </v-btn>
 
+              <!-- Modifications requested actions -->
+              <template v-if="ticket.status === 'modifications_requested'">
+                <v-btn
+                  color="error"
+                  density="comfortable"
+                  prepend-icon="mdi-message-alert-outline"
+                  size="small"
+                  variant="tonal"
+                  @click="openModificationsDialog(ticket)"
+                >
+                  Ver modificaciones
+                </v-btn>
+                <v-btn
+                  color="info"
+                  density="comfortable"
+                  :loading="syncingId === ticket.id"
+                  prepend-icon="mdi-cloud-sync-outline"
+                  size="small"
+                  variant="tonal"
+                  @click="syncFromBitrix(ticket.id)"
+                >
+                  Sincronizar
+                </v-btn>
+                <v-btn
+                  color="#FAB21A"
+                  density="comfortable"
+                  :loading="requestingId === ticket.id"
+                  prepend-icon="mdi-send-check-outline"
+                  size="small"
+                  variant="tonal"
+                  @click="confirmApproval(ticket)"
+                >
+                  Re-solicitar aprobación
+                </v-btn>
+              </template>
+
               <v-btn
                 v-if="ticket.can_download"
                 color="success"
@@ -145,6 +181,52 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Modification requests history dialog -->
+    <v-dialog v-model="modificationsDialog" max-width="540">
+      <v-card rounded="xl">
+        <v-card-title class="pt-6 px-6">Historial de modificaciones</v-card-title>
+        <v-card-subtitle class="px-6 pb-2">
+          {{ modificationsTicket?.title }}
+        </v-card-subtitle>
+        <v-card-text class="px-6">
+          <div
+            v-if="!modificationsTicket?.modification_requests?.length"
+            class="text-medium-emphasis text-body-2"
+          >
+            Sin historial de modificaciones.
+          </div>
+          <div v-else class="modifications-list">
+            <div
+              v-for="(mod, index) in modificationsTicket!.modification_requests"
+              :key="mod.id"
+              class="modification-entry"
+            >
+              <div class="modification-header">
+                <v-icon color="error" icon="mdi-close-circle-outline" size="18" />
+                <span class="modification-who">{{ mod.requested_by_name ?? 'Encargado' }}</span>
+                <span class="modification-when">{{ formatDate(mod.created_at) }}</span>
+                <v-chip
+                  v-if="index === 0"
+                  color="error"
+                  density="comfortable"
+                  size="x-small"
+                  variant="tonal"
+                >
+                  Más reciente
+                </v-chip>
+              </div>
+              <p class="modification-notes">{{ mod.notes }}</p>
+              <v-divider v-if="index < modificationsTicket!.modification_requests!.length - 1" class="my-3" />
+            </div>
+          </div>
+        </v-card-text>
+        <v-card-actions class="px-6 pb-6">
+          <v-spacer />
+          <v-btn variant="flat" @click="modificationsDialog = false">Cerrar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-card>
 </template>
 
@@ -162,11 +244,16 @@
     onlyMine,
     requestApproval,
     requestingId,
+    syncFromBitrix,
+    syncingId,
     tickets,
   } = useTickets()
 
   const approvalDialog = ref(false)
   const selectedTicket = ref<LocalDeal | null>(null)
+
+  const modificationsDialog = ref(false)
+  const modificationsTicket = ref<LocalDeal | null>(null)
 
   function confirmApproval (ticket: LocalDeal) {
     selectedTicket.value = ticket
@@ -180,14 +267,30 @@
     selectedTicket.value = null
   }
 
+  function openModificationsDialog (ticket: LocalDeal) {
+    modificationsTicket.value = ticket
+    modificationsDialog.value = true
+  }
+
   function statusColor (status: LocalDeal['status']): string {
     const colors: Record<LocalDeal['status'], string> = {
       pending: 'default',
       approval_requested: 'warning',
+      modifications_requested: 'error',
       approved: 'info',
       signed: 'success',
     }
     return colors[status] ?? 'default'
+  }
+
+  function formatDate (value: string): string {
+    return new Date(value).toLocaleString('es-MX', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
   }
 </script>
 
@@ -275,6 +378,42 @@
 
 .gap-2 {
   gap: 8px;
+}
+
+.modifications-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.modification-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modification-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.modification-who {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.modification-when {
+  font-size: 0.8rem;
+  color: #5e5e5e;
+}
+
+.modification-notes {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #333;
+  white-space: pre-wrap;
 }
 
 @media (max-width: 960px) {

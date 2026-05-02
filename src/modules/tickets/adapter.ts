@@ -1,12 +1,22 @@
-import type { LocalDeal, TicketsPort } from '@/modules/tickets/port'
+import type { LocalDeal, ModificationRequest, TicketsPort } from '@/modules/tickets/port'
 import type { HttpClient } from '@/services/http'
 import { http, httpClient } from '@/services/http'
 import { getAuthToken } from '@/services/storage'
 
 type ApiDeal = Record<string, unknown>
+type ApiModificationRequest = Record<string, unknown>
 
 interface LaravelCollectionResponse<TItem> {
   data?: TItem[]
+}
+
+function mapModificationRequest (raw: ApiModificationRequest): ModificationRequest {
+  return {
+    id: raw.id as number,
+    notes: typeof raw.notes === 'string' ? raw.notes : '',
+    requested_by_name: typeof raw.requested_by_name === 'string' ? raw.requested_by_name : null,
+    created_at: typeof raw.created_at === 'string' ? raw.created_at : '',
+  }
 }
 
 function mapDeal (raw: ApiDeal): LocalDeal {
@@ -39,6 +49,9 @@ function mapDeal (raw: ApiDeal): LocalDeal {
     signed_by_name: typeof raw.signed_by_name === 'string' ? raw.signed_by_name : null,
     can_download: raw.can_download === true,
     synced_at: typeof raw.synced_at === 'string' ? raw.synced_at : null,
+    modification_requests: Array.isArray(raw.modification_requests)
+      ? (raw.modification_requests as ApiModificationRequest[]).map(mapModificationRequest)
+      : null,
   }
 }
 
@@ -59,6 +72,10 @@ export class HttpTicketsAdapter implements TicketsPort {
 
   async requestApproval (dealId: number) {
     await this.client.post<unknown>(`/api/v1/tickets/${dealId}/request-approval`)
+  }
+
+  async syncFromBitrix (dealId: number) {
+    await this.client.post<unknown>(`/api/v1/tickets/${dealId}/sync`)
   }
 
   async downloadSigned (dealId: number): Promise<Blob> {

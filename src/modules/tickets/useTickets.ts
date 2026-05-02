@@ -8,6 +8,7 @@ export function useTickets (ticketsPort: TicketsPort = ticketsAdapter) {
   const error = ref<string | null>(null)
   const requestingId = ref<number | null>(null)
   const downloadingId = ref<number | null>(null)
+  const syncingId = ref<number | null>(null)
   const onlyMine = ref(true)
 
   async function loadTickets () {
@@ -34,6 +35,20 @@ export function useTickets (ticketsPort: TicketsPort = ticketsAdapter) {
       error.value = error_ instanceof Error ? error_.message : 'No fue posible solicitar aprobación'
     } finally {
       requestingId.value = null
+    }
+  }
+
+  async function syncFromBitrix (dealId: number) {
+    syncingId.value = dealId
+    error.value = null
+
+    try {
+      await ticketsPort.syncFromBitrix(dealId)
+      await loadTickets()
+    } catch (error_) {
+      error.value = error_ instanceof Error ? error_.message : 'No fue posible sincronizar desde Bitrix24'
+    } finally {
+      syncingId.value = null
     }
   }
 
@@ -69,6 +84,8 @@ export function useTickets (ticketsPort: TicketsPort = ticketsAdapter) {
     onlyMine,
     requestApproval,
     requestingId,
+    syncFromBitrix,
+    syncingId,
     tickets,
   }
 }
