@@ -49,6 +49,13 @@
 
         <div class="user-actions">
           <v-btn
+            color="#1a1a1a"
+            icon="mdi-shield-key-outline"
+            size="small"
+            variant="text"
+            @click="openPermissionsDialog(user)"
+          />
+          <v-btn
             color="#FAB21A"
             icon="mdi-pencil"
             size="small"
@@ -193,14 +200,74 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <v-dialog v-model="permissionsDialog" max-width="720" persistent>
+    <v-card :loading="permissionsDialogLoading || permissionsCatalogLoading">
+      <v-card-title class="pt-6 pb-2">
+        Permisos de usuario
+      </v-card-title>
+
+      <v-card-text class="pb-4">
+        <div class="text-body-2 mb-4 text-medium-emphasis">
+          <strong>{{ selectedUser?.name }}</strong> ({{ selectedUser?.email }})
+        </div>
+
+        <v-autocomplete
+          v-model="selectedPermissionIds"
+          chips
+          clearable
+          closable-chips
+          item-title="name"
+          item-value="id"
+          :items="permissions"
+          label="Selecciona permisos"
+          :loading="permissionsCatalogLoading || permissionsDialogLoading"
+          multiple
+          no-data-text="No hay permisos disponibles"
+          placeholder="Busca por nombre o módulo"
+          prepend-inner-icon="mdi-magnify"
+          variant="outlined"
+        >
+          <template #item="slotProps">
+            <v-list-item
+              v-bind="slotProps.props"
+              :subtitle="permissionItemSubtitle(slotProps.item)"
+            >
+              <template #prepend>
+                <v-icon icon="mdi-key-variant" size="18" />
+              </template>
+            </v-list-item>
+          </template>
+        </v-autocomplete>
+      </v-card-text>
+
+      <v-divider />
+
+      <v-card-actions>
+        <v-spacer />
+        <v-btn text="Cancelar" variant="text" @click="closePermissionsDialog" />
+        <v-btn
+          color="#FAB21A"
+          :loading="permissionsDialogLoading"
+          text="Guardar permisos"
+          variant="flat"
+          @click="saveUserPermissions"
+        />
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script lang="ts" setup>
+  import type { Permission } from '@/modules/permissions/port'
   import type { User, UserPayload } from '@/modules/users/port'
   import { ref } from 'vue'
+  import { usePermissions } from '@/modules/permissions/usePermissions'
   import { useUsers } from '@/modules/users/useUsers'
+  import { httpClient } from '@/services/http'
 
   const { error, loading, users, createUser, updateUser, removeUser } = useUsers()
+  const { loadPermissions, loading: permissionsCatalogLoading, permissions } = usePermissions()
 
   const formDialog = ref(false)
   const formRef = ref()
@@ -316,6 +383,10 @@
   }
 
   const deleteDialog = ref(false)
+  const permissionsDialog = ref(false)
+  const permissionsDialogLoading = ref(false)
+  const selectedPermissionIds = ref<Array<number | string>>([])
+  const initialPermissionIds = ref<Array<number | string>>([])
 
   function openDeleteDialog (user: User) {
     selectedUser.value = user
@@ -335,6 +406,106 @@
       closeDeleteDialog()
     } catch {
       // Error is handled by the composable
+    }
+  }
+
+  function permissionItemSubtitle (item: { raw?: Permission } | null | undefined) {
+    return item?.raw?.module ?? ''
+  }
+
+  function normalizePermissionId (value: unknown): number | string | null {
+    if (typeof value === 'number' || typeof value === 'string') {
+      return value
+    }
+    return null
+  }
+
+  function extractPermissionId (entry: unknown): number | string | null {
+    if (typeof entry === 'number' || typeof entry === 'string') {
+      return entry
+    }
+
+    if (entry && typeof entry === 'object') {
+      const record = entry as Record<string, unknown>
+      return normalizePermissionId(record.id ?? record.permission_id ?? record.permissionId)
+    }
+
+    return null
+  }
+
+  function parsePermissionCollection (response: unknown): Array<number | string> {
+    const source = Array.isArray(response)
+      ? response
+      : (response && typeof response === 'object' && 'data' in response
+        ? (response as { data?: unknown }).data
+        : [])
+
+    if (!Array.isArray(source)) {
+      return []
+    }
+
+    return source
+      .map(item => extractPermissionId(item))
+      .filter((id): id is number | string => id !== null)
+  }
+
+  async function openPermissionsDialog (user: User) {
+    selectedUser.value = user
+    permissionsDialog.value = true
+    permissionsDialogLoading.value = true
+    error.value = null
+
+    try {
+      await loadPermissions()
+      const response = await httpClient.get<unknown>(`/api/v1/users/${user.id}/permissions`)
+      const assignedIds = parsePermissionCollection(response)
+
+      initialPermissionIds.value = assignedIds
+      selectedPermissionIds.value = [...assignedIds]
+    } catch (error_) {
+      error.value = error_ instanceof Error ? error_.message : 'No fue posible cargar los permisos del usuario'
+    } finally {
+      permissionsDialogLoading.value = false
+    }
+  }
+
+  function closePermissionsDialog () {
+    permissionsDialog.value = false
+    selectedPermissionIds.value = []
+    initialPermissionIds.value = []
+    selectedUser.value = null
+  }
+
+  async function saveUserPermissions () {
+    if (!selectedUser.value) return
+
+    permissionsDialogLoading.value = true
+    error.value = null
+
+    const toAdd = selectedPermissionIds.value.filter(id => !initialPermissionIds.value.includes(id))
+    const toRemove = initialPermissionIds.value.filter(id => !selectedPermissionIds.value.includes(id))
+
+    try {
+      await Promise.all(
+        toAdd.map(permissionId =>
+          httpClient.post<unknown, { permission_id: number | string }>(
+            `/api/v1/users/${selectedUser.value?.id}/permissions`,
+            { permission_id: permissionId },
+          ),
+        ),
+      )
+
+      await Promise.all(
+        toRemove.map(permissionId =>
+          httpClient.delete<unknown>(`/api/v1/users/${selectedUser.value?.id}/permissions/${permissionId}`),
+        ),
+      )
+
+      closePermissionsDialog()
+    } catch (error_) {
+      error.value = error_ instanceof Error ? error_.message : 'No fue posible guardar los permisos del usuario'
+    } finally {
+      permissionsDialogLoading.value = false
     }
   }
 </script>
