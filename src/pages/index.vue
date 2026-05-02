@@ -94,6 +94,16 @@
       color: '#c89215',
       features: ['Solicitud de permisos', 'Autorizaciones', 'Historial'],
     },
+    {
+      id: 'administracion',
+      title: 'Administración',
+      fullName: 'Gestión administrativa del panel',
+      description: 'Centraliza usuarios, roles y permisos del sistema',
+      path: '/administracion',
+      icon: 'mdi-shield-crown-outline',
+      color: '#3d2c00',
+      features: ['Usuarios', 'Roles', 'Permisos'],
+    },
   ]
 </script>
 
@@ -162,7 +172,7 @@
 .modules-grid {
   display: grid;
   gap: 28px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .module-card-link {

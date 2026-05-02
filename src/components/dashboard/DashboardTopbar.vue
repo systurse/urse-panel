@@ -22,15 +22,20 @@
         <v-menu location="bottom end">
           <template #activator="{ props }">
             <v-btn class="profile-trigger" v-bind="props" variant="text">
+              <div class="profile-meta">
+                <span class="profile-name">{{ userName }}</span>
+                <span class="profile-role">{{ userRole }}</span>
+              </div>
               <v-avatar color="#000000" size="38">
-                <span style="color: #FAB21A; font-weight: 800;">SA</span>
+                <span class="profile-initials">{{ userInitials }}</span>
               </v-avatar>
             </v-btn>
           </template>
 
-          <v-list min-width="180">
-            <v-list-item subtitle="superadmin@urse.mx" title="Super Admin" />
+          <v-list min-width="220">
+            <v-list-item :subtitle="userEmail" :title="userName" />
             <v-divider />
+            <v-list-item prepend-icon="mdi-shield-crown-outline" title="Administración" to="/administracion" />
             <v-list-item prepend-icon="mdi-logout" title="Cerrar sesión" @click="emit('logout')" />
           </v-list>
         </v-menu>
@@ -40,6 +45,11 @@
 </template>
 
 <script lang="ts" setup>
+  import { storeToRefs } from 'pinia'
+  import { computed } from 'vue'
+  import { useAuthStore } from '@/stores/auth'
+  import { formatRoleLabel } from '@/utils/auth'
+
   defineProps<{
     title: string
     subtitle: string
@@ -48,6 +58,18 @@
   const emit = defineEmits<{
     logout: []
   }>()
+
+  const authStore = useAuthStore()
+  const { role, user } = storeToRefs(authStore)
+
+  const userName = computed(() => user.value?.name || user.value?.email?.split('@')[0] || 'Usuario')
+  const userEmail = computed(() => user.value?.email || 'Sin correo')
+  const userRole = computed(() => formatRoleLabel(role.value))
+  const userInitials = computed(() => {
+    const source = user.value?.name?.trim() || user.value?.email || 'U'
+    const parts = source.split(/\s+/).filter(Boolean)
+    return parts.slice(0, 2).map(part => part[0]?.toUpperCase() ?? '').join('') || 'U'
+  })
 </script>
 
 <style scoped>
@@ -104,7 +126,31 @@
 
 .profile-trigger {
   min-width: auto;
-  padding: 0;
+  padding: 6px 8px;
+}
+
+.profile-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-right: 10px;
+  text-transform: none;
+}
+
+.profile-name {
+  color: #101010;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.profile-role {
+  color: #5e5e5e;
+  font-size: 0.76rem;
+}
+
+.profile-initials {
+  color: #FAB21A;
+  font-weight: 800;
 }
 
 @media (max-width: 960px) {
@@ -125,6 +171,10 @@
   .topbar-search {
     flex: 1;
     width: 100%;
+  }
+
+  .profile-meta {
+    display: none;
   }
 }
 </style>

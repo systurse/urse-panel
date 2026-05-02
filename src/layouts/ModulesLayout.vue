@@ -27,6 +27,7 @@
               </div>
             </template>
             <v-list>
+              <v-list-item prepend-icon="mdi-shield-crown-outline" title="Administración" to="/administracion" />
               <v-list-item title="Mi Perfil" />
               <v-list-item title="Configuración" />
               <v-divider />
@@ -50,6 +51,7 @@
   import { computed } from 'vue'
   import { useRouter } from 'vue-router'
   import { useAuthStore } from '@/stores/auth'
+  import { formatRoleLabel } from '@/utils/auth'
 
   const router = useRouter()
   const authStore = useAuthStore()
@@ -59,7 +61,7 @@
   })
 
   const userRole = computed(() => {
-    return authStore.user?.role || 'Administrador'
+    return formatRoleLabel(authStore.role)
   })
 
   async function handleLogout () {

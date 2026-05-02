@@ -1,6 +1,7 @@
 import type { AxiosError } from 'axios'
 import { defineStore } from 'pinia'
 import {
+  type AuthenticatedUserResponse,
   fetchAuthenticatedUser,
   loginRequest,
   logoutRequest,
@@ -8,19 +9,33 @@ import {
 } from '@/services/auth'
 import {
   type AuthUser,
+  clearAuthPermissions,
+  clearAuthRole,
   clearAuthToken,
   clearAuthUser,
+  getAuthPermissions,
+  getAuthRole,
   getAuthToken,
   getAuthUser,
+  setAuthPermissions,
+  setAuthRole,
   setAuthToken,
   setAuthUser,
 } from '@/services/storage'
 
 interface AuthState {
   user: AuthUser | null
+  role: string | null
+  permissions: string[]
   token: string | null
   loading: boolean
   error: string | null
+}
+
+interface SessionData {
+  user: AuthUser
+  role: string | null
+  permissions: string[]
 }
 
 function resolveErrorMessage (error: unknown, fallback: string) {
@@ -31,6 +46,8 @@ function resolveErrorMessage (error: unknown, fallback: string) {
 export const useAuthStore = defineStore('auth', {
   state: (): AuthState => ({
     user: getAuthUser(),
+    role: getAuthRole(),
+    permissions: getAuthPermissions(),
     token: getAuthToken(),
     loading: false,
     error: null,
@@ -41,26 +58,54 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
+    normalizeSessionData (response: AuthenticatedUserResponse): SessionData {
+      return {
+        user: response.user,
+        role: response.role,
+        permissions: response.permissions ?? [],
+      }
+    },
+
     // Punto único para establecer sesión: guarda token y resuelve el usuario
     // (si no llegó embebido en la respuesta, lo pide a /api/auth/user).
     // Ambos flujos (correo y Microsoft) convergen aquí.
-    async setSession (token: string, preloadedUser?: AuthUser | null) {
+    async setSession (token: string, preloadedSession?: Partial<SessionData> | null) {
       this.token = token
       setAuthToken(token)
 
-      const user = preloadedUser ?? await fetchAuthenticatedUser()
+      const sessionData = preloadedSession?.user && Array.isArray(preloadedSession.permissions)
+        ? {
+            user: preloadedSession.user,
+            role: preloadedSession.role ?? null,
+            permissions: preloadedSession.permissions,
+          }
+        : this.normalizeSessionData(await fetchAuthenticatedUser())
 
-      this.user = user
-      setAuthUser(user)
+      this.user = sessionData.user
+      this.role = sessionData.role
+      this.permissions = sessionData.permissions
+      setAuthUser(sessionData.user)
 
-      return user
+      if (sessionData.role) {
+        setAuthRole(sessionData.role)
+      } else {
+        clearAuthRole()
+      }
+
+      setAuthPermissions(sessionData.permissions)
+
+      return sessionData
     },
 
     clearSession () {
       this.user = null
+      this.role = null
+      this.permissions = []
       this.token = null
       clearAuthToken()
       clearAuthUser()
+      clearAuthRole()
+      clearAuthPermissions()
     },
 
     async login (email: string, password: string) {
@@ -75,7 +120,11 @@ export const useAuthStore = defineStore('auth', {
           throw new Error('La respuesta del servidor no incluye un token válido.')
         }
 
-        await this.setSession(token, response.user ?? null)
+        await this.setSession(token, {
+          user: response.user,
+          role: response.role ?? null,
+          permissions: response.permissions ?? [],
+        })
       } catch (error_) {
         this.clearSession()
         this.error = resolveErrorMessage(error_, 'Error al iniciar sesión')
@@ -116,10 +165,20 @@ export const useAuthStore = defineStore('auth', {
 
     async fetchUser () {
       try {
-        const user = await fetchAuthenticatedUser()
-        this.user = user
-        setAuthUser(user)
-        return user
+        const sessionData = this.normalizeSessionData(await fetchAuthenticatedUser())
+        this.user = sessionData.user
+        this.role = sessionData.role
+        this.permissions = sessionData.permissions
+        setAuthUser(sessionData.user)
+
+        if (sessionData.role) {
+          setAuthRole(sessionData.role)
+        } else {
+          clearAuthRole()
+        }
+
+        setAuthPermissions(sessionData.permissions)
+        return sessionData.user
       } catch (error_) {
         this.error = resolveErrorMessage(error_, 'No se pudo obtener el usuario autenticado')
         throw error_
