@@ -60,6 +60,7 @@
       to: '/aprobaciones',
       icon: 'mdi-draw-pen',
       subtitle: 'Cola de aprobaciones pendientes de firma digital.',
+      enabled: authStore.isAdmin
     },
     {
       title: 'separator',

@@ -60,11 +60,11 @@
   }>()
 
   const authStore = useAuthStore()
-  const { role, user } = storeToRefs(authStore)
+  const { roles, user } = storeToRefs(authStore)
 
   const userName = computed(() => user.value?.name || user.value?.email?.split('@')[0] || 'Usuario')
   const userEmail = computed(() => user.value?.email || 'Sin correo')
-  const userRole = computed(() => formatRoleLabel(role.value))
+  const userRole = computed(() => formatRoleLabel(roles.value[0]))
   const userInitials = computed(() => {
     const source = user.value?.name?.trim() || user.value?.email || 'U'
     const parts = source.split(/\s+/).filter(Boolean)

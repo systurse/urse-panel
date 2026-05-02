@@ -51,15 +51,27 @@ export function clearAuthUser () {
   localStorage.removeItem(AUTH_USER_KEY)
 }
 
-export function getAuthRole () {
-  return localStorage.getItem(AUTH_ROLE_KEY)
+export function getAuthRoles () {
+  const roles = localStorage.getItem(AUTH_ROLE_KEY)
+
+  if (!roles) {
+    return []
+  }
+
+  try {
+    const parsed = JSON.parse(roles)
+    return Array.isArray(parsed) ? parsed.filter(item => typeof item === 'string') : []
+  } catch {
+    localStorage.removeItem(AUTH_ROLE_KEY)
+    return []
+  }
 }
 
-export function setAuthRole (role: string) {
-  localStorage.setItem(AUTH_ROLE_KEY, role)
+export function setAuthRoles (roles: string[]) {
+  localStorage.setItem(AUTH_ROLE_KEY, JSON.stringify(roles))
 }
 
-export function clearAuthRole () {
+export function clearAuthRoles () {
   localStorage.removeItem(AUTH_ROLE_KEY)
 }
 

@@ -10,22 +10,22 @@ import {
 import {
   type AuthUser,
   clearAuthPermissions,
-  clearAuthRole,
+  clearAuthRoles,
   clearAuthToken,
   clearAuthUser,
   getAuthPermissions,
-  getAuthRole,
+  getAuthRoles,
   getAuthToken,
   getAuthUser,
   setAuthPermissions,
-  setAuthRole,
+  setAuthRoles,
   setAuthToken,
   setAuthUser,
 } from '@/services/storage'
 
 interface AuthState {
   user: AuthUser | null
-  role: string | null
+  roles: string[]
   permissions: string[]
   token: string | null
   loading: boolean
@@ -34,7 +34,7 @@ interface AuthState {
 
 interface SessionData {
   user: AuthUser
-  role: string | null
+  roles: string[]
   permissions: string[]
 }
 
@@ -46,7 +46,7 @@ function resolveErrorMessage (error: unknown, fallback: string) {
 export const useAuthStore = defineStore('auth', {
   state: (): AuthState => ({
     user: getAuthUser(),
-    role: getAuthRole(),
+    roles: getAuthRoles(),
     permissions: getAuthPermissions(),
     token: getAuthToken(),
     loading: false,
@@ -55,13 +55,18 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     isAuthenticated: state => !!state.token && !!state.user,
+    isAdmin: state => state.roles.includes('administrator'),
+    hasPermission: state => (permission: string) => state.permissions.includes(permission),
+    hasAnyPermission: state => (permissions: string[]) => permissions.some(p => state.permissions.includes(p)),
+    hasRole: state => (role: string) => state.roles.includes(role),
+    hasAnyRole: state => (roles: string[]) => roles.some(r => state.roles.includes(r)),
   },
 
   actions: {
     normalizeSessionData (response: AuthenticatedUserResponse): SessionData {
       return {
         user: response.user,
-        role: response.role,
+        roles: response.roles,
         permissions: response.permissions ?? [],
       }
     },
@@ -73,23 +78,25 @@ export const useAuthStore = defineStore('auth', {
       this.token = token
       setAuthToken(token)
 
-      const sessionData = preloadedSession?.user && Array.isArray(preloadedSession.permissions)
+      const sessionData = preloadedSession?.user
+        && Array.isArray(preloadedSession.permissions)
+        && Array.isArray(preloadedSession.roles)
         ? {
             user: preloadedSession.user,
-            role: preloadedSession.role ?? null,
+            roles: preloadedSession.roles,
             permissions: preloadedSession.permissions,
           }
         : this.normalizeSessionData(await fetchAuthenticatedUser())
 
       this.user = sessionData.user
-      this.role = sessionData.role
+      this.roles = sessionData.roles
       this.permissions = sessionData.permissions
       setAuthUser(sessionData.user)
 
-      if (sessionData.role) {
-        setAuthRole(sessionData.role)
+      if (sessionData.roles) {
+        setAuthRoles(sessionData.roles)
       } else {
-        clearAuthRole()
+        clearAuthRoles()
       }
 
       setAuthPermissions(sessionData.permissions)
@@ -99,12 +106,12 @@ export const useAuthStore = defineStore('auth', {
 
     clearSession () {
       this.user = null
-      this.role = null
+      this.roles = []
       this.permissions = []
       this.token = null
       clearAuthToken()
       clearAuthUser()
-      clearAuthRole()
+      clearAuthRoles()
       clearAuthPermissions()
     },
 
@@ -122,7 +129,7 @@ export const useAuthStore = defineStore('auth', {
 
         await this.setSession(token, {
           user: response.user,
-          role: response.role ?? null,
+          roles: response.roles ?? [],
           permissions: response.permissions ?? [],
         })
       } catch (error_) {
@@ -167,14 +174,14 @@ export const useAuthStore = defineStore('auth', {
       try {
         const sessionData = this.normalizeSessionData(await fetchAuthenticatedUser())
         this.user = sessionData.user
-        this.role = sessionData.role
+        this.roles = sessionData.roles
         this.permissions = sessionData.permissions
         setAuthUser(sessionData.user)
 
-        if (sessionData.role) {
-          setAuthRole(sessionData.role)
+        if (sessionData.roles) {
+          setAuthRoles(sessionData.roles)
         } else {
-          clearAuthRole()
+          clearAuthRoles()
         }
 
         setAuthPermissions(sessionData.permissions)

@@ -61,7 +61,7 @@
   })
 
   const userRole = computed(() => {
-    return formatRoleLabel(authStore.role)
+    return formatRoleLabel(authStore.roles[0] || '')
   })
 
   async function handleLogout () {

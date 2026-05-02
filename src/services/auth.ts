@@ -14,13 +14,13 @@ export interface LoginResponse {
   token?: string
   token_type?: string
   user?: AuthUser
-  role?: string | null
+  roles?: string[]
   permissions?: string[]
 }
 
 export interface AuthenticatedUserResponse {
   user: AuthUser
-  role: string | null
+  roles: string[]
   permissions: string[]
 }
 
