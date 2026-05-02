@@ -298,8 +298,12 @@
   const selectedPermissionIds = ref<Array<number | string>>([])
   const initialPermissionIds = ref<Array<number | string>>([])
 
-  function permissionItemSubtitle (item: { raw?: Permission } | null | undefined) {
-    return item?.raw?.module ?? ''
+  function permissionItemSubtitle (item: Permission | { raw?: Permission } | null | undefined): string {
+    if (item == null) return ''
+    if ('raw' in item && item.raw) {
+      return item.raw.module ?? ''
+    }
+    return 'module' in item ? item.module : ''
   }
 
   function normalizePermissionId (value: unknown): number | string | null {
