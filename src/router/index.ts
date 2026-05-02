@@ -75,15 +75,15 @@ const router = createRouter({
           component: SSM,
         },    
         {
-          path: '/negociaciones',
+          path: 'negociaciones',
           component: Negociaciones,
         },
         {
-          path: '/tickets',
+          path: 'tickets',
           component: Tickets,
         },
         {
-          path: '/aprobaciones',
+          path: 'aprobaciones',
           component: Aprobaciones,
         },
         {

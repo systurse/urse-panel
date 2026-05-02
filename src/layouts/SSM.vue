@@ -51,13 +51,13 @@
     },
     {
       title: 'Mis tickets',
-      to: '/tickets',
+      to: '/ssm/tickets',
       icon: 'mdi-ticket-outline',
       subtitle: 'Órdenes de servicio asignadas a tu usuario.',
     },
     {
       title: 'Aprobaciones',
-      to: '/aprobaciones',
+      to: '/ssm/aprobaciones',
       icon: 'mdi-draw-pen',
       subtitle: 'Cola de aprobaciones pendientes de firma digital.',
       enabled: authStore.isAdmin
