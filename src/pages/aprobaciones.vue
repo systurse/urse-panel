@@ -205,15 +205,6 @@
             (Folio: {{ selectedDeal?.folio ?? selectedDeal?.id }}).
             Esta acción es irreversible.
           </p>
-          <v-text-field
-            v-model="signPassword"
-            density="comfortable"
-            label="Tu contraseña"
-            :type="showPassword ? 'text' : 'password'"
-            variant="outlined"
-            :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
-            @click:append-inner="showPassword = !showPassword"
-          />
           <v-alert
             v-if="signError"
             color="error"
@@ -228,7 +219,6 @@
           <v-btn :disabled="signing" variant="text" @click="closeSignDialog">Cancelar</v-btn>
           <v-btn
             color="#FAB21A"
-            :disabled="!signPassword"
             :loading="signing"
             prepend-icon="mdi-draw-pen"
             variant="flat"
@@ -268,25 +258,20 @@
   // Sign dialog
   const signDialog = ref(false)
   const selectedDeal = ref<LocalDeal | null>(null)
-  const signPassword = ref('')
-  const showPassword = ref(false)
 
   function openSignDialog (deal: LocalDeal) {
     selectedDeal.value = deal
-    signPassword.value = ''
-    showPassword.value = false
     signDialog.value = true
   }
 
   function closeSignDialog () {
     signDialog.value = false
     selectedDeal.value = null
-    signPassword.value = ''
   }
 
   async function handleSign () {
     if (!selectedDeal.value) return
-    const ok = await sign(selectedDeal.value.id, signPassword.value)
+    const ok = await sign(selectedDeal.value.id)
     if (ok) {
       closeSignDialog()
     }

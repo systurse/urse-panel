@@ -56,8 +56,8 @@ export class HttpApprovalsAdapter implements ApprovalsPort {
     return unwrapDeals(response).map(mapDeal)
   }
 
-  async sign (dealId: number, password: string) {
-    await this.client.post<unknown, { password: string }>(`/api/v1/approvals/${dealId}/sign`, { password })
+  async sign (dealId: number) {
+    await this.client.post<unknown, Record<string, never>>(`/api/v1/approvals/${dealId}/sign`, {})
   }
 }
 

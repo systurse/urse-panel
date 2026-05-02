@@ -23,12 +23,12 @@ export function useApprovals (approvalsPort: ApprovalsPort = approvalsAdapter) {
     }
   }
 
-  async function sign (dealId: number, password: string): Promise<boolean> {
+  async function sign (dealId: number): Promise<boolean> {
     signing.value = true
     signError.value = null
 
     try {
-      await approvalsPort.sign(dealId, password)
+      await approvalsPort.sign(dealId)
       await loadApprovals()
       return true
     } catch (error_) {
