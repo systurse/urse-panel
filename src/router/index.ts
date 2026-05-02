@@ -7,22 +7,21 @@
 // Composables
 import { createRouter, createWebHistory } from 'vue-router'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
+import SSMLayout from '@/layouts/SSM.vue'
 import ModulesLayout from '@/layouts/ModulesLayout.vue'
+import Aprobaciones from '@/pages/aprobaciones.vue'
 import AuthCallback from '@/pages/auth-callback.vue'
-import CreateTicket from '@/pages/create-ticket.vue'
-import Fields from '@/pages/fields.vue'
-import FormFields from '@/pages/form-fields.vue'
-import Forms from '@/pages/forms.vue'
 import Index from '@/pages/index.vue'
 import Login from '@/pages/login.vue'
+import Negociaciones from '@/pages/negociaciones.vue'
 import Permissions from '@/pages/permissions.vue'
-import Reports from '@/pages/reports.vue'
 import Roles from '@/pages/roles.vue'
-import Settings from '@/pages/settings.vue'
-import Users from '@/pages/users.vue'
+import SPS from '@/pages/sps.vue'
 import SACC from '@/pages/sacc.vue'
 import SSM from '@/pages/ssm.vue'
-import SPS from '@/pages/sps.vue'
+import Settings from '@/pages/settings.vue'
+import Tickets from '@/pages/tickets.vue'
+import Users from '@/pages/users.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -48,26 +47,6 @@ const router = createRouter({
           component: SACC,
         },
         {
-          path: 'crear-ticket',
-          component: CreateTicket,
-        },
-        {
-          path: 'reportes',
-          component: Reports,
-        },
-        {
-          path: 'campos',
-          component: Fields,
-        },
-        {
-          path: 'formularios/campos',
-          component: FormFields,
-        },
-        {
-          path: 'formularios',
-          component: Forms,
-        },
-        {
           path: 'roles',
           component: Roles,
         },
@@ -88,43 +67,23 @@ const router = createRouter({
     {
       path: '/ssm',
       meta: { requiresAuth: true },
-      component: DashboardLayout,
+      component: SSMLayout,
       children: [
         {
           path: '',
           component: SSM,
+        },    
+        {
+          path: '/negociaciones',
+          component: Negociaciones,
         },
         {
-          path: 'crear-ticket',
-          component: CreateTicket,
+          path: '/tickets',
+          component: Tickets,
         },
         {
-          path: 'reportes',
-          component: Reports,
-        },
-        {
-          path: 'campos',
-          component: Fields,
-        },
-        {
-          path: 'formularios/campos',
-          component: FormFields,
-        },
-        {
-          path: 'formularios',
-          component: Forms,
-        },
-        {
-          path: 'roles',
-          component: Roles,
-        },
-        {
-          path: 'usuarios',
-          component: Users,
-        },
-        {
-          path: 'permisos',
-          component: Permissions,
+          path: '/aprobaciones',
+          component: Aprobaciones,
         },
         {
           path: 'configuracion',
@@ -140,38 +99,6 @@ const router = createRouter({
         {
           path: '',
           component: SPS,
-        },
-        {
-          path: 'crear-ticket',
-          component: CreateTicket,
-        },
-        {
-          path: 'reportes',
-          component: Reports,
-        },
-        {
-          path: 'campos',
-          component: Fields,
-        },
-        {
-          path: 'formularios/campos',
-          component: FormFields,
-        },
-        {
-          path: 'formularios',
-          component: Forms,
-        },
-        {
-          path: 'roles',
-          component: Roles,
-        },
-        {
-          path: 'usuarios',
-          component: Users,
-        },
-        {
-          path: 'permisos',
-          component: Permissions,
         },
         {
           path: 'configuracion',
