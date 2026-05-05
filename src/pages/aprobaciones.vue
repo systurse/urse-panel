@@ -63,7 +63,12 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="deal in approvals" :key="deal.id">
+          <tr
+            v-for="deal in approvals"
+            :key="deal.id"
+            class="clickable-row"
+            @click="openDetailDialog(deal)"
+          >
             <td class="approval-folio">#{{ deal.folio ?? deal.id }}</td>
             <td class="approval-title">
               {{ deal.title }}
@@ -90,34 +95,23 @@
             <td>{{ deal.contact_name ?? '—' }}</td>
             <td>{{ deal.area_atencion ?? '—' }}</td>
             <td class="text-date">{{ formatDate(deal.approval_requested_at) }}</td>
-            <td class="text-center">
+            <td class="text-center" @click.stop>
               <div v-if="deal.status === 'signed'" class="signed-info">
                 <v-icon color="success" icon="mdi-check-circle-outline" size="18" />
                 <span class="signed-by">{{ deal.signed_by_name ?? 'Encargado' }}</span>
                 <span class="signed-at">{{ formatDate(deal.signed_at) }}</span>
               </div>
-              <div v-else class="action-group">
-                <v-btn
-                  color="warning"
-                  density="comfortable"
-                  prepend-icon="mdi-message-alert-outline"
-                  size="small"
-                  variant="tonal"
-                  @click="openModificationsDialog(deal)"
-                >
-                  Pedir cambios
-                </v-btn>
-                <v-btn
-                  color="#FAB21A"
-                  density="comfortable"
-                  prepend-icon="mdi-draw-pen"
-                  size="small"
-                  variant="flat"
-                  @click="openSignDialog(deal)"
-                >
-                  Firmar
-                </v-btn>
-              </div>
+              <v-btn
+                v-else
+                color="#FAB21A"
+                density="comfortable"
+                prepend-icon="mdi-draw-pen"
+                size="small"
+                variant="flat"
+                @click="openSignDialog(deal)"
+              >
+                Firmar
+              </v-btn>
             </td>
           </tr>
         </tbody>
@@ -157,13 +151,11 @@
         {{ keyError }}
       </v-alert>
 
-      <!-- Loading state -->
       <div v-if="keyLoading && keyInfo === null && !changingKey" class="ssh-loading mt-6">
         <v-progress-circular color="#FAB21A" indeterminate size="22" />
         <span>Verificando clave registrada...</span>
       </div>
 
-      <!-- Key already registered — show info -->
       <template v-else-if="keyInfo !== null && !changingKey">
         <div class="ssh-registered mt-6">
           <v-icon color="#FAB21A" icon="mdi-shield-key" size="40" />
@@ -194,7 +186,6 @@
         </div>
       </template>
 
-      <!-- Upload form — no key yet, or user wants to change -->
       <template v-else>
         <p class="ssh-hint mt-4">
           Sube tu clave privada RSA (sin passphrase) para poder firmar digitalmente las órdenes de servicio.
@@ -235,68 +226,134 @@
       </template>
     </v-card>
 
-    <!-- Request modifications dialog -->
-    <v-dialog v-model="modificationsDialog" max-width="520" persistent>
+    <!-- Detail + modifications dialog -->
+    <v-dialog v-model="detailDialog" max-width="620" scrollable>
       <v-card rounded="xl">
-        <v-card-title class="pt-6 px-6">Solicitar modificaciones</v-card-title>
-        <v-card-text class="px-6">
-          <p class="mb-4 text-body-2 text-medium-emphasis">
-            Indica al técnico qué cambios debe realizar en la orden
-            <strong>{{ modificationsDeal?.title }}</strong>.
-          </p>
+        <v-card-title class="pt-6 px-6 d-flex align-center gap-2">
+          <span>{{ detailDeal?.title }}</span>
+          <v-chip color="#FAB21A" density="comfortable" size="small" variant="tonal">
+            #{{ detailDeal?.folio ?? detailDeal?.id }}
+          </v-chip>
+        </v-card-title>
+        <v-card-subtitle class="px-6 pb-0">
+          {{ detailDeal?.assigned_user_name }} · {{ detailDeal?.area_atencion ?? '—' }}
+        </v-card-subtitle>
 
-          <!-- Previous rejections history -->
-          <template v-if="modificationsDeal?.modification_requests?.length">
-            <p class="mb-2 text-body-2 font-weight-bold">Rechazos anteriores:</p>
-            <div class="prev-modifications mb-4">
-              <div
-                v-for="mod in modificationsDeal!.modification_requests"
-                :key="mod.id"
-                class="prev-modification-entry"
-              >
-                <span class="prev-mod-meta">{{ mod.requested_by_name ?? 'Encargado' }} · {{ formatDate(mod.created_at) }}</span>
-                <p class="prev-mod-notes">{{ mod.notes }}</p>
-              </div>
+        <v-card-text class="px-6 pt-4">
+          <!-- Report fields -->
+          <div class="detail-fields">
+            <div v-if="detailDeal?.reporte_usuario" class="detail-field">
+              <span class="detail-label">Reporte del usuario</span>
+              <p class="detail-value">{{ detailDeal.reporte_usuario }}</p>
             </div>
+            <div v-if="detailDeal?.diagnostico" class="detail-field">
+              <span class="detail-label">Diagnóstico</span>
+              <p class="detail-value">{{ detailDeal.diagnostico }}</p>
+            </div>
+            <div v-if="detailDeal?.solucion" class="detail-field">
+              <span class="detail-label">Solución</span>
+              <p class="detail-value">{{ detailDeal.solucion }}</p>
+            </div>
+            <div v-if="detailDeal?.requerimientos" class="detail-field">
+              <span class="detail-label">Requerimientos</span>
+              <p class="detail-value">{{ detailDeal.requerimientos }}</p>
+            </div>
+            <div v-if="detailDeal?.recomendaciones" class="detail-field">
+              <span class="detail-label">Recomendaciones</span>
+              <p class="detail-value">{{ detailDeal.recomendaciones }}</p>
+            </div>
+            <p
+              v-if="!detailDeal?.reporte_usuario && !detailDeal?.diagnostico && !detailDeal?.solucion && !detailDeal?.requerimientos && !detailDeal?.recomendaciones"
+              class="text-medium-emphasis text-body-2"
+            >
+              Sin información de reporte registrada.
+            </p>
+          </div>
+
+          <!-- Modifications form — only for non-signed deals -->
+          <template v-if="detailDeal?.status !== 'signed'">
+            <v-divider class="my-5" />
+
+            <!-- Previous rejections history -->
+            <template v-if="detailDeal?.modification_requests?.length">
+              <p class="mb-2 text-body-2 font-weight-bold">Rechazos anteriores:</p>
+              <div class="prev-modifications mb-4">
+                <div
+                  v-for="mod in detailDeal!.modification_requests"
+                  :key="mod.id"
+                  class="prev-modification-entry"
+                >
+                  <span class="prev-mod-meta">{{ mod.requested_by_name ?? 'Encargado' }} · {{ formatDate(mod.created_at) }}</span>
+                  <p class="prev-mod-notes">{{ mod.notes }}</p>
+                </div>
+              </div>
+            </template>
+
+            <v-textarea
+              v-model="modificationNotes"
+              auto-grow
+              density="comfortable"
+              label="Notas para el técnico (opcional para firmar, requerido para pedir cambios)"
+              maxlength="2000"
+              rows="3"
+              variant="outlined"
+            />
+            <v-alert
+              v-if="modificationError"
+              class="mt-2"
+              color="error"
+              density="comfortable"
+              variant="tonal"
+            >
+              {{ modificationError }}
+            </v-alert>
           </template>
 
-          <v-textarea
-            v-model="modificationNotes"
-            auto-grow
-            density="comfortable"
-            label="Notas para el técnico"
-            maxlength="2000"
-            rows="4"
-            variant="outlined"
-          />
-          <v-alert
-            v-if="modificationError"
-            class="mt-2"
-            color="error"
-            density="comfortable"
-            variant="tonal"
-          >
-            {{ modificationError }}
-          </v-alert>
+          <!-- Signed info -->
+          <template v-else>
+            <v-divider class="my-5" />
+            <div class="signed-detail">
+              <v-icon color="success" icon="mdi-check-circle-outline" size="20" />
+              <span>Firmado por <strong>{{ detailDeal.signed_by_name ?? 'Encargado' }}</strong> el {{ formatDate(detailDeal.signed_at) }}</span>
+            </div>
+          </template>
         </v-card-text>
+
         <v-card-actions class="px-6 pb-6 gap-2">
           <v-spacer />
-          <v-btn :disabled="requestingModifications" variant="text" @click="closeModificationsDialog">Cancelar</v-btn>
           <v-btn
-            color="warning"
-            :disabled="!modificationNotes.trim()"
-            :loading="requestingModifications"
-            prepend-icon="mdi-message-alert-outline"
-            variant="flat"
-            @click="handleRequestModifications"
+            :disabled="signing || requestingModifications"
+            variant="text"
+            @click="closeDetailDialog"
           >
-            Solicitar cambios
+            Cerrar
           </v-btn>
+          <template v-if="detailDeal?.status !== 'signed'">
+            <v-btn
+              color="warning"
+              :disabled="!modificationNotes.trim()"
+              :loading="requestingModifications"
+              prepend-icon="mdi-message-alert-outline"
+              variant="tonal"
+              @click="handleRequestModifications"
+            >
+              Pedir cambios
+            </v-btn>
+            <v-btn
+              color="#FAB21A"
+              :loading="signing"
+              prepend-icon="mdi-draw-pen"
+              variant="flat"
+              @click="handleSignFromDetail"
+            >
+              Firmar
+            </v-btn>
+          </template>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
-    <!-- Sign dialog -->
+    <!-- Sign confirmation dialog -->
     <v-dialog v-model="signDialog" max-width="440" persistent>
       <v-card rounded="xl">
         <v-card-title class="pt-6 px-6">Firmar orden de servicio</v-card-title>
@@ -368,32 +425,40 @@
     await removeKey()
   }
 
-  // Modifications dialog
-  const modificationsDialog = ref(false)
-  const modificationsDeal = ref<LocalDeal | null>(null)
+  // Detail + modifications dialog
+  const detailDialog = ref(false)
+  const detailDeal = ref<LocalDeal | null>(null)
   const modificationNotes = ref('')
 
-  function openModificationsDialog (deal: LocalDeal) {
-    modificationsDeal.value = deal
+  function openDetailDialog (deal: LocalDeal) {
+    detailDeal.value = deal
     modificationNotes.value = ''
-    modificationsDialog.value = true
+    detailDialog.value = true
   }
 
-  function closeModificationsDialog () {
-    modificationsDialog.value = false
-    modificationsDeal.value = null
+  function closeDetailDialog () {
+    detailDialog.value = false
+    detailDeal.value = null
     modificationNotes.value = ''
   }
 
   async function handleRequestModifications () {
-    if (!modificationsDeal.value) return
-    const ok = await requestModifications(modificationsDeal.value.id, modificationNotes.value)
+    if (!detailDeal.value) return
+    const ok = await requestModifications(detailDeal.value.id, modificationNotes.value)
     if (ok) {
-      closeModificationsDialog()
+      closeDetailDialog()
     }
   }
 
-  // Sign dialog
+  async function handleSignFromDetail () {
+    if (!detailDeal.value) return
+    const ok = await sign(detailDeal.value.id)
+    if (ok) {
+      closeDetailDialog()
+    }
+  }
+
+  // Quick sign from table row button
   const signDialog = ref(false)
   const selectedDeal = ref<LocalDeal | null>(null)
 
@@ -457,6 +522,13 @@
   gap: 16px;
 }
 
+.card-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 .section-kicker {
   color: #fab21a;
   font-size: 0.8rem;
@@ -485,6 +557,15 @@
 
 .approvals-state--empty {
   flex-direction: column;
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.clickable-row:hover {
+  background-color: #fafafa;
 }
 
 .approval-folio {
@@ -563,21 +644,6 @@
   gap: 8px;
 }
 
-.card-head-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.action-group {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
 .signed-info {
   display: flex;
   align-items: center;
@@ -595,6 +661,34 @@
   font-size: 0.78rem;
   color: #5e5e5e;
   white-space: nowrap;
+}
+
+.detail-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fab21a;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.detail-value {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #222;
+  line-height: 1.6;
+  white-space: pre-wrap;
 }
 
 .prev-modifications {
@@ -622,6 +716,14 @@
   font-size: 0.875rem;
   color: #333;
   white-space: pre-wrap;
+}
+
+.signed-detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #2e7d32;
+  font-size: 0.9rem;
 }
 
 @media (max-width: 960px) {
