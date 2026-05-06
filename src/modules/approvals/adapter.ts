@@ -1,7 +1,8 @@
 import type { ApprovalsPort } from '@/modules/approvals/port'
 import type { LocalDeal, ModificationRequest } from '@/modules/tickets/port'
 import type { HttpClient } from '@/services/http'
-import { httpClient } from '@/services/http'
+import { http, httpClient } from '@/services/http'
+import { getAuthToken } from '@/services/storage'
 
 type ApiDeal = Record<string, unknown>
 type ApiModificationRequest = Record<string, unknown>
@@ -76,6 +77,14 @@ export class HttpApprovalsAdapter implements ApprovalsPort {
 
   async requestModifications (dealId: number, notes: string) {
     await this.client.post<unknown, { notes: string }>(`/api/v1/approvals/${dealId}/request-modifications`, { notes })
+  }
+
+  async downloadSigned (dealId: number): Promise<Blob> {
+    const response = await http.get(`/api/v1/deals/${dealId}/signed-pdf`, {
+      responseType: 'blob',
+      headers: { Authorization: `Bearer ${getAuthToken()}` },
+    })
+    return response.data as Blob
   }
 }
 

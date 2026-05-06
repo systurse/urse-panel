@@ -8,6 +8,7 @@ export function useApprovals (approvalsPort: ApprovalsPort = approvalsAdapter) {
   const loading = ref(false)
   const signing = ref(false)
   const requestingModifications = ref(false)
+  const downloadingId = ref<number | null>(null)
   const includeSigned = ref(false)
   const error = ref<string | null>(null)
   const signError = ref<string | null>(null)
@@ -62,8 +63,28 @@ export function useApprovals (approvalsPort: ApprovalsPort = approvalsAdapter) {
     void loadApprovals()
   })
 
+  async function downloadSigned (dealId: number, title: string) {
+    downloadingId.value = dealId
+
+    try {
+      const blob = await approvalsPort.downloadSigned(dealId)
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `orden-servicio-${dealId}-firmada.pdf`
+      anchor.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      error.value = `No fue posible descargar la orden "${title}"`
+    } finally {
+      downloadingId.value = null
+    }
+  }
+
   return {
     approvals,
+    downloadingId,
+    downloadSigned,
     error,
     includeSigned,
     loadApprovals,

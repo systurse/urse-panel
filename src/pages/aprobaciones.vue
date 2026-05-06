@@ -100,6 +100,17 @@
                 <v-icon color="success" icon="mdi-check-circle-outline" size="18" />
                 <span class="signed-by">{{ deal.signed_by_name ?? 'Encargado' }}</span>
                 <span class="signed-at">{{ formatDate(deal.signed_at) }}</span>
+                <v-btn
+                  color="success"
+                  density="comfortable"
+                  :loading="downloadingId === deal.id"
+                  prepend-icon="mdi-file-download-outline"
+                  size="small"
+                  variant="tonal"
+                  @click="downloadSigned(deal.id, deal.title)"
+                >
+                  Descargar
+                </v-btn>
               </div>
               <v-btn
                 v-else
@@ -349,6 +360,16 @@
               Firmar
             </v-btn>
           </template>
+          <v-btn
+            v-else
+            color="success"
+            :loading="downloadingId === detailDeal?.id"
+            prepend-icon="mdi-file-download-outline"
+            variant="flat"
+            @click="downloadSigned(detailDeal!.id, detailDeal!.title)"
+          >
+            Descargar PDF firmado
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -398,6 +419,8 @@
 
   const {
     approvals,
+    downloadingId,
+    downloadSigned,
     error,
     includeSigned,
     loadApprovals,
