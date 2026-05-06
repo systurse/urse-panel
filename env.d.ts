@@ -8,3 +8,11 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    requiresAllPermissions?: string[]
+    requiresAnyPermission?: string[]
+    requiresAdministrator?: boolean
+  }
+}
