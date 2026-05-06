@@ -7,27 +7,27 @@
         <p>Sistema de Servicios y Mantenimiento</p>
       </div>
       <div class="header-icon" style="background-color: #1a1a1a">
-        <v-icon icon="mdi-toolbox-outline" size="32" color="white" />
+        <v-icon color="white" icon="mdi-toolbox-outline" size="32" />
       </div>
     </div>
 
     <!-- Quick Stats -->
     <div class="stats-grid">
-      <v-card rounded="xl" class="stat-card">
+      <v-card class="stat-card" rounded="xl">
         <v-card-text>
           <div class="stat-label">Órdenes de trabajo</div>
           <div class="stat-value">34</div>
         </v-card-text>
       </v-card>
 
-      <v-card rounded="xl" class="stat-card">
+      <v-card class="stat-card" rounded="xl">
         <v-card-text>
           <div class="stat-label">En progreso</div>
           <div class="stat-value">8</div>
         </v-card-text>
       </v-card>
 
-      <v-card rounded="xl" class="stat-card">
+      <v-card class="stat-card" rounded="xl">
         <v-card-text>
           <div class="stat-label">Completadas</div>
           <div class="stat-value">26</div>
@@ -36,10 +36,10 @@
     </div>
 
     <!-- Main Content -->
-    <v-card rounded="xl" class="module-card">
+    <v-card class="module-card" rounded="xl">
       <v-card-text>
         <div class="coming-soon">
-          <v-icon icon="mdi-hammer-wrench" size="64" color="#1a1a1a" />
+          <v-icon color="#1a1a1a" icon="mdi-hammer-wrench" size="64" />
           <h2>Módulo en desarrollo</h2>
           <p>Las funcionalidades del SSM estarán disponibles pronto.</p>
         </div>

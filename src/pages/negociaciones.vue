@@ -7,9 +7,9 @@
       </div>
       <v-btn
         color="#FAB21A"
+        :loading="loading"
         prepend-icon="mdi-refresh"
         variant="tonal"
-        :loading="loading"
         @click="loadDeals"
       >
         Actualizar

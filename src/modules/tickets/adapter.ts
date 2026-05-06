@@ -56,8 +56,12 @@ function mapDeal (raw: ApiDeal): LocalDeal {
 }
 
 function unwrapDeals (response: ApiDeal[] | LaravelCollectionResponse<ApiDeal>): ApiDeal[] {
-  if (Array.isArray(response)) return response
-  if (Array.isArray(response.data)) return response.data
+  if (Array.isArray(response)) {
+    return response
+  }
+  if (Array.isArray(response.data)) {
+    return response.data
+  }
   return []
 }
 

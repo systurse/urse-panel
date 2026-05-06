@@ -24,6 +24,7 @@
 </template>
 
 <script lang="ts" setup>
+  import type { RouteMeta } from 'vue-router'
   import { computed, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import DashboardContent from '@/components/dashboard/DashboardContent.vue'
@@ -120,7 +121,7 @@
           return true
         }
 
-        return canAccessRouteMeta(item.meta, authStore)
+        return canAccessRouteMeta(item.meta as RouteMeta | undefined, authStore)
       })
     }
 
@@ -192,7 +193,7 @@
         return true
       }
 
-      return canAccessRouteMeta(item.meta, authStore)
+      return canAccessRouteMeta(item.meta as RouteMeta | undefined, authStore)
     })
     return section && 'to' in section
       ? { title: section.title, subtitle: section.subtitle ?? '' }
