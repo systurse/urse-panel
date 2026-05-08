@@ -21,6 +21,7 @@ import SACC from '@/pages/sacc.vue'
 import Settings from '@/pages/settings.vue'
 import SPS from '@/pages/sps.vue'
 import SSM from '@/pages/ssm.vue'
+import MisSolicitudes from '@/pages/mis-solicitudes.vue'
 import Tickets from '@/pages/tickets.vue'
 import Users from '@/pages/users.vue'
 
@@ -108,6 +109,10 @@ const router = createRouter({
         {
           path: 'tickets',
           component: Tickets,
+        },
+        {
+          path: 'mis-solicitudes',
+          component: MisSolicitudes,
         },
         {
           path: 'aprobaciones',

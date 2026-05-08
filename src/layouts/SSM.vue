@@ -56,6 +56,12 @@
       subtitle: 'Órdenes de servicio asignadas a tu usuario.',
     },
     {
+      title: 'Mis solicitudes',
+      to: '/ssm/mis-solicitudes',
+      icon: 'mdi-file-search-outline',
+      subtitle: 'Seguimiento de tus solicitudes de servicio.',
+    },
+    {
       title: 'Aprobaciones',
       to: '/ssm/aprobaciones',
       icon: 'mdi-draw-pen',
