@@ -16,7 +16,9 @@ export class HttpEncargadoAdapter implements EncargadoPort {
 
   async fetchKey (): Promise<SshKeyInfo | null> {
     const response = await this.client.get<KeyStatusResponse>('/api/v1/encargado/key')
-    if (!response.has_key) return null
+    if (!response.has_key) {
+      return null
+    }
     return { fingerprint: response.fingerprint ?? null }
   }
 

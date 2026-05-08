@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
   import { onMounted, ref } from 'vue'
-  import { useRoute, useRouter, type LocationQueryValue } from 'vue-router'
+  import { type LocationQueryValue, useRoute, useRouter } from 'vue-router'
   import { useAuthStore } from '@/stores/auth'
 
   const route = useRoute()

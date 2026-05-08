@@ -9,6 +9,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import ModulesLayout from '@/layouts/ModulesLayout.vue'
 import SSMLayout from '@/layouts/SSM.vue'
+import AdminExitPasses from '@/pages/admin-exit-passes.vue'
 import Administration from '@/pages/administracion.vue'
 import Aprobaciones from '@/pages/aprobaciones.vue'
 import AuthCallback from '@/pages/auth-callback.vue'
@@ -19,11 +20,15 @@ import Permissions from '@/pages/permissions.vue'
 import Roles from '@/pages/roles.vue'
 import SACC from '@/pages/sacc.vue'
 import Settings from '@/pages/settings.vue'
+import SPSPasses from '@/pages/sps-pases.vue'
 import SPS from '@/pages/sps.vue'
+import SPSReportExitPasses from '@/pages/sps/report-exit-passes.vue'
 import SSM from '@/pages/ssm.vue'
 import MisSolicitudes from '@/pages/mis-solicitudes.vue'
 import Tickets from '@/pages/tickets.vue'
 import Users from '@/pages/users.vue'
+import { useAuthStore } from '@/stores/auth'
+import { canAccessRouteMeta } from '@/utils/routeAccess'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -88,6 +93,11 @@ const router = createRouter({
           component: Permissions,
         },
         {
+          path: 'pases-salida',
+          component: AdminExitPasses,
+          meta: { requiresAdministrator: true },
+        },
+        {
           path: 'configuracion',
           component: Settings,
         },
@@ -134,8 +144,22 @@ const router = createRouter({
           component: SPS,
         },
         {
+          path: 'pases',
+          component: SPSPasses,
+        },
+        {
+          path: 'reportes',
+          component: SPSReportExitPasses,
+          meta: { requiresAnyPermission: ['sps.pass.filter', 'sps.pass.export'] },
+        },
+        {
           path: 'configuracion',
           component: Settings,
+        },
+        {
+          path: 'administracion/pases-salida',
+          component: AdminExitPasses,
+          meta: { requiresAdministrator: true },
         },
       ],
     },
@@ -165,6 +189,11 @@ router.beforeEach(to => {
 
   if (to.meta.guest && token) {
     return { path: '/' }
+  }
+
+  const authStore = useAuthStore()
+  if (!canAccessRouteMeta(to.meta, authStore)) {
+    return { path: '/administracion' }
   }
 })
 

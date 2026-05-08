@@ -1,5 +1,5 @@
 <template>
-  <v-card rounded="lg" class="reservation-card">
+  <v-card class="reservation-card" rounded="lg">
     <v-card-item>
       <div class="card-header">
         <div class="reservation-info">
@@ -8,9 +8,9 @@
         </div>
         <v-chip
           :color="statusColor"
-          :text-color="statusTextColor"
-          size="small"
           label
+          size="small"
+          :text-color="statusTextColor"
         >
           {{ reservation.status }}
         </v-chip>
@@ -40,18 +40,18 @@
 
     <v-card-actions class="card-actions">
       <v-btn
+        color="primary"
         size="small"
         variant="text"
-        color="primary"
       >
         Ver detalles
       </v-btn>
       <v-spacer />
       <v-btn
-        size="small"
-        icon="mdi-delete-outline"
-        variant="text"
         color="error"
+        icon="mdi-delete-outline"
+        size="small"
+        variant="text"
       />
     </v-card-actions>
   </v-card>

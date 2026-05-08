@@ -7,27 +7,27 @@
         <p>Sistema de Apartado del Centro de Cómputo</p>
       </div>
       <div class="header-icon" style="background-color: #FAB21A">
-        <v-icon icon="mdi-desktop-classic" size="32" color="white" />
+        <v-icon color="white" icon="mdi-desktop-classic" size="32" />
       </div>
     </div>
 
     <!-- Quick Stats -->
     <div class="stats-grid">
-      <v-card rounded="xl" class="stat-card">
+      <v-card class="stat-card" rounded="xl">
         <v-card-text>
           <div class="stat-label">Reservaciones activas</div>
           <div class="stat-value">12</div>
         </v-card-text>
       </v-card>
 
-      <v-card rounded="xl" class="stat-card">
+      <v-card class="stat-card" rounded="xl">
         <v-card-text>
           <div class="stat-label">Equipos disponibles</div>
           <div class="stat-value">28</div>
         </v-card-text>
       </v-card>
 
-      <v-card rounded="xl" class="stat-card">
+      <v-card class="stat-card" rounded="xl">
         <v-card-text>
           <div class="stat-label">Equipos en mantenimiento</div>
           <div class="stat-value">3</div>
@@ -36,10 +36,10 @@
     </div>
 
     <!-- Main Content -->
-    <v-card rounded="xl" class="module-card">
+    <v-card class="module-card" rounded="xl">
       <v-card-text>
         <div class="coming-soon">
-          <v-icon icon="mdi-hammer-wrench" size="64" color="#FAB21A" />
+          <v-icon color="#FAB21A" icon="mdi-hammer-wrench" size="64" />
           <h2>Módulo en desarrollo</h2>
           <p>Las funcionalidades del SACC estarán disponibles pronto.</p>
         </div>

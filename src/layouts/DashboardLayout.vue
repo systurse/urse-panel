@@ -24,12 +24,14 @@
 </template>
 
 <script lang="ts" setup>
+  import type { RouteMeta } from 'vue-router'
   import { computed, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import DashboardContent from '@/components/dashboard/DashboardContent.vue'
   import DashboardSidebar from '@/components/dashboard/DashboardSidebar.vue'
   import DashboardTopbar from '@/components/dashboard/DashboardTopbar.vue'
   import { useAuthStore } from '@/stores/auth'
+  import { canAccessRouteMeta } from '@/utils/routeAccess'
 
   const route = useRoute()
   const router = useRouter()
@@ -42,7 +44,7 @@
 
   const navigationItems = computed(() => {
     if (moduleBase.value === '/administracion') {
-      return [
+      const items = [
         {
           title: 'Inicio',
           to: '/',
@@ -74,6 +76,53 @@
           subtitle: 'Listado de permisos y capacidades asociadas.',
         },
       ]
+
+      return items
+    }
+
+    if (moduleBase.value === '/sps') {
+      const items = [
+        {
+          title: 'Inicio',
+          to: '/',
+          icon: 'mdi-home-outline',
+          subtitle: 'Vista general del panel de control.',
+        },
+        {
+          title: 'Solicitud de pase',
+          to: '/sps',
+          icon: 'mdi-badge-account-outline',
+          subtitle: 'Registra empleado y crea un pase de salida.',
+        },
+        {
+          title: 'Pases registrados',
+          to: '/sps/pases',
+          icon: 'mdi-file-document-multiple-outline',
+          subtitle: 'Consulta el historial de pases de salida capturados.',
+        },
+        {
+          title: 'Reporte de pases',
+          to: '/sps/reportes',
+          icon: 'mdi-file-chart-outline',
+          subtitle: 'Vista de reporte con filtros y exportación.',
+          meta: { requiresAnyPermission: ['sps.pass.filter', 'sps.pass.export'] },
+        },
+        {
+          title: 'Pases de salida',
+          to: '/sps/administracion/pases-salida',
+          icon: 'mdi-clipboard-check-multiple-outline',
+          subtitle: 'Consulta y resuelve pases de salida (autorizar o rechazar).',
+          meta: { requiresAdministrator: true },
+        },
+      ]
+
+      return items.filter(item => {
+        if (!('meta' in item)) {
+          return true
+        }
+
+        return canAccessRouteMeta(item.meta as RouteMeta | undefined, authStore)
+      })
     }
 
     return [
@@ -135,7 +184,17 @@
   })
 
   const currentSection = computed(() => {
-    const section = navigationItems.value.find(item => 'to' in item && item.to === route.path)
+    const section = navigationItems.value.find(item => {
+      if (!('to' in item) || item.to !== route.path) {
+        return false
+      }
+
+      if (!('meta' in item)) {
+        return true
+      }
+
+      return canAccessRouteMeta(item.meta as RouteMeta | undefined, authStore)
+    })
     return section && 'to' in section
       ? { title: section.title, subtitle: section.subtitle ?? '' }
       : { title: navigationItems.value[0].title, subtitle: (navigationItems.value[0] as { subtitle?: string }).subtitle ?? '' }
