@@ -26,6 +26,7 @@ function mapTicket (raw: ApiTicket): ContactTicket {
     approval_requested_at: typeof raw.approval_requested_at === 'string' ? raw.approval_requested_at : null,
     signed_at: typeof raw.signed_at === 'string' ? raw.signed_at : null,
     synced_at: typeof raw.synced_at === 'string' ? raw.synced_at : null,
+    verification_url: typeof raw.verification_url === 'string' ? raw.verification_url : null,
   }
 }
 

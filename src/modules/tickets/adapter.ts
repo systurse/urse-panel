@@ -90,6 +90,10 @@ export class HttpTicketsAdapter implements TicketsPort {
 
     return response.data as Blob
   }
+
+  async notifySigned (dealId: number): Promise<void> {
+    await this.client.post<unknown>(`/api/v1/tickets/${dealId}/notify-signed`)
+  }
 }
 
 export const ticketsAdapter = new HttpTicketsAdapter(httpClient)

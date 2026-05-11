@@ -44,4 +44,5 @@ export interface TicketsPort {
   requestApproval: (dealId: number) => Promise<void>
   syncFromBitrix: (dealId: number) => Promise<void>
   downloadSigned: (dealId: number) => Promise<Blob>
+  notifySigned: (dealId: number) => Promise<void>
 }

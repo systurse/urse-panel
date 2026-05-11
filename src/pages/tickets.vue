@@ -143,6 +143,19 @@
                 Descargar firmada
               </v-btn>
 
+              <v-btn
+                v-if="ticket.can_download"
+                color="info"
+                density="comfortable"
+                :loading="notifyingId === ticket.id"
+                prepend-icon="mdi-email-check-outline"
+                size="small"
+                variant="tonal"
+                @click="notifySigned(ticket.id)"
+              >
+                Notificar por correo
+              </v-btn>
+
               <v-chip
                 v-if="ticket.status === 'approval_requested'"
                 color="warning"
@@ -227,6 +240,12 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Notify success snackbar -->
+    <v-snackbar v-model="notifySuccess" color="success" location="bottom" timeout="4000">
+      <v-icon icon="mdi-check-circle-outline" class="mr-2" />
+      Notificación enviada al solicitante.
+    </v-snackbar>
   </v-card>
 </template>
 
@@ -241,6 +260,9 @@
     error,
     loadTickets,
     loading,
+    notifyingId,
+    notifySigned,
+    notifySuccess,
     onlyMine,
     requestApproval,
     requestingId,

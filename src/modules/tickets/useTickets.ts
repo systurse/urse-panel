@@ -9,6 +9,8 @@ export function useTickets (ticketsPort: TicketsPort = ticketsAdapter) {
   const requestingId = ref<number | null>(null)
   const downloadingId = ref<number | null>(null)
   const syncingId = ref<number | null>(null)
+  const notifyingId = ref<number | null>(null)
+  const notifySuccess = ref(false)
   const onlyMine = ref(true)
 
   async function loadTickets () {
@@ -71,6 +73,20 @@ export function useTickets (ticketsPort: TicketsPort = ticketsAdapter) {
     }
   }
 
+  async function notifySigned (dealId: number) {
+    notifyingId.value = dealId
+    error.value = null
+
+    try {
+      await ticketsPort.notifySigned(dealId)
+      notifySuccess.value = true
+    } catch (error_) {
+      error.value = error_ instanceof Error ? error_.message : 'No fue posible enviar la notificación'
+    } finally {
+      notifyingId.value = null
+    }
+  }
+
   onMounted(() => {
     void loadTickets()
   })
@@ -81,6 +97,9 @@ export function useTickets (ticketsPort: TicketsPort = ticketsAdapter) {
     error,
     loadTickets,
     loading,
+    notifyingId,
+    notifySigned,
+    notifySuccess,
     onlyMine,
     requestApproval,
     requestingId,

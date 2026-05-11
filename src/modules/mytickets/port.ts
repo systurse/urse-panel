@@ -17,6 +17,7 @@ export interface ContactTicket {
   approval_requested_at: string | null
   signed_at: string | null
   synced_at: string | null
+  verification_url: string | null
 }
 
 export interface MyTicketsPort {

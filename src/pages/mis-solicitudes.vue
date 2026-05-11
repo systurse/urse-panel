@@ -184,6 +184,22 @@
             <v-icon color="#FAB21A" icon="mdi-wrench-clock" size="18" />
             <span>El diagnóstico y la solución estarán disponibles cuando el técnico complete la revisión.</span>
           </div>
+
+          <template v-if="selectedTicket.verification_url">
+            <v-divider class="my-4" />
+            <div class="detail-block">
+              <div class="detail-label">Orden de servicio firmada</div>
+              <a
+                :href="selectedTicket.verification_url"
+                class="verification-link"
+                rel="noopener"
+                target="_blank"
+              >
+                <v-icon icon="mdi-file-sign" size="16" class="mr-1" />
+                Ver orden firmada
+              </a>
+            </div>
+          </template>
         </v-card-text>
 
         <v-card-actions class="px-6 pb-6">
@@ -471,6 +487,19 @@
   border-radius: 8px;
   font-size: 0.85rem;
   color: #6f5a60;
+}
+
+.verification-link {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1976d2;
+  text-decoration: none;
+}
+
+.verification-link:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 960px) {
