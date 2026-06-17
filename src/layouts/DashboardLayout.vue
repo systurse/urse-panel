@@ -125,6 +125,29 @@
       })
     }
 
+    if (moduleBase.value === '/inscripciones') {
+      return [
+        {
+          title: 'Inicio',
+          to: '/',
+          icon: 'mdi-home-outline',
+          subtitle: 'Vista general del panel de control.',
+        },
+        {
+          title: 'Nueva Inscripción',
+          to: '/inscripciones',
+          icon: 'mdi-account-school-outline',
+          subtitle: 'Registra un nuevo estudiante en el sistema.',
+        },
+        {
+          title: 'Reporte',
+          to: '/inscripciones/reporte',
+          icon: 'mdi-chart-pie',
+          subtitle: 'Estadísticas y listado de estudiantes registrados.',
+        },
+      ]
+    }
+
     return [
       {
         title: 'Inicio',

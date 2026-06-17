@@ -24,6 +24,9 @@ import SPSPasses from '@/pages/sps-pases.vue'
 import SPS from '@/pages/sps.vue'
 import SPSReportExitPasses from '@/pages/sps/report-exit-passes.vue'
 import SSM from '@/pages/ssm.vue'
+import Inscripciones from '@/pages/inscripciones.vue'
+import InscripcionesConfirmacion from '@/pages/inscripciones-confirmacion.vue'
+import InscripcionesReporte from '@/pages/inscripciones-reporte.vue'
 import MisSolicitudes from '@/pages/mis-solicitudes.vue'
 import Tickets from '@/pages/tickets.vue'
 import Users from '@/pages/users.vue'
@@ -160,6 +163,25 @@ const router = createRouter({
           path: 'administracion/pases-salida',
           component: AdminExitPasses,
           meta: { requiresAdministrator: true },
+        },
+      ],
+    },
+    {
+      path: '/inscripciones',
+      meta: { requiresAuth: true },
+      component: DashboardLayout,
+      children: [
+        {
+          path: '',
+          component: Inscripciones,
+        },
+        {
+          path: 'confirmacion/:studentId',
+          component: InscripcionesConfirmacion,
+        },
+        {
+          path: 'reporte',
+          component: InscripcionesReporte,
         },
       ],
     },

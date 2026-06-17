@@ -95,6 +95,16 @@
       features: ['Solicitud de permisos', 'Autorizaciones', 'Historial'],
     },
     {
+      id: 'inscripciones',
+      title: 'Inscripciones',
+      fullName: 'Registro de Nuevos Estudiantes',
+      description: 'Registra y administra nuevas cuentas de estudiantes',
+      path: '/inscripciones',
+      icon: 'mdi-account-school-outline',
+      color: '#00a86b',
+      features: ['Alta de estudiantes', 'Provisioning M365', 'Seguimiento de cuentas'],
+    },
+    {
       id: 'administracion',
       title: 'Administración',
       fullName: 'Gestión administrativa del panel',
