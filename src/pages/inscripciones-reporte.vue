@@ -104,7 +104,7 @@
     <!-- Students List -->
     <v-card rounded="xl" class="students-card mt-8">
       <v-card-text class="pa-6">
-        <h3 class="list-title mb-6">Listado de Estudiantes Registrados</h3>
+        <h3 class="list-title">Listado de Estudiantes Registrados</h3>
 
         <div v-if="loading" class="loading-container">
           <v-progress-circular
@@ -138,6 +138,17 @@
 
             <template #item.created_at="{ item }">
               {{ formatDate(item.created_at) }}
+            </template>
+
+            <template #item.actions="{ item }">
+              <v-btn
+                icon="mdi-file-pdf-box"
+                size="small"
+                variant="text"
+                color="primary"
+                @click="downloadStudentPDF(item.id)"
+                title="Abrir hoja de credenciales"
+              />
             </template>
           </v-data-table>
 
@@ -202,6 +213,7 @@
     { title: 'Email', key: 'institutional_email' },
     { title: 'Estado', key: 'status' },
     { title: 'Registrado', key: 'created_at' },
+    { title: 'Acciones', key: 'actions', sortable: false },
   ]
 
   function getStatusColor (status: string) {
@@ -353,6 +365,12 @@
 
   async function handlePageChange (page: number) {
     await fetchStudents(page)
+  }
+
+  function downloadStudentPDF (studentId: number) {
+    const apiSoporteUrl = import.meta.env.VITE_API_SOPORTE_URL
+    const pdfUrl = `${apiSoporteUrl}/api/v1/students/${studentId}/credential-sheet`
+    window.open(pdfUrl, '_blank')
   }
 
   watch(stats, async (newVal) => {
