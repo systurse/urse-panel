@@ -66,16 +66,16 @@ export const studentService = {
   },
 
   async getStudentStatus (studentId: number) {
-    const response = await httpClient.get(`${STUDENTS_API}/${studentId}`)
-    return response.data as StudentStatus
+    const response = await httpClient.get<StudentStatus>(`${STUDENTS_API}/${studentId}`)
+    return response
   },
 
   async resetPassword (studentId: number, password: string) {
-    const response = await httpClient.post(
+    const response = await httpClient.post<any>(
       `${STUDENTS_API}/${studentId}/reset-password`,
       { password },
     )
-    return response.data
+    return response
   },
 
   async getCareers () {

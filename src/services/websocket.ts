@@ -1,12 +1,12 @@
 import Echo from 'laravel-echo'
 import Pusher from 'pusher-js'
 
-let echoInstance: Echo | null = null
+let echoInstance: Echo<any> | null = null
 
 export function initEcho () {
   if (echoInstance) return echoInstance
 
-  window.Pusher = Pusher
+  ;(window as any).Pusher = Pusher
 
   echoInstance = new Echo({
     broadcaster: 'reverb',
