@@ -428,6 +428,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .stats-row {
@@ -553,13 +554,129 @@
 }
 
 @media (max-width: 768px) {
+  .report-page {
+    gap: 16px;
+  }
+
   .module-header {
     flex-direction: column;
     gap: 16px;
+    padding: 16px;
+  }
+
+  .header-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .header-content p {
+    font-size: 0.85rem;
+  }
+
+  .header-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .stats-row {
+    gap: 12px;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
   }
 
   .chart-container {
     height: 250px;
+  }
+
+  .chart-title {
+    font-size: 1rem;
+  }
+
+  .list-title {
+    font-size: 1rem;
+  }
+
+  .connection-status {
+    bottom: 16px;
+    right: 16px;
+    font-size: 0.75rem;
+    padding: 8px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .report-page {
+    gap: 12px;
+  }
+
+  .module-header {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .header-content h1 {
+    font-size: 1.25rem;
+  }
+
+  .header-content p {
+    font-size: 0.75rem;
+  }
+
+  .header-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .stats-row {
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 8px !important;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
+  }
+
+  .charts-row {
+    gap: 8px;
+  }
+
+  .chart-container {
+    height: 200px;
+  }
+
+  .chart-title {
+    font-size: 0.9rem;
+  }
+
+  .students-card {
+    border-radius: 8px;
+  }
+
+  .list-title {
+    font-size: 0.9rem;
+  }
+
+  .connection-status {
+    bottom: 12px;
+    right: 12px;
+    font-size: 0.65rem;
+    padding: 6px 10px;
+  }
+
+  .students-table {
+    font-size: 0.75rem;
   }
 }
 </style>

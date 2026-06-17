@@ -377,13 +377,56 @@
 }
 
 @media (max-width: 768px) {
+  .confirmation-page {
+    gap: 16px;
+  }
+
   .module-header {
     flex-direction: column;
     gap: 16px;
+    padding: 16px;
+  }
+
+  .header-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .header-content p {
+    font-size: 0.85rem;
+  }
+
+  .header-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .confirm-row {
+    gap: 16px;
+  }
+
+  .confirmation-card {
+    padding: 16px !important;
+  }
+
+  .confirmation-title {
+    font-size: 1rem;
+  }
+
+  .credentials-title {
+    font-size: 0.9rem;
+  }
+
+  .field-value {
+    font-size: 0.85rem;
+  }
+
+  .credential-value {
+    font-size: 0.8rem;
   }
 
   .action-buttons {
     flex-direction: column;
+    gap: 8px;
   }
 
   .action-btn-primary {
@@ -393,6 +436,77 @@
   .confirmation-grid,
   .credentials-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .confirmation-page {
+    gap: 12px;
+  }
+
+  .module-header {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .header-content h1 {
+    font-size: 1.25rem;
+  }
+
+  .header-content p {
+    font-size: 0.75rem;
+  }
+
+  .header-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .confirm-row {
+    gap: 12px;
+  }
+
+  .confirmation-card {
+    padding: 12px !important;
+  }
+
+  .confirmation-title {
+    font-size: 0.9rem;
+  }
+
+  .confirmation-field {
+    gap: 2px;
+  }
+
+  .field-label {
+    font-size: 0.7rem;
+  }
+
+  .field-value {
+    font-size: 0.8rem;
+  }
+
+  .credentials-title {
+    font-size: 0.85rem;
+  }
+
+  .credential-label {
+    font-size: 0.75rem;
+  }
+
+  .credential-value-box {
+    padding: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .credential-value {
+    font-size: 0.7rem;
+    word-break: break-word;
+  }
+
+  .action-buttons {
+    gap: 6px;
   }
 }
 </style>

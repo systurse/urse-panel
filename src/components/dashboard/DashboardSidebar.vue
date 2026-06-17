@@ -4,7 +4,8 @@
     class="dashboard-drawer"
     color="#000000"
     :model-value="modelValue"
-    permanent
+    :temporary="isTemporary"
+    :permanent="!isTemporary"
     :rail="rail"
     rail-width="88"
     width="280"
@@ -58,6 +59,8 @@
 
 <script lang="ts" setup>
   import { useRoute } from 'vue-router'
+  import { useDisplay } from 'vuetify'
+  import { computed } from 'vue'
 
   interface NavigationItem {
     title: string
@@ -78,12 +81,15 @@
     rail: boolean
   }>()
 
+  const display = useDisplay()
+  const route = useRoute()
+
+  const isTemporary = computed(() => display.xs.value || display.sm.value)
+
   const emit = defineEmits<{
     'update:modelValue': [value: boolean]
     'toggle-rail': []
   }>()
-
-  const route = useRoute()
 </script>
 
 <style scoped>

@@ -25,20 +25,29 @@
 
 <script lang="ts" setup>
   import type { RouteMeta } from 'vue-router'
-  import { computed, ref } from 'vue'
-  import { useRoute, useRouter } from 'vue-router'
+  import { computed, ref, onMounted } from 'vue'
+  import { useRoute, useRouter, useDisplay } from 'vue-router'
   import DashboardContent from '@/components/dashboard/DashboardContent.vue'
   import DashboardSidebar from '@/components/dashboard/DashboardSidebar.vue'
   import DashboardTopbar from '@/components/dashboard/DashboardTopbar.vue'
   import { useAuthStore } from '@/stores/auth'
   import { canAccessRouteMeta } from '@/utils/routeAccess'
+  import { useDisplay as useVuetifyDisplay } from 'vuetify'
 
   const route = useRoute()
   const router = useRouter()
   const authStore = useAuthStore()
+  const display = useVuetifyDisplay()
 
   const drawer = ref(true)
   const rail = ref(false)
+
+  onMounted(() => {
+    // En móvil, cerrar el drawer por defecto
+    if (display.xs.value || display.sm.value) {
+      drawer.value = false
+    }
+  })
 
   const moduleBase = computed(() => `/${route.path.split('/')[1]}`)
 
@@ -223,7 +232,12 @@
       : { title: navigationItems.value[0].title, subtitle: (navigationItems.value[0] as { subtitle?: string }).subtitle ?? '' }
   })
 
-  const drawerWidth = computed(() => (rail.value ? 88 : 280))
+  const drawerWidth = computed(() => {
+    if (!drawer.value && (display.xs.value || display.sm.value)) {
+      return 0
+    }
+    return rail.value ? 88 : 280
+  })
 
   const mainStyles = computed(() => ({
     marginInlineStart: `${drawerWidth.value}px`,
@@ -234,6 +248,17 @@
     await authStore.logout()
     router.push('/login')
   }
+
+  const closeDrawerOnNavigation = () => {
+    if (display.xs.value || display.sm.value) {
+      drawer.value = false
+    }
+  }
+
+  // Cerrar el drawer cuando se navega
+  router.afterEach(() => {
+    closeDrawerOnNavigation()
+  })
 </script>
 
 <style scoped>

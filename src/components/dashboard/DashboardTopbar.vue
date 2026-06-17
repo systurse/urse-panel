@@ -120,6 +120,52 @@
   gap: 10px;
 }
 
+@media (max-width: 768px) {
+  .topbar-shell {
+    height: 96px !important;
+  }
+
+  .topbar-inner {
+    padding: 16px 16px;
+    gap: 12px;
+  }
+
+  .topbar-title {
+    font-size: 1.35rem;
+  }
+
+  .topbar-subtitle {
+    display: none;
+  }
+
+  .topbar-actions {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar-shell {
+    height: 80px !important;
+  }
+
+  .topbar-inner {
+    padding: 12px 12px;
+    gap: 8px;
+  }
+
+  .eyebrow {
+    font-size: 0.65rem;
+  }
+
+  .topbar-title {
+    font-size: 1.1rem;
+  }
+
+  .topbar-actions {
+    gap: 4px;
+  }
+}
+
 .topbar-search {
   width: min(360px, 42vw);
 }

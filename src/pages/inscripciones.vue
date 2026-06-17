@@ -67,6 +67,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .registration-section {
@@ -74,9 +75,51 @@
 }
 
 @media (max-width: 768px) {
+  .students-page {
+    gap: 16px;
+  }
+
   .module-header {
     flex-direction: column;
     gap: 16px;
+    padding: 16px;
+  }
+
+  .header-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .header-content p {
+    font-size: 0.85rem;
+  }
+
+  .header-icon {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+@media (max-width: 480px) {
+  .students-page {
+    gap: 12px;
+  }
+
+  .module-header {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .header-content h1 {
+    font-size: 1.25rem;
+  }
+
+  .header-content p {
+    font-size: 0.75rem;
+  }
+
+  .header-icon {
+    width: 40px;
+    height: 40px;
   }
 }
 </style>
