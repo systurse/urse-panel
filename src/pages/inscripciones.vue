@@ -1,15 +1,5 @@
 <template>
   <div class="students-page">
-    <!-- Header -->
-    <div class="module-header">
-      <div class="header-content">
-        <h1>Nueva Inscripción</h1>
-        <p>Registro de Nuevos Estudiantes</p>
-      </div>
-      <div class="header-icon" style="background-color: #00a86b">
-        <v-icon icon="mdi-account-school-outline" size="32" color="white" />
-      </div>
-    </div>
 
     <!-- Formulario de Registro -->
     <div class="registration-section">

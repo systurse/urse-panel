@@ -24,59 +24,27 @@
         class="mt-6"
       >
         <v-row>
-          <!-- Matrícula -->
+          <!-- Apellido Paterno -->
           <v-col cols="12" md="6">
             <v-text-field
-              v-model="form.matricula"
-              label="Matrícula"
-              placeholder="Ej: A123456"
-              :rules="matriculaRules"
+              v-model="form.first_last_name"
+              label="Apellido Paterno"
+              placeholder="Pérez"
+              :rules="nameRules"
               :disabled="loading"
               variant="outlined"
-              hint="Ingresa la matrícula del alumno"
             />
           </v-col>
 
-          <!-- Matrícula Confirmación -->
+          <!-- Apellido Materno -->
           <v-col cols="12" md="6">
             <v-text-field
-              v-model="form.matriculaConfirm"
-              label="Confirmar Matrícula"
-              placeholder="Repite la matrícula"
-              :rules="matriculaConfirmRules"
+              v-model="form.second_last_name"
+              label="Apellido Materno"
+              placeholder="López"
+              :rules="nameRules"
               :disabled="loading"
               variant="outlined"
-              hint="Debe coincidir con la matrícula anterior"
-            />
-          </v-col>
-
-          <!-- Servo Username -->
-          <v-col cols="12" md="6">
-            <v-text-field
-              v-model="form.servo_username"
-              label="Nombre de usuario SERVO"
-              placeholder="Ej: jperez"
-              :rules="usernameRules"
-              :disabled="loading"
-              variant="outlined"
-              hint="Nombre de usuario del sistema SERVO"
-            />
-          </v-col>
-
-          <!-- Carrera (Select desde backend) -->
-          <v-col cols="12" md="6">
-            <v-select
-              v-model="form.career"
-              label="Carrera/Programa"
-              :items="careers"
-              item-title="name"
-              item-value="id"
-              :rules="careerRules"
-              :disabled="loading || careersLoading"
-              :loading="careersLoading"
-              variant="outlined"
-              hint="Selecciona la carrera del alumno"
-              placeholder="Selecciona una carrera"
             />
           </v-col>
 
@@ -92,27 +60,46 @@
             />
           </v-col>
 
-          <!-- Apellido Paterno -->
+          <!-- Matrícula -->
           <v-col cols="12" md="4">
             <v-text-field
-              v-model="form.first_last_name"
-              label="Apellido Paterno"
-              placeholder="Pérez"
-              :rules="nameRules"
+              v-model="form.matricula"
+              label="Matrícula"
+              placeholder="Ej: A123456"
+              :rules="matriculaRules"
               :disabled="loading"
               variant="outlined"
+              hint="Ingresa la matrícula del alumno"
             />
           </v-col>
 
-          <!-- Apellido Materno -->
+          <!-- Matrícula Confirmación -->
           <v-col cols="12" md="4">
             <v-text-field
-              v-model="form.second_last_name"
-              label="Apellido Materno"
-              placeholder="López"
-              :rules="nameRules"
+              v-model="form.matriculaConfirm"
+              label="Confirmar Matrícula"
+              placeholder="Repite la matrícula"
+              :rules="matriculaConfirmRules"
               :disabled="loading"
               variant="outlined"
+              hint="Debe coincidir con la matrícula anterior"
+            />
+          </v-col>
+
+          <!-- Carrera (Select desde backend) -->
+          <v-col cols="12">
+            <v-autocomplete
+              v-model="form.career"
+              label="Carrera/Programa"
+              :items="careers"
+              item-title="name"
+              item-value="id"
+              :rules="careerRules"
+              :disabled="loading || careersLoading"
+              :loading="careersLoading"
+              variant="outlined"
+              hint="Selecciona la carrera del alumno"
+              placeholder="Selecciona una carrera"
             />
           </v-col>
 
@@ -166,7 +153,6 @@
   const form = ref({
     matricula: '',
     matriculaConfirm: '',
-    servo_username: '',
     career: '',
     name: '',
     first_last_name: '',
@@ -182,11 +168,6 @@
   const matriculaConfirmRules = [
     (v: string) => !!v || 'Confirma la matrícula',
     (v: string) => v === form.value.matricula || 'Las matrículas no coinciden',
-  ]
-
-  const usernameRules = [
-    (v: string) => !!v || 'El usuario SERVO es requerido',
-    (v: string) => v.length >= 2 || 'Mínimo 2 caracteres',
   ]
 
   const careerRules = [
@@ -216,7 +197,7 @@
 
       const response = await registerStudent({
         matricula: form.value.matricula,
-        servo_username: form.value.servo_username,
+        servo_username: form.value.matricula,
         career_id: form.value.career,
         name: form.value.name,
         first_last_name: form.value.first_last_name,

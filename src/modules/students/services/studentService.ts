@@ -1,4 +1,4 @@
-import { httpClient } from '@/services/http'
+import { httpClient, publicHttpClient } from '@/services/http'
 
 const STUDENTS_API = '/api/v1/students'
 const CAREERS_API = '/api/v1/careers'
@@ -50,6 +50,14 @@ export interface ProvisioningStep {
   completed_at: string | null
 }
 
+export interface StudentUpdate {
+  matricula: string
+  name: string
+  first_last_name: string
+  second_last_name: string
+  career_id: number | string
+}
+
 export interface StudentStatus {
   id: number
   matricula: string
@@ -70,11 +78,21 @@ export const studentService = {
     return response
   },
 
+  async getStudent (studentId: number) {
+    const response = await publicHttpClient.get<StudentResponse & { career_id?: number }>(`${STUDENTS_API}/${studentId}`)
+    return response
+  },
+
   async resetPassword (studentId: number, password: string) {
     const response = await httpClient.post<any>(
       `${STUDENTS_API}/${studentId}/reset-password`,
       { password },
     )
+    return response
+  },
+
+  async updateStudent (studentId: number, data: StudentUpdate) {
+    const response = await publicHttpClient.put<StudentResponse>(`${STUDENTS_API}/${studentId}`, data)
     return response
   },
 

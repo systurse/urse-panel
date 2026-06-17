@@ -1,16 +1,5 @@
 <template>
   <div class="report-page">
-    <!-- Header -->
-    <div class="module-header">
-      <div class="header-content">
-        <h1>Reporte de Inscripciones</h1>
-        <p>Estadísticas y listado de estudiantes registrados</p>
-      </div>
-      <div class="header-icon" style="background-color: #2196f3">
-        <v-icon icon="mdi-chart-pie" size="32" color="white" />
-      </div>
-    </div>
-
     <!-- Alert de Error -->
     <v-alert
       v-if="error"
@@ -104,7 +93,21 @@
     <!-- Students List -->
     <v-card rounded="xl" class="students-card mt-8">
       <v-card-text class="pa-6">
-        <h3 class="list-title">Listado de Estudiantes Registrados</h3>
+        <div class="list-header mb-4">
+          <h3 class="list-title">Listado de Estudiantes Registrados</h3>
+          <v-text-field
+            v-model="searchQuery"
+            placeholder="Buscar por matrícula, nombre, apellidos, correo..."
+            prepend-inner-icon="mdi-magnify"
+            variant="outlined"
+            density="compact"
+            clearable
+            hide-details
+            style="max-width: 380px"
+            @update:model-value="onSearchChange"
+            @click:clear="onSearchClear"
+          />
+        </div>
 
         <div v-if="loading" class="loading-container">
           <v-progress-circular
@@ -142,12 +145,20 @@
 
             <template #item.actions="{ item }">
               <v-btn
+                icon="mdi-pencil-outline"
+                size="small"
+                variant="text"
+                color="warning"
+                title="Editar estudiante"
+                @click="editStudent(item.id)"
+              />
+              <v-btn
                 icon="mdi-file-pdf-box"
                 size="small"
                 variant="text"
                 color="primary"
-                @click="downloadStudentPDF(item.id)"
                 title="Abrir hoja de credenciales"
+                @click="downloadStudentPDF(item.id)"
               />
             </template>
           </v-data-table>
@@ -174,6 +185,7 @@
 
 <script setup lang="ts">
   import { onMounted, ref, watch, nextTick } from 'vue'
+  import { useRouter } from 'vue-router'
   import {
     Chart as ChartJS,
     PieController,
@@ -200,6 +212,9 @@
     clearError,
   } = useReport()
 
+  const router = useRouter()
+  const searchQuery = ref('')
+  let searchDebounce: ReturnType<typeof setTimeout> | null = null
   const careerChartRef = ref<HTMLCanvasElement | null>(null)
   const statusChartRef = ref<HTMLCanvasElement | null>(null)
   const isConnected = ref(false)
@@ -364,7 +379,27 @@
   }
 
   async function handlePageChange (page: number) {
-    await fetchStudents(page)
+    await fetchStudents(page, searchQuery.value || undefined)
+  }
+
+  function onSearchChange (value: string | null) {
+    if (searchDebounce) clearTimeout(searchDebounce)
+    searchDebounce = setTimeout(() => {
+      fetchStudents(1, value?.trim() || undefined)
+    }, 400)
+  }
+
+  function onSearchClear () {
+    searchQuery.value = ''
+    fetchStudents(1)
+  }
+
+  function editStudent (studentId: number) {
+    const student = students.value.find(s => s.id === studentId)
+router.push({
+      path: `/inscripciones/editar/${studentId}`,
+      state: { student: student ? JSON.parse(JSON.stringify(student)) : null },
+    })
   }
 
   function downloadStudentPDF (studentId: number) {
@@ -524,6 +559,14 @@
 .students-card {
   background: #ffffff;
   border: 1px solid rgb(0 0 0 / 0.08);
+}
+
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .list-title {

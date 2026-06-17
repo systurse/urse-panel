@@ -43,10 +43,10 @@ export interface StatsResponse {
 }
 
 export const reportService = {
-  async getStudents (page: number = 1, perPage: number = 10) {
-    const response = await httpClient.get<StudentsListResponse>(
-      `${STUDENTS_API}?page=${page}&per_page=${perPage}`,
-    )
+  async getStudents (page: number = 1, perPage: number = 10, search?: string) {
+    const params = new URLSearchParams({ page: String(page), per_page: String(perPage) })
+    if (search?.trim()) params.set('search', search.trim())
+    const response = await httpClient.get<StudentsListResponse>(`${STUDENTS_API}?${params}`)
     return response
   },
 

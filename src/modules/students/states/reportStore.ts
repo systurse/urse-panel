@@ -11,12 +11,12 @@ export const useReportStore = defineStore('report', () => {
   const totalPages = ref(1)
   const totalStudents = ref(0)
 
-  const fetchStudents = async (page: number = 1) => {
+  const fetchStudents = async (page: number = 1, search?: string) => {
     loading.value = true
     error.value = null
 
     try {
-      const response = await reportService.getStudents(page, 10)
+      const response = await reportService.getStudents(page, 10, search)
       students.value = response.data
       currentPage.value = response.current_page
       totalPages.value = response.last_page

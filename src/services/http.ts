@@ -33,6 +33,32 @@ function unwrapData<TResponse> (request: Promise<AxiosResponse<TResponse>>) {
   return request.then(({ data }) => data)
 }
 
+export const publicHttp = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  },
+})
+
+export const publicHttpClient: HttpClient = {
+  delete<TResponse> (url: string, config?: AxiosRequestConfig) {
+    return unwrapData(publicHttp.delete<TResponse>(url, config))
+  },
+  get<TResponse> (url: string, config?: AxiosRequestConfig) {
+    return unwrapData(publicHttp.get<TResponse>(url, config))
+  },
+  patch<TResponse, TPayload = unknown> (url: string, payload?: TPayload, config?: AxiosRequestConfig) {
+    return unwrapData(publicHttp.patch<TResponse, AxiosResponse<TResponse>, TPayload>(url, payload, config))
+  },
+  post<TResponse, TPayload = unknown> (url: string, payload?: TPayload, config?: AxiosRequestConfig) {
+    return unwrapData(publicHttp.post<TResponse, AxiosResponse<TResponse>, TPayload>(url, payload, config))
+  },
+  put<TResponse, TPayload = unknown> (url: string, payload?: TPayload, config?: AxiosRequestConfig) {
+    return unwrapData(publicHttp.put<TResponse, AxiosResponse<TResponse>, TPayload>(url, payload, config))
+  },
+}
+
 export const httpClient: HttpClient = {
   delete<TResponse> (url: string, config?: AxiosRequestConfig) {
     return unwrapData(http.delete<TResponse>(url, config))

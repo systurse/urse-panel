@@ -26,6 +26,7 @@ import SPSReportExitPasses from '@/pages/sps/report-exit-passes.vue'
 import SSM from '@/pages/ssm.vue'
 import Inscripciones from '@/pages/inscripciones.vue'
 import InscripcionesConfirmacion from '@/pages/inscripciones-confirmacion.vue'
+import InscripcionesEditar from '@/pages/inscripciones-editar.vue'
 import InscripcionesReporte from '@/pages/inscripciones-reporte.vue'
 import MisSolicitudes from '@/pages/mis-solicitudes.vue'
 import Tickets from '@/pages/tickets.vue'
@@ -177,6 +178,10 @@ const router = createRouter({
         {
           path: 'confirmacion/:studentId',
           component: InscripcionesConfirmacion,
+        },
+        {
+          path: 'editar/:studentId',
+          component: InscripcionesEditar,
         },
         {
           path: 'reporte',
