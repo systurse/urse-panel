@@ -26,18 +26,18 @@
 <script lang="ts" setup>
   import type { RouteMeta } from 'vue-router'
   import { computed, ref, onMounted } from 'vue'
-  import { useRoute, useRouter, useDisplay } from 'vue-router'
+  import { useRoute, useRouter } from 'vue-router'
+  import { useDisplay } from 'vuetify'
   import DashboardContent from '@/components/dashboard/DashboardContent.vue'
   import DashboardSidebar from '@/components/dashboard/DashboardSidebar.vue'
   import DashboardTopbar from '@/components/dashboard/DashboardTopbar.vue'
   import { useAuthStore } from '@/stores/auth'
   import { canAccessRouteMeta } from '@/utils/routeAccess'
-  import { useDisplay as useVuetifyDisplay } from 'vuetify'
 
   const route = useRoute()
   const router = useRouter()
   const authStore = useAuthStore()
-  const display = useVuetifyDisplay()
+  const display = useDisplay()
 
   const drawer = ref(true)
   const rail = ref(false)
