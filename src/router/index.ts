@@ -168,7 +168,6 @@ const router = createRouter({
     },
     {
       path: '/inscripciones',
-      meta: { requiresAuth: true },
       component: DashboardLayout,
       children: [
         {
