@@ -169,7 +169,6 @@
     ArcElement,
     Tooltip,
     Legend,
-    ChartOptions,
   } from 'chart.js'
   import { useReport } from '@/modules/students/hooks/useReport'
   import { listenToStudentRegistered, type StudentRegisteredEvent } from '@/services/websocket'
@@ -293,7 +292,7 @@
                 position: 'bottom' as const,
               },
             },
-          } as ChartOptions,
+          } as any,
         })
       }
     } catch (err) {
@@ -344,7 +343,7 @@
                 position: 'bottom' as const,
               },
             },
-          } as ChartOptions,
+          } as any,
         })
       }
     } catch (err) {
