@@ -4,11 +4,11 @@ const STUDENTS_API = '/api/v1/students'
 const CAREERS_API = '/api/v1/careers'
 
 export interface StudentRegistration {
-  matricula: string
   servo_username: string
-  name: string
   first_last_name: string
   second_last_name: string
+  name: string
+  matricula: string
   career_id: number
   password: string
 }
@@ -68,8 +68,7 @@ export interface StudentStatus {
 
 export const studentService = {
   async registerStudent (data: StudentRegistration) {
-    const response = await httpClient.post<RegisterResponse>(STUDENTS_API, data)
-    console.log('registerStudent response:', response)
+const response = await httpClient.post<RegisterResponse>(STUDENTS_API, data)
     return response
   },
 

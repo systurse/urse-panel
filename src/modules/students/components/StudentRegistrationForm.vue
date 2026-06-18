@@ -24,8 +24,21 @@
         class="mt-6"
       >
         <v-row>
-          <!-- Apellido Paterno -->
-          <v-col cols="12" md="6">
+          <!-- Fila 1: Usuario SERVO -->
+          <v-col cols="12">
+            <v-text-field
+              v-model="form.servo_username"
+              label="Nombre de usuario SERVO"
+              placeholder="Ej: jperez"
+              :rules="usernameRules"
+              :disabled="loading"
+              variant="outlined"
+              hint="Nombre de usuario del sistema SERVO"
+            />
+          </v-col>
+
+          <!-- Fila 2: Apellido Paterno, Apellido Materno, Nombre -->
+          <v-col cols="12" md="4">
             <v-text-field
               v-model="form.first_last_name"
               label="Apellido Paterno"
@@ -36,8 +49,7 @@
             />
           </v-col>
 
-          <!-- Apellido Materno -->
-          <v-col cols="12" md="6">
+          <v-col cols="12" md="4">
             <v-text-field
               v-model="form.second_last_name"
               label="Apellido Materno"
@@ -48,7 +60,6 @@
             />
           </v-col>
 
-          <!-- Nombre -->
           <v-col cols="12" md="4">
             <v-text-field
               v-model="form.name"
@@ -60,8 +71,8 @@
             />
           </v-col>
 
-          <!-- Matrícula -->
-          <v-col cols="12" md="4">
+          <!-- Fila 3: Matrícula y Correo -->
+          <v-col cols="12" md="6">
             <v-text-field
               v-model="form.matricula"
               label="Matrícula"
@@ -73,20 +84,7 @@
             />
           </v-col>
 
-          <!-- Matrícula Confirmación -->
-          <v-col cols="12" md="4">
-            <v-text-field
-              v-model="form.matriculaConfirm"
-              label="Confirmar Matrícula"
-              placeholder="Repite la matrícula"
-              :rules="matriculaConfirmRules"
-              :disabled="loading"
-              variant="outlined"
-              hint="Debe coincidir con la matrícula anterior"
-            />
-          </v-col>
-
-          <!-- Carrera (Select desde backend) -->
+          <!-- Carrera -->
           <v-col cols="12">
             <v-autocomplete
               v-model="form.career"
@@ -151,23 +149,23 @@
   const formValid = ref(false)
 
   const form = ref({
-    matricula: '',
-    matriculaConfirm: '',
-    career: '',
-    name: '',
+    servo_username: '',
     first_last_name: '',
     second_last_name: '',
+    name: '',
+    matricula: '',
+    career: '',
     password: '',
   })
+
+  const usernameRules = [
+    (v: string) => !!v || 'El usuario SERVO es requerido',
+    (v: string) => v.length >= 2 || 'Mínimo 2 caracteres',
+  ]
 
   const matriculaRules = [
     (v: string) => !!v || 'La matrícula es requerida',
     (v: string) => v.length >= 2 || 'La matrícula debe tener al menos 2 caracteres',
-  ]
-
-  const matriculaConfirmRules = [
-    (v: string) => !!v || 'Confirma la matrícula',
-    (v: string) => v === form.value.matricula || 'Las matrículas no coinciden',
   ]
 
   const careerRules = [
@@ -196,12 +194,12 @@
       const generatedPassword = generateSecurePassword()
 
       const response = await registerStudent({
-        matricula: form.value.matricula,
-        servo_username: form.value.matricula,
-        career_id: form.value.career,
-        name: form.value.name,
+        servo_username: form.value.servo_username,
         first_last_name: form.value.first_last_name,
         second_last_name: form.value.second_last_name,
+        name: form.value.name,
+        matricula: form.value.matricula,
+        career_id: form.value.career,
         password: generatedPassword,
       })
       emit('student-registered', response.student.id)
