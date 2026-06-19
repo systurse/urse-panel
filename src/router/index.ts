@@ -30,6 +30,7 @@ import InscripcionesEditar from '@/pages/inscripciones-editar.vue'
 import InscripcionesReporte from '@/pages/inscripciones-reporte.vue'
 import InscripcionesListado from '@/pages/inscripciones-listado.vue'
 import Credenciales from '@/pages/credenciales.vue'
+import ChatSoporte from '@/pages/chat-soporte.vue'
 import MisSolicitudes from '@/pages/mis-solicitudes.vue'
 import Tickets from '@/pages/tickets.vue'
 import Users from '@/pages/users.vue'
@@ -204,6 +205,11 @@ const router = createRouter({
       path: '/credenciales',
       component: Credenciales,
       meta: { public: true },
+    },
+    {
+      path: '/chat',
+      component: ChatSoporte,
+      meta: { requiresAuth: true },
     },
     {
       path: '/auth/callback',

@@ -160,6 +160,12 @@
           icon: 'mdi-format-list-bulleted',
           subtitle: 'Tabla de estudiantes registrados con búsqueda.',
         },
+        {
+          title: 'Chat Soporte',
+          to: '/chat',
+          icon: 'mdi-headset',
+          subtitle: 'Atención en tiempo real a alumnos.',
+        },
       ]
     }
 

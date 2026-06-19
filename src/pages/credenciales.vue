@@ -1,5 +1,6 @@
 <template>
   <div class="cred-page">
+    <ChatWidget />
     <!-- Header -->
     <div class="cred-header">
       <v-img src="@/assets/logo.png" alt="URSE" width="72" class="cred-logo" />
@@ -321,6 +322,7 @@
 
 <script setup lang="ts">
   import { ref, computed, nextTick } from 'vue'
+  import ChatWidget from '@/components/ChatWidget.vue'
   import QRCode from 'qrcode'
   import { useReCaptcha } from 'vue-recaptcha-v3'
   import { credencialesService, type StudentCredentials } from '@/services/credencialesService'
