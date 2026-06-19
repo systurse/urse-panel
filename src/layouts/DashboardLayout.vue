@@ -152,7 +152,13 @@
           title: 'Reporte',
           to: '/inscripciones/reporte',
           icon: 'mdi-chart-pie',
-          subtitle: 'Estadísticas y listado de estudiantes registrados.',
+          subtitle: 'Estadísticas y gráficas de estudiantes registrados.',
+        },
+        {
+          title: 'Listado',
+          to: '/inscripciones/listado',
+          icon: 'mdi-format-list-bulleted',
+          subtitle: 'Tabla de estudiantes registrados con búsqueda.',
         },
       ]
     }

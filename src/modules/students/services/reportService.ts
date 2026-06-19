@@ -34,6 +34,7 @@ export interface StudentsListResponse {
 
 export interface StatsResponse {
   total: number
+  credentials_retrieved: number
   by_status: {
     pending: number
     active: number

@@ -47,11 +47,18 @@
           </v-card-text>
         </v-card>
       </v-col>
+      <v-col cols="12" sm="6" md="3">
+        <v-card rounded="xl" class="stat-card stat-retrieved">
+          <v-card-text class="pa-6">
+            <div class="stat-value">{{ stats?.credentials_retrieved || 0 }}</div>
+            <div class="stat-label">Credenciales Consultadas</div>
+          </v-card-text>
+        </v-card>
+      </v-col>
     </v-row>
 
-    <!-- Charts and Table -->
+    <!-- Charts -->
     <v-row class="charts-row">
-      <!-- Pie Chart -->
       <v-col cols="12" md="6">
         <v-card rounded="xl" class="chart-card">
           <v-card-text class="pa-6">
@@ -60,17 +67,12 @@
               <canvas ref="careerChartRef" />
             </div>
             <div v-else class="loading-placeholder">
-              <v-progress-circular
-                indeterminate
-                color="primary"
-                size="50"
-              />
+              <v-progress-circular indeterminate color="primary" size="50" />
             </div>
           </v-card-text>
         </v-card>
       </v-col>
 
-      <!-- Status Distribution -->
       <v-col cols="12" md="6">
         <v-card rounded="xl" class="chart-card">
           <v-card-text class="pa-6">
@@ -79,101 +81,12 @@
               <canvas ref="statusChartRef" />
             </div>
             <div v-else class="loading-placeholder">
-              <v-progress-circular
-                indeterminate
-                color="primary"
-                size="50"
-              />
+              <v-progress-circular indeterminate color="primary" size="50" />
             </div>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
-
-    <!-- Students List -->
-    <v-card rounded="xl" class="students-card mt-8">
-      <v-card-text class="pa-6">
-        <div class="list-header mb-4">
-          <h3 class="list-title">Listado de Estudiantes Registrados</h3>
-          <v-text-field
-            v-model="searchQuery"
-            placeholder="Buscar por matrícula, nombre, apellidos, correo..."
-            prepend-inner-icon="mdi-magnify"
-            variant="outlined"
-            density="compact"
-            clearable
-            hide-details
-            style="max-width: 380px"
-            @update:model-value="onSearchChange"
-            @click:clear="onSearchClear"
-          />
-        </div>
-
-        <div v-if="loading" class="loading-container">
-          <v-progress-circular
-            indeterminate
-            color="primary"
-            size="50"
-          />
-        </div>
-
-        <div v-else>
-          <v-data-table
-            :headers="headers"
-            :items="students"
-            :loading="loading"
-            item-value="id"
-            class="students-table"
-          >
-            <template #item.career="{ item }">
-              {{ getCareerName(item.career) }}
-            </template>
-
-            <template #item.status="{ item }">
-              <v-chip
-                :color="getStatusColor(item.status)"
-                label
-                small
-              >
-                {{ formatStatus(item.status) }}
-              </v-chip>
-            </template>
-
-            <template #item.created_at="{ item }">
-              {{ formatDate(item.created_at) }}
-            </template>
-
-            <template #item.actions="{ item }">
-              <v-btn
-                icon="mdi-pencil-outline"
-                size="small"
-                variant="text"
-                color="warning"
-                title="Editar estudiante"
-                @click="editStudent(item.id)"
-              />
-              <v-btn
-                icon="mdi-file-pdf-box"
-                size="small"
-                variant="text"
-                color="primary"
-                title="Abrir hoja de credenciales"
-                @click="downloadStudentPDF(item.id)"
-              />
-            </template>
-          </v-data-table>
-
-          <!-- Pagination -->
-          <div v-if="totalPages > 1" class="pagination-container mt-4">
-            <v-pagination
-              v-model="currentPage"
-              :length="totalPages"
-              @update:model-value="handlePageChange"
-            />
-          </div>
-        </div>
-      </v-card-text>
-    </v-card>
 
     <!-- Connection Status -->
     <div class="connection-status" :class="{ connected: isConnected }">
@@ -185,7 +98,6 @@
 
 <script setup lang="ts">
   import { onMounted, ref, watch, nextTick } from 'vue'
-  import { useRouter } from 'vue-router'
   import {
     Chart as ChartJS,
     PieController,
@@ -199,91 +111,29 @@
   ChartJS.register(PieController, ArcElement, Tooltip, Legend)
 
   const {
-    students,
     stats,
-    loading,
     error,
-    currentPage,
-    totalPages,
-    fetchStudents,
     fetchStats,
     updateStats,
     addStudent,
     clearError,
   } = useReport()
 
-  const router = useRouter()
-  const searchQuery = ref('')
-  let searchDebounce: ReturnType<typeof setTimeout> | null = null
   const careerChartRef = ref<HTMLCanvasElement | null>(null)
   const statusChartRef = ref<HTMLCanvasElement | null>(null)
   const isConnected = ref(false)
   let careerChartInstance: ChartJS | null = null
   let statusChartInstance: ChartJS | null = null
 
-  const headers = [
-    { title: 'Matrícula', key: 'matricula' },
-    { title: 'Nombre', key: 'name' },
-    { title: 'Carrera', key: 'career' },
-    { title: 'Email', key: 'institutional_email' },
-    { title: 'Estado', key: 'status' },
-    { title: 'Registrado', key: 'created_at' },
-    { title: 'Acciones', key: 'actions', sortable: false },
-  ]
-
-  function getStatusColor (status: string) {
-    switch (status) {
-      case 'active':
-        return 'success'
-      case 'pending':
-        return 'warning'
-      case 'suspended':
-        return 'error'
-      default:
-        return 'default'
-    }
-  }
-
-  function formatStatus (status: string) {
-    switch (status) {
-      case 'active':
-        return 'Activo'
-      case 'pending':
-        return 'Pendiente'
-      case 'suspended':
-        return 'Suspendido'
-      default:
-        return status
-    }
-  }
-
-  function formatDate (date: string) {
-    return new Date(date).toLocaleDateString('es-ES')
-  }
-
-  function getCareerName (career: any) {
-    if (typeof career === 'string') {
-      return career
-    }
-    return career?.name || 'N/A'
-  }
-
   function renderCareerChart () {
     if (!stats.value?.by_career || !careerChartRef.value) return
-
     try {
       const labels = Object.keys(stats.value.by_career)
       const data = Object.values(stats.value.by_career)
-
       if (labels.length === 0 || data.length === 0) return
 
-      // Destroy existing chart if it exists
       if (careerChartInstance) {
-        try {
-          careerChartInstance.destroy()
-        } catch (e) {
-          // Ignorar error al destruir gráfico anterior
-        }
+        try { careerChartInstance.destroy() } catch {}
         careerChartInstance = null
       }
 
@@ -302,44 +152,21 @@
           type: 'pie',
           data: {
             labels,
-            datasets: [
-              {
-                data,
-                backgroundColor: colors.slice(0, data.length),
-                borderColor: '#fff',
-                borderWidth: 2,
-              },
-            ],
+            datasets: [{ data, backgroundColor: colors.slice(0, data.length), borderColor: '#fff', borderWidth: 2 }],
           },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-              legend: {
-                position: 'bottom' as const,
-              },
-            },
-          } as any,
+          options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' as const } } } as any,
         })
       }
-    } catch (err) {
-      // Error silencioso en producción
-    }
+    } catch {}
   }
 
   function renderStatusChart () {
     if (!stats.value?.by_status || !statusChartRef.value) return
-
     try {
       const { pending, active, suspended } = stats.value.by_status
 
-      // Destroy existing chart if it exists
       if (statusChartInstance) {
-        try {
-          statusChartInstance.destroy()
-        } catch (e) {
-          // Ignorar error al destruir gráfico anterior
-        }
+        try { statusChartInstance.destroy() } catch {}
         statusChartInstance = null
       }
 
@@ -349,63 +176,17 @@
           type: 'pie',
           data: {
             labels: ['Pendiente', 'Activo', 'Suspendido'],
-            datasets: [
-              {
-                data: [pending, active, suspended],
-                backgroundColor: [
-                  'rgba(255, 193, 7, 0.8)',
-                  'rgba(76, 175, 80, 0.8)',
-                  'rgba(244, 67, 54, 0.8)',
-                ],
-                borderColor: '#fff',
-                borderWidth: 2,
-              },
-            ],
+            datasets: [{
+              data: [pending, active, suspended],
+              backgroundColor: ['rgba(255, 193, 7, 0.8)', 'rgba(76, 175, 80, 0.8)', 'rgba(244, 67, 54, 0.8)'],
+              borderColor: '#fff',
+              borderWidth: 2,
+            }],
           },
-          options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-              legend: {
-                position: 'bottom' as const,
-              },
-            },
-          } as any,
+          options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' as const } } } as any,
         })
       }
-    } catch (err) {
-      // Error silencioso en producción
-    }
-  }
-
-  async function handlePageChange (page: number) {
-    await fetchStudents(page, searchQuery.value || undefined)
-  }
-
-  function onSearchChange (value: string | null) {
-    if (searchDebounce) clearTimeout(searchDebounce)
-    searchDebounce = setTimeout(() => {
-      fetchStudents(1, value?.trim() || undefined)
-    }, 400)
-  }
-
-  function onSearchClear () {
-    searchQuery.value = ''
-    fetchStudents(1)
-  }
-
-  function editStudent (studentId: number) {
-    const student = students.value.find(s => s.id === studentId)
-router.push({
-      path: `/inscripciones/editar/${studentId}`,
-      state: { student: student ? JSON.parse(JSON.stringify(student)) : null },
-    })
-  }
-
-  function downloadStudentPDF (studentId: number) {
-    const apiSoporteUrl = import.meta.env.VITE_API_SOPORTE_URL
-    const pdfUrl = `${apiSoporteUrl}/api/v1/students/${studentId}/credential-sheet`
-    window.open(pdfUrl, '_blank')
+    } catch {}
   }
 
   watch(stats, async (newVal) => {
@@ -418,7 +199,6 @@ router.push({
 
   onMounted(async () => {
     try {
-      await fetchStudents(1)
       await fetchStats()
 
       try {
@@ -452,41 +232,7 @@ router.push({
   gap: 24px;
 }
 
-.module-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 24px;
-  background: linear-gradient(135deg, rgb(33 150 243 / 0.1) 0%, transparent 100%);
-  border-radius: 16px;
-}
-
-.header-content h1 {
-  margin: 0;
-  font-size: 2rem;
-  font-weight: 800;
-  color: #000000;
-}
-
-.header-content p {
-  margin: 8px 0 0;
-  color: #5e5e5e;
-  font-size: 0.95rem;
-}
-
-.header-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.stats-row {
-  gap: 16px;
-}
+.stats-row { gap: 16px; }
 
 .stat-card {
   background: #ffffff;
@@ -507,21 +253,12 @@ router.push({
   font-weight: 600;
 }
 
-.stat-pending .stat-value {
-  color: #ff9800;
-}
+.stat-pending .stat-value { color: #ff9800; }
+.stat-active .stat-value { color: #4caf50; }
+.stat-suspended .stat-value { color: #f44336; }
+.stat-retrieved .stat-value { color: #2196f3; }
 
-.stat-active .stat-value {
-  color: #4caf50;
-}
-
-.stat-suspended .stat-value {
-  color: #f44336;
-}
-
-.charts-row {
-  gap: 16px;
-}
+.charts-row { gap: 16px; }
 
 .chart-card {
   background: #ffffff;
@@ -556,42 +293,6 @@ router.push({
   height: 350px;
 }
 
-.students-card {
-  background: #ffffff;
-  border: 1px solid rgb(0 0 0 / 0.08);
-}
-
-.list-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.list-title {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #000000;
-}
-
-.loading-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 300px;
-}
-
-.students-table {
-  border-radius: 8px;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: center;
-}
-
 .connection-status {
   position: fixed;
   bottom: 24px;
@@ -615,129 +316,24 @@ router.push({
 }
 
 @media (max-width: 768px) {
-  .report-page {
-    gap: 16px;
-  }
-
-  .module-header {
-    flex-direction: column;
-    gap: 16px;
-    padding: 16px;
-  }
-
-  .header-content h1 {
-    font-size: 1.5rem;
-  }
-
-  .header-content p {
-    font-size: 0.85rem;
-  }
-
-  .header-icon {
-    width: 48px;
-    height: 48px;
-  }
-
-  .stats-row {
-    gap: 12px;
-  }
-
-  .stat-value {
-    font-size: 1.5rem;
-  }
-
-  .stat-label {
-    font-size: 0.75rem;
-  }
-
-  .chart-container {
-    height: 250px;
-  }
-
-  .chart-title {
-    font-size: 1rem;
-  }
-
-  .list-title {
-    font-size: 1rem;
-  }
-
-  .connection-status {
-    bottom: 16px;
-    right: 16px;
-    font-size: 0.75rem;
-    padding: 8px 12px;
-  }
+  .report-page { gap: 16px; }
+  .stats-row { gap: 12px; }
+  .stat-value { font-size: 1.5rem; }
+  .stat-label { font-size: 0.75rem; }
+  .chart-container { height: 250px; }
+  .chart-title { font-size: 1rem; }
+  .connection-status { bottom: 16px; right: 16px; font-size: 0.75rem; padding: 8px 12px; }
 }
 
 @media (max-width: 480px) {
-  .report-page {
-    gap: 12px;
-  }
-
-  .module-header {
-    padding: 12px;
-    gap: 12px;
-  }
-
-  .header-content h1 {
-    font-size: 1.25rem;
-  }
-
-  .header-content p {
-    font-size: 0.75rem;
-  }
-
-  .header-icon {
-    width: 40px;
-    height: 40px;
-  }
-
-  .stats-row {
-    gap: 8px;
-  }
-
-  .stat-card {
-    padding: 8px !important;
-  }
-
-  .stat-value {
-    font-size: 1.25rem;
-  }
-
-  .stat-label {
-    font-size: 0.65rem;
-  }
-
-  .charts-row {
-    gap: 8px;
-  }
-
-  .chart-container {
-    height: 200px;
-  }
-
-  .chart-title {
-    font-size: 0.9rem;
-  }
-
-  .students-card {
-    border-radius: 8px;
-  }
-
-  .list-title {
-    font-size: 0.9rem;
-  }
-
-  .connection-status {
-    bottom: 12px;
-    right: 12px;
-    font-size: 0.65rem;
-    padding: 6px 10px;
-  }
-
-  .students-table {
-    font-size: 0.75rem;
-  }
+  .report-page { gap: 12px; }
+  .stats-row { gap: 8px; }
+  .stat-card { padding: 8px !important; }
+  .stat-value { font-size: 1.25rem; }
+  .stat-label { font-size: 0.65rem; }
+  .charts-row { gap: 8px; }
+  .chart-container { height: 200px; }
+  .chart-title { font-size: 0.9rem; }
+  .connection-status { bottom: 12px; right: 12px; font-size: 0.65rem; padding: 6px 10px; }
 }
 </style>

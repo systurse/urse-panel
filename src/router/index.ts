@@ -28,6 +28,7 @@ import Inscripciones from '@/pages/inscripciones.vue'
 import InscripcionesConfirmacion from '@/pages/inscripciones-confirmacion.vue'
 import InscripcionesEditar from '@/pages/inscripciones-editar.vue'
 import InscripcionesReporte from '@/pages/inscripciones-reporte.vue'
+import InscripcionesListado from '@/pages/inscripciones-listado.vue'
 import Credenciales from '@/pages/credenciales.vue'
 import MisSolicitudes from '@/pages/mis-solicitudes.vue'
 import Tickets from '@/pages/tickets.vue'
@@ -187,6 +188,10 @@ const router = createRouter({
         {
           path: 'reporte',
           component: InscripcionesReporte,
+        },
+        {
+          path: 'listado',
+          component: InscripcionesListado,
         },
       ],
     },
