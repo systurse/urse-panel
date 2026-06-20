@@ -152,7 +152,7 @@
           title: 'Carga masiva',
           to: '/inscripciones/importar',
           icon: 'mdi-microsoft-excel',
-          subtitle: 'Importa estudiantes desde los 3 archivos de Excel.',
+          subtitle: 'Importa estudiantes desde el archivo de reporte.',
         },
         {
           title: 'Reporte',
