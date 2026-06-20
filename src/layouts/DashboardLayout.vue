@@ -149,6 +149,12 @@
           subtitle: 'Registra un nuevo estudiante en el sistema.',
         },
         {
+          title: 'Carga masiva',
+          to: '/inscripciones/importar',
+          icon: 'mdi-microsoft-excel',
+          subtitle: 'Importa estudiantes desde los 3 archivos de Excel.',
+        },
+        {
           title: 'Reporte',
           to: '/inscripciones/reporte',
           icon: 'mdi-chart-pie',

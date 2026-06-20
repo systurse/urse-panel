@@ -43,6 +43,19 @@ export interface RegisterResponse {
   message: string
 }
 
+export interface ImportFiles {
+  reporte: File
+  career_id?: number | null
+}
+
+export interface ImportSummary {
+  processed: number
+  created: number
+  updated: number
+  skipped: { matricula: string, reason: string }[]
+  errors: { matricula: string, message: string }[]
+}
+
 export interface ProvisioningStep {
   step: 'microsoft_365' | 'active_directory' | 'activation' | 'credential_sheet'
   status: 'pending' | 'processing' | 'completed' | 'failed'
@@ -97,6 +110,21 @@ const response = await httpClient.post<RegisterResponse>(STUDENTS_API, data)
 
   async getCareers () {
     const response = await httpClient.get<Career[]>(CAREERS_API)
+    return response
+  },
+
+  async importStudents (data: ImportFiles) {
+    const formData = new FormData()
+    if (data.career_id) {
+      formData.append('career_id', String(data.career_id))
+    }
+    formData.append('reporte', data.reporte)
+
+    const response = await httpClient.post<ImportSummary>(
+      `${STUDENTS_API}/import`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    )
     return response
   },
 }
