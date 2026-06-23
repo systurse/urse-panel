@@ -191,9 +191,7 @@
     replyText.value = ''
     sending.value = true
     try {
-      const msg = await chatSupportService.sendMessage(selectedId.value, body)
-      selectedMessages.value.push(msg)
-      scrollToBottom()
+      await chatSupportService.sendMessage(selectedId.value, body)
     } finally {
       sending.value = false
     }
