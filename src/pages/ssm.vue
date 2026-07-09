@@ -187,13 +187,14 @@
   }
 
   const latestTickets = computed(() =>
-    tickets.value.toSorted((a, b) => timeOf(b) - timeOf(a)).slice(0, 5),
+    [...tickets.value].sort((a, b) => timeOf(b) - timeOf(a)).slice(0, 5),
   )
 
   const approvalQueue = computed(() =>
     tickets.value
       .filter(deal => deal.status === 'approval_requested')
-      .toSorted((a, b) => {
+      .slice()
+      .sort((a, b) => {
         const aTime = a.approval_requested_at ? new Date(a.approval_requested_at).getTime() : 0
         const bTime = b.approval_requested_at ? new Date(b.approval_requested_at).getTime() : 0
         return bTime - aTime
