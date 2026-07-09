@@ -15,7 +15,10 @@ export interface ChatSession {
   id: number
   session_token: string
   status: 'waiting' | 'active' | 'closed'
+  guest_name?: string
   student_name?: string
+  contact_value?: string
+  contact_whatsapp?: boolean
   created_at: string
   last_message?: ChatMessage
   messages?: ChatMessage[]
