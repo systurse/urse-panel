@@ -36,7 +36,7 @@
         <div ref="messagesEl" class="chat-messages">
           <div v-if="!session" class="chat-start">
             <v-icon size="48" color="#1e3a5f" class="mb-3">mdi-chat-question-outline</v-icon>
-            <p class="mb-4">¿Tienes dudas? Escribe tu nombre e inicia el chat.</p>
+            <p class="mb-4">¿Tienes dudas? Escribe tus datos e inicia el chat.</p>
             <v-text-field
               v-model="guestName"
               label="Tu nombre"
@@ -46,14 +46,32 @@
               hide-details
               class="mb-3"
               style="width: 100%"
-              @keyup.enter="startSession"
+            />
+            <v-text-field
+              v-model="contactValue"
+              label="Correo o teléfono"
+              placeholder="Ej: juan@gmail.com o 9511234567"
+              variant="outlined"
+              density="compact"
+              hide-details
+              class="mb-2"
+              style="width: 100%"
+            />
+            <v-checkbox
+              v-if="isPhone"
+              v-model="contactWhatsapp"
+              label="Prefiero contacto por WhatsApp"
+              density="compact"
+              hide-details
+              color="#1e3a5f"
+              class="mb-2"
             />
             <v-btn
               color="#1e3a5f"
               variant="flat"
               rounded="lg"
               :loading="starting"
-              :disabled="!guestName.trim()"
+              :disabled="!canStart"
               block
               @click="startSession"
             >
@@ -119,12 +137,17 @@
   const open = ref(false)
   const starting = ref(false)
   const guestName = ref('')
+  const contactValue = ref('')
+  const contactWhatsapp = ref(false)
   const sending = ref(false)
   const unread = ref(0)
   const inputText = ref('')
   const session = ref<ChatSession | null>(null)
   const messages = ref<ChatMessage[]>([])
   const messagesEl = ref<HTMLElement | null>(null)
+
+  const isPhone = computed(() => /^\d+$/.test(contactValue.value.trim()))
+  const canStart = computed(() => !!guestName.value.trim() && !!contactValue.value.trim())
 
   const statusLabel = computed(() => {
     if (!session.value) return 'En línea'
@@ -151,10 +174,15 @@
   }
 
   async function startSession () {
-    if (!guestName.value.trim()) return
+    if (!canStart.value) return
     starting.value = true
     try {
-      const s = await chatPublicService.createSession(guestName.value.trim())
+      const payload: Parameters<typeof chatPublicService.createSession>[0] = {
+        guest_name: guestName.value.trim(),
+        contact_value: contactValue.value.trim(),
+      }
+      if (isPhone.value) payload.contact_whatsapp = contactWhatsapp.value
+      const s = await chatPublicService.createSession(payload)
       session.value = s
       messages.value = []
       localStorage.setItem(SESSION_KEY, s.session_token)
@@ -181,6 +209,8 @@
         session.value = null
         messages.value = []
         guestName.value = ''
+        contactValue.value = ''
+        contactWhatsapp.value = false
       }
     } finally {
       sending.value = false

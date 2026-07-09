@@ -22,11 +22,18 @@ export interface ChatSession {
   recoverable?: boolean
 }
 
+export interface CreateSessionPayload {
+  guest_name: string
+  contact_value: string
+  contact_whatsapp?: boolean
+  student_id?: number | null
+}
+
 // ── Alumno (público) ──────────────────────────────────────
 
 export const chatPublicService = {
-  async createSession (guestName: string): Promise<ChatSession> {
-    return publicHttpClient.post(PUBLIC, { guest_name: guestName })
+  async createSession (payload: CreateSessionPayload): Promise<ChatSession> {
+    return publicHttpClient.post(PUBLIC, payload)
   },
 
   async getSession (token: string): Promise<ChatSession> {
