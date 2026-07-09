@@ -203,7 +203,9 @@
     replyText.value = ''
     sending.value = true
     try {
-      await chatSupportService.sendMessage(selectedId.value, body)
+      const msg = await chatSupportService.sendMessage(selectedId.value, body)
+      selectedMessages.value.push(msg)
+      scrollToBottom()
     } finally {
       sending.value = false
     }
@@ -239,7 +241,6 @@
 
     try {
       listenToSupportChats((event) => {
-        // Nuevo mensaje: actualizar lista y conversación activa
         const token = event.session_token
         const idx = sessions.value.findIndex(s => s.session_token === token)
         if (idx !== -1) {
@@ -248,7 +249,9 @@
           loadSessions()
         }
 
-        if (selectedSession.value?.session_token === token) {
+        // Solo agregar a la vista si el mensaje viene del alumno;
+        // los de soporte ya se agregan en sendReply() para evitar duplicados.
+        if (selectedSession.value?.session_token === token && event.message.sender_type === 'student') {
           selectedMessages.value.push(event.message as any)
           scrollToBottom()
         }
