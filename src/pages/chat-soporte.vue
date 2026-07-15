@@ -27,10 +27,16 @@
           @click="selectSession(s.id)"
         >
           <div class="session-item-header">
-            <span class="session-name">{{ s.student_name || 'Alumno' }}</span>
+            <span class="session-name">{{ s.guest_name || s.student_name || 'Sin nombre' }}</span>
             <v-chip :color="statusColor(s.status)" size="x-small" label>
               {{ statusLabel(s.status) }}
             </v-chip>
+          </div>
+          <div class="session-contact">
+            <v-icon v-if="s.contact_whatsapp" size="13" color="#25D366">mdi-whatsapp</v-icon>
+            <v-icon v-else-if="s.contact_value?.includes('@')" size="13" color="#666">mdi-email-outline</v-icon>
+            <v-icon v-else-if="s.contact_value" size="13" color="#666">mdi-phone-outline</v-icon>
+            <span>{{ s.contact_value || '—' }}</span>
           </div>
           <div class="session-last-msg">
             {{ s.last_message?.body || 'Sin mensajes' }}
@@ -51,11 +57,17 @@
         <!-- Header de la conversación -->
         <div class="conversation-header">
           <div>
-            <div class="conv-title">{{ selectedSession.student_name || 'Alumno' }}</div>
+            <div class="conv-title">{{ selectedSession.guest_name || selectedSession.student_name || 'Sin nombre' }}</div>
             <div class="conv-sub">
-              <v-chip :color="statusColor(selectedSession.status)" size="x-small" label>
+              <v-chip :color="statusColor(selectedSession.status)" size="x-small" label class="mr-2">
                 {{ statusLabel(selectedSession.status) }}
               </v-chip>
+              <span v-if="selectedSession.contact_value" class="conv-contact">
+                <v-icon v-if="selectedSession.contact_whatsapp" size="14" color="#25D366">mdi-whatsapp</v-icon>
+                <v-icon v-else-if="selectedSession.contact_value.includes('@')" size="14" color="#666">mdi-email-outline</v-icon>
+                <v-icon v-else size="14" color="#666">mdi-phone-outline</v-icon>
+                {{ selectedSession.contact_value }}
+              </span>
             </div>
           </div>
           <v-btn
@@ -191,7 +203,9 @@
     replyText.value = ''
     sending.value = true
     try {
-      await chatSupportService.sendMessage(selectedId.value, body)
+      const msg = await chatSupportService.sendMessage(selectedId.value, body)
+      selectedMessages.value.push(msg)
+      scrollToBottom()
     } finally {
       sending.value = false
     }
@@ -227,7 +241,6 @@
 
     try {
       listenToSupportChats((event) => {
-        // Nuevo mensaje: actualizar lista y conversación activa
         const token = event.session_token
         const idx = sessions.value.findIndex(s => s.session_token === token)
         if (idx !== -1) {
@@ -236,7 +249,9 @@
           loadSessions()
         }
 
-        if (selectedSession.value?.session_token === token) {
+        // Solo agregar a la vista si el mensaje viene del alumno;
+        // los de soporte ya se agregan en sendReply() para evitar duplicados.
+        if (selectedSession.value?.session_token === token && event.message.sender_type === 'student') {
           selectedMessages.value.push(event.message as any)
           scrollToBottom()
         }
@@ -323,6 +338,15 @@
   color: #111;
 }
 
+.session-contact {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: #555;
+  margin-bottom: 2px;
+}
+
 .session-last-msg {
   font-size: 0.8rem;
   color: #666;
@@ -371,7 +395,21 @@
   color: #1e3a5f;
 }
 
-.conv-sub { margin-top: 4px; }
+.conv-sub {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.conv-contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: #555;
+}
 
 .conversation-messages {
   flex: 1;
