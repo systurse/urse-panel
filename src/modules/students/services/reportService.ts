@@ -1,4 +1,4 @@
-import { httpClient } from '@/services/http'
+import { http, httpClient } from '@/services/http'
 
 const STUDENTS_API = '/api/v1/students'
 const STATS_API = '/api/v1/students/stats'
@@ -43,10 +43,27 @@ export interface StatsResponse {
   by_career: Record<string, number>
 }
 
+export interface StudentFilters {
+  search?: string
+  careerId?: number
+  dateFrom?: string
+  dateTo?: string
+}
+
+function buildFilterParams (filters: StudentFilters = {}) {
+  const params = new URLSearchParams()
+  if (filters.search?.trim()) params.set('search', filters.search.trim())
+  if (filters.careerId) params.set('career_id', String(filters.careerId))
+  if (filters.dateFrom) params.set('date_from', filters.dateFrom)
+  if (filters.dateTo) params.set('date_to', filters.dateTo)
+  return params
+}
+
 export const reportService = {
-  async getStudents (page: number = 1, perPage: number = 10, search?: string) {
-    const params = new URLSearchParams({ page: String(page), per_page: String(perPage) })
-    if (search?.trim()) params.set('search', search.trim())
+  async getStudents (page: number = 1, perPage: number = 10, filters: StudentFilters = {}) {
+    const params = buildFilterParams(filters)
+    params.set('page', String(page))
+    params.set('per_page', String(perPage))
     const response = await httpClient.get<StudentsListResponse>(`${STUDENTS_API}?${params}`)
     return response
   },
@@ -54,5 +71,11 @@ export const reportService = {
   async getStats () {
     const response = await httpClient.get<StatsResponse>(STATS_API)
     return response
+  },
+
+  async exportStudents (filters: StudentFilters = {}) {
+    const params = buildFilterParams(filters)
+    const response = await http.get(`${STUDENTS_API}/export?${params}`, { responseType: 'blob' })
+    return response.data as Blob
   },
 }

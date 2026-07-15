@@ -17,19 +17,70 @@
       <v-card-text class="pa-6">
         <div class="list-header mb-4">
           <h3 class="list-title">Listado de Estudiantes Registrados</h3>
-          <v-text-field
-            v-model="searchQuery"
-            placeholder="Buscar por matrícula, nombre, apellidos, correo..."
-            prepend-inner-icon="mdi-magnify"
-            variant="outlined"
-            density="compact"
-            clearable
-            hide-details
-            style="max-width: 380px"
-            @update:model-value="onSearchChange"
-            @click:clear="onSearchClear"
-          />
+          <v-btn
+            color="primary"
+            :loading="exporting"
+            prepend-icon="mdi-file-download-outline"
+            variant="flat"
+            @click="handleExport"
+          >
+            Exportar CSV
+          </v-btn>
         </div>
+
+        <v-row class="filters-row mb-4" dense>
+          <v-col cols="12" md="4">
+            <v-text-field
+              v-model="searchQuery"
+              placeholder="Buscar por matrícula, nombre, apellidos, correo..."
+              prepend-inner-icon="mdi-magnify"
+              variant="outlined"
+              density="compact"
+              clearable
+              hide-details
+              @update:model-value="onSearchChange"
+              @click:clear="onSearchClear"
+            />
+          </v-col>
+          <v-col cols="12" sm="6" md="3">
+            <v-select
+              v-model="careerFilter"
+              clearable
+              density="compact"
+              hide-details
+              item-title="name"
+              item-value="id"
+              :items="careers"
+              label="Carrera"
+              variant="outlined"
+              @update:model-value="onFiltersChange"
+            />
+          </v-col>
+          <v-col cols="6" sm="3" md="2">
+            <v-text-field
+              v-model="dateFrom"
+              density="compact"
+              hide-details
+              label="Desde"
+              :max="dateTo || undefined"
+              type="date"
+              variant="outlined"
+              @update:model-value="onFiltersChange"
+            />
+          </v-col>
+          <v-col cols="6" sm="3" md="2">
+            <v-text-field
+              v-model="dateTo"
+              density="compact"
+              hide-details
+              label="Hasta"
+              :min="dateFrom || undefined"
+              type="date"
+              variant="outlined"
+              @update:model-value="onFiltersChange"
+            />
+          </v-col>
+        </v-row>
 
         <div v-if="loading" class="loading-container">
           <v-progress-circular indeterminate color="primary" size="50" />
@@ -94,20 +145,38 @@
   import { onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { useReport } from '@/modules/students/hooks/useReport'
+  import { useStudent } from '@/modules/students/hooks/useStudent'
+  import type { StudentFilters } from '@/modules/students/services/reportService'
 
   const router = useRouter()
   const {
     students,
     loading,
+    exporting,
     error,
     currentPage,
     totalPages,
     fetchStudents,
+    exportStudents,
     clearError,
   } = useReport()
 
+  const { careers, loadCareers } = useStudent()
+
   const searchQuery = ref('')
+  const careerFilter = ref<number | null>(null)
+  const dateFrom = ref('')
+  const dateTo = ref('')
   let searchDebounce: ReturnType<typeof setTimeout> | null = null
+
+  function currentFilters (): StudentFilters {
+    return {
+      search: searchQuery.value.trim() || undefined,
+      careerId: careerFilter.value || undefined,
+      dateFrom: dateFrom.value || undefined,
+      dateTo: dateTo.value || undefined,
+    }
+  }
 
   const headers = [
     { title: 'Matrícula', key: 'matricula' },
@@ -146,19 +215,27 @@
   }
 
   async function handlePageChange (page: number) {
-    await fetchStudents(page, searchQuery.value || undefined)
+    await fetchStudents(page, currentFilters())
   }
 
-  function onSearchChange (value: string | null) {
+  function onSearchChange () {
     if (searchDebounce) clearTimeout(searchDebounce)
     searchDebounce = setTimeout(() => {
-      fetchStudents(1, value?.trim() || undefined)
+      fetchStudents(1, currentFilters())
     }, 400)
   }
 
   function onSearchClear () {
     searchQuery.value = ''
-    fetchStudents(1)
+    fetchStudents(1, currentFilters())
+  }
+
+  function onFiltersChange () {
+    fetchStudents(1, currentFilters())
+  }
+
+  async function handleExport () {
+    await exportStudents(currentFilters())
   }
 
   function editStudent (studentId: number) {
@@ -174,7 +251,10 @@
     window.open(`${apiSoporteUrl}/api/v1/students/${studentId}/credential-sheet`, '_blank')
   }
 
-  onMounted(() => fetchStudents(1))
+  onMounted(() => {
+    fetchStudents(1)
+    loadCareers()
+  })
 </script>
 
 <style scoped>
