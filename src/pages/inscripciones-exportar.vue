@@ -151,7 +151,7 @@
               label
               color="secondary"
               variant="tonal"
-              @click:close="filters.date_field = null; filters.date_from = ''; filters.date_to = ''"
+              @click:close="filters.date_field = undefined; filters.date_from = ''; filters.date_to = ''"
             >
               <v-icon start>mdi-calendar-range</v-icon>
               {{ dateFieldLabel }}

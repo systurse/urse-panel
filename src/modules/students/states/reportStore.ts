@@ -36,7 +36,7 @@ export const useReportStore = defineStore('report', () => {
     error.value = null
 
     try {
-      const blob = await reportService.exportStudents(filters)
+      const blob = await reportService.exportCredentials(filters as any)
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
