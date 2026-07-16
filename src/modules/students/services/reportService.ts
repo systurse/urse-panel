@@ -1,4 +1,4 @@
-import { http, httpClient } from '@/services/http'
+import { httpClient } from '@/services/http'
 
 const STUDENTS_API = '/api/v1/students'
 const STATS_API = '/api/v1/students/stats'
@@ -59,6 +59,13 @@ function buildFilterParams (filters: StudentFilters = {}) {
   return params
 }
 
+export interface ExportParams {
+  career_id?: number | null
+  date_field?: 'created_at' | 'activated_at' | 'credentials_retrieved_at'
+  date_from?: string
+  date_to?: string
+}
+
 export const reportService = {
   async getStudents (page: number = 1, perPage: number = 10, filters: StudentFilters = {}) {
     const params = buildFilterParams(filters)
@@ -73,9 +80,15 @@ export const reportService = {
     return response
   },
 
-  async exportStudents (filters: StudentFilters = {}) {
-    const params = buildFilterParams(filters)
-    const response = await http.get(`${STUDENTS_API}/export?${params}`, { responseType: 'blob' })
-    return response.data as Blob
+  async exportCredentials (filters: ExportParams = {}) {
+    const params = new URLSearchParams()
+    if (filters.career_id) params.set('career_id', String(filters.career_id))
+    if (filters.date_field) params.set('date_field', filters.date_field)
+    if (filters.date_from) params.set('date_from', filters.date_from)
+    if (filters.date_to) params.set('date_to', filters.date_to)
+    const query = params.toString()
+    const url = `${STUDENTS_API}/credentials-export${query ? `?${query}` : ''}`
+    const response = await httpClient.get<Blob>(url, { responseType: 'blob' })
+    return response
   },
 }

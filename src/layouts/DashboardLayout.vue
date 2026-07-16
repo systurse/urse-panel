@@ -167,6 +167,12 @@
           subtitle: 'Tabla de estudiantes registrados con búsqueda.',
         },
         {
+          title: 'Exportar',
+          to: '/inscripciones/exportar',
+          icon: 'mdi-microsoft-excel',
+          subtitle: 'Descarga credenciales de alumnos en Excel.',
+        },
+        {
           title: 'Chat Soporte',
           to: '/chat',
           icon: 'mdi-headset',

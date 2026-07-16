@@ -30,6 +30,7 @@ import InscripcionesEditar from '@/pages/inscripciones-editar.vue'
 import InscripcionesReporte from '@/pages/inscripciones-reporte.vue'
 import InscripcionesListado from '@/pages/inscripciones-listado.vue'
 import InscripcionesImportar from '@/pages/inscripciones-importar.vue'
+import InscripcionesExportar from '@/pages/inscripciones-exportar.vue'
 import Credenciales from '@/pages/credenciales.vue'
 import ChatSoporte from '@/pages/chat-soporte.vue'
 import MisSolicitudes from '@/pages/mis-solicitudes.vue'
@@ -198,6 +199,10 @@ const router = createRouter({
         {
           path: 'importar',
           component: InscripcionesImportar,
+        },
+        {
+          path: 'exportar',
+          component: InscripcionesExportar,
         },
       ],
     },
