@@ -84,6 +84,12 @@
           icon: 'mdi-lock-outline',
           subtitle: 'Listado de permisos y capacidades asociadas.',
         },
+        {
+          title: 'Correos',
+          to: '/administracion/correos',
+          icon: 'mdi-email-outline',
+          subtitle: 'Historial de correos enviados desde el sistema.',
+        },
       ]
 
       return items

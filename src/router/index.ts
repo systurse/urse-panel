@@ -33,6 +33,7 @@ import InscripcionesImportar from '@/pages/inscripciones-importar.vue'
 import InscripcionesExportar from '@/pages/inscripciones-exportar.vue'
 import Credenciales from '@/pages/credenciales.vue'
 import ChatSoporte from '@/pages/chat-soporte.vue'
+import AdminMail from '@/pages/admin-mail.vue'
 import MisSolicitudes from '@/pages/mis-solicitudes.vue'
 import Tickets from '@/pages/tickets.vue'
 import Users from '@/pages/users.vue'
@@ -105,6 +106,10 @@ const router = createRouter({
           path: 'pases-salida',
           component: AdminExitPasses,
           meta: { requiresAdministrator: true },
+        },
+        {
+          path: 'correos',
+          component: AdminMail,
         },
         {
           path: 'configuracion',
