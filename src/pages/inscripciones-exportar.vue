@@ -51,22 +51,12 @@
             />
 
             <!-- Rango de fechas -->
-            <template v-if="filters.date_field">
-              <v-text-field
-                v-model="filters.date_from"
-                label="Fecha desde"
-                type="date"
-                variant="outlined"
-                style="margin-bottom: 16px;"
-              />
-              <v-text-field
-                v-model="filters.date_to"
-                label="Fecha hasta"
-                type="date"
-                variant="outlined"
-                style="margin-bottom: 16px;"
-              />
-            </template>
+            <DateRangeFilter
+              v-if="filters.date_field"
+              ref="dateRangeRef"
+              v-model:from="filters.date_from"
+              v-model:to="filters.date_to"
+            />
 
             <v-btn
               color="#1e3a5f"
@@ -76,6 +66,7 @@
               rounded="lg"
               prepend-icon="mdi-microsoft-excel"
               :loading="downloading"
+              :disabled="dateRangeRef?.hasError"
               style="margin-bottom: 8px;"
               @click="downloadExcel"
             >
@@ -177,11 +168,13 @@
   import { reportService, type ExportParams } from '@/modules/students/services/reportService'
   import { studentService } from '@/modules/students/services/studentService'
   import type { Career } from '@/modules/students/services/reportService'
+  import DateRangeFilter from '@/components/DateRangeFilter.vue'
 
   const error = ref('')
   const downloading = ref(false)
   const snackbar = ref(false)
   const careers = ref<Career[]>([])
+  const dateRangeRef = ref<InstanceType<typeof DateRangeFilter> | null>(null)
 
   const filters = reactive<ExportParams & { career_id: number | null }>({
     career_id: null,
@@ -220,6 +213,7 @@
   )
 
   async function downloadExcel () {
+    if (dateRangeRef.value?.hasError) return
     downloading.value = true
     error.value = ''
     try {
