@@ -209,11 +209,11 @@
   }
 
   function generateSecurePassword (): string {
-    // Generar contraseña que cumpla con política M365
+    // Máximo 8 caracteres, solo letras, dígitos y los símbolos $ # % & +
     const mayusculas = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     const minusculas = 'abcdefghijklmnopqrstuvwxyz'
     const numeros = '0123456789'
-    const caracteresEspeciales = '!@#$%^&*'
+    const caracteresEspeciales = '$#%&+'
 
     let password = ''
     password += mayusculas.charAt(Math.floor(Math.random() * mayusculas.length))
@@ -222,8 +222,8 @@
     password += caracteresEspeciales.charAt(Math.floor(Math.random() * caracteresEspeciales.length))
 
     // Llenar el resto
-    const todosLosCaracteres = mayusculas + minusculas + numeros + caracteresEspeciales
-    for (let i = 4; i < 12; i++) {
+    const todosLosCaracteres = mayusculas + minusculas + numeros
+    for (let i = 4; i < 8; i++) {
       password += todosLosCaracteres.charAt(Math.floor(Math.random() * todosLosCaracteres.length))
     }
 
