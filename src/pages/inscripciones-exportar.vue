@@ -232,7 +232,9 @@
       URL.revokeObjectURL(url)
       snackbar.value = true
     } catch (err: any) {
-      error.value = err?.response?.data?.message || 'Error al generar el archivo. Intenta nuevamente.'
+      const data = err?.response?.data
+      const fieldErrors = data?.errors && Object.values(data.errors).flat().join(' ')
+      error.value = fieldErrors || data?.message || 'Error al generar el archivo. Intenta nuevamente.'
     } finally {
       downloading.value = false
     }

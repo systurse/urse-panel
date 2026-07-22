@@ -20,6 +20,7 @@ export interface StudentCredentials {
   first_last_name: string
   second_last_name: string
   institutional_email: string
+  institutional_username: string
   password: string
   wifi_password: string
   career: string | { name: string; email: string; extension?: string }

@@ -41,6 +41,23 @@ export const publicHttp = axios.create({
   },
 })
 
+// Requests with responseType 'blob' (e.g. file downloads) also receive error bodies as a
+// Blob, so JSON validation errors (message/errors) are otherwise unreadable in the catch block.
+async function parseBlobErrorResponse (error: any) {
+  const data = error?.response?.data
+  if (data instanceof Blob && data.type.includes('json')) {
+    try {
+      error.response.data = JSON.parse(await data.text())
+    } catch {
+      // Leave the raw Blob if it can't be parsed as JSON
+    }
+  }
+  return Promise.reject(error)
+}
+
+http.interceptors.response.use(response => response, parseBlobErrorResponse)
+publicHttp.interceptors.response.use(response => response, parseBlobErrorResponse)
+
 export const publicHttpClient: HttpClient = {
   delete<TResponse> (url: string, config?: AxiosRequestConfig) {
     return unwrapData(publicHttp.delete<TResponse>(url, config))

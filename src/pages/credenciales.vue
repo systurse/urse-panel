@@ -337,6 +337,10 @@
             </thead>
             <tbody>
               <tr>
+                <td class="cell-label">Usuario</td>
+                <td class="cell-value">{{ student!.institutional_username }}</td>
+              </tr>
+              <tr>
                 <td class="cell-label">Contraseña</td>
                 <td class="cell-value">
                   <span class="mono">{{ student!.wifi_password }}</span>
