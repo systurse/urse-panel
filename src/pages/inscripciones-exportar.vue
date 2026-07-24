@@ -16,7 +16,7 @@
     <v-row>
       <!-- Filtros -->
       <v-col cols="12" md="4">
-        <v-card rounded="xl" class="h-100">
+        <v-card rounded="xl">
           <v-card-text style="padding: 28px;">
             <div style="font-size: 1.05rem; font-weight: 700; color: #1e3a5f; margin-bottom: 8px;">
               Filtros de exportación

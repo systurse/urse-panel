@@ -6,7 +6,6 @@ export const useReportStore = defineStore('report', () => {
   const students = ref<StudentListItem[]>([])
   const stats = ref<StatsResponse | null>(null)
   const loading = ref(false)
-  const exporting = ref(false)
   const error = ref<string | null>(null)
   const currentPage = ref(1)
   const totalPages = ref(1)
@@ -28,28 +27,6 @@ export const useReportStore = defineStore('report', () => {
       throw err
     } finally {
       loading.value = false
-    }
-  }
-
-  const exportStudents = async (filters: StudentFilters = {}) => {
-    exporting.value = true
-    error.value = null
-
-    try {
-      const blob = await reportService.exportCredentials(filters as any)
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `estudiantes-${new Date().toISOString().slice(0, 10)}.csv`
-      document.body.append(link)
-      link.click()
-      link.remove()
-      URL.revokeObjectURL(url)
-    } catch (err: any) {
-      error.value = err.message || 'Error al exportar estudiantes'
-      throw err
-    } finally {
-      exporting.value = false
     }
   }
 
@@ -86,13 +63,11 @@ export const useReportStore = defineStore('report', () => {
     students,
     stats,
     loading,
-    exporting,
     error,
     currentPage,
     totalPages,
     totalStudents,
     fetchStudents,
-    exportStudents,
     fetchStats,
     updateStats,
     addStudent,

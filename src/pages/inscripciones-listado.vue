@@ -17,15 +17,6 @@
       <v-card-text class="pa-6">
         <div class="list-header mb-4">
           <h3 class="list-title">Listado de Estudiantes Registrados</h3>
-          <v-btn
-            color="primary"
-            :loading="exporting"
-            prepend-icon="mdi-file-download-outline"
-            variant="flat"
-            @click="handleExport"
-          >
-            Exportar CSV
-          </v-btn>
         </div>
 
         <v-row class="filters-row mb-4" dense>
@@ -152,12 +143,10 @@
   const {
     students,
     loading,
-    exporting,
     error,
     currentPage,
     totalPages,
     fetchStudents,
-    exportStudents,
     clearError,
   } = useReport()
 
@@ -232,10 +221,6 @@
 
   function onFiltersChange () {
     fetchStudents(1, currentFilters())
-  }
-
-  async function handleExport () {
-    await exportStudents(currentFilters())
   }
 
   function editStudent (studentId: number) {
