@@ -10,6 +10,7 @@ export interface StudentRegistration {
   name: string
   matricula: string
   career_id: number
+  personal_email?: string
   password: string
 }
 
@@ -30,6 +31,7 @@ export interface StudentResponse {
   first_last_name: string
   second_last_name: string
   institutional_email: string
+  personal_email: string | null
   wifi_password: string
   status: 'pending' | 'active' | 'suspended'
   microsoft_365_id: string | null
@@ -68,6 +70,7 @@ export interface StudentUpdate {
   name: string
   first_last_name: string
   second_last_name: string
+  personal_email?: string
   career_id: number | string
 }
 

@@ -81,6 +81,18 @@
               />
             </v-col>
 
+            <!-- Correo personal -->
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="form.personal_email"
+                label="Correo personal"
+                :rules="personalEmailRules"
+                :disabled="loading"
+                type="email"
+                variant="outlined"
+              />
+            </v-col>
+
             <!-- Carrera -->
             <v-col cols="12">
               <v-autocomplete
@@ -146,12 +158,19 @@
     name: '',
     first_last_name: '',
     second_last_name: '',
+    personal_email: '',
     career_id: '' as string | number,
   })
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
   const matriculaRules = [
     (v: string) => !!v || 'La matrícula es requerida',
     (v: string) => v.length >= 2 || 'Mínimo 2 caracteres',
+  ]
+
+  const personalEmailRules = [
+    (v: string) => !v || emailRegex.test(v) || 'Ingresa un correo válido',
   ]
 
   const nameRules = [
@@ -186,6 +205,7 @@
         form.value.name = stateStudent.name ?? ''
         form.value.first_last_name = stateStudent.first_last_name ?? ''
         form.value.second_last_name = stateStudent.second_last_name ?? ''
+        form.value.personal_email = stateStudent.personal_email ?? ''
         form.value.career_id = careerIdFromValue(stateStudent.career)
       } else {
         // Fallback: API para los campos de texto (career quedará vacío)
@@ -194,6 +214,7 @@
         form.value.name = student.name ?? ''
         form.value.first_last_name = student.first_last_name ?? ''
         form.value.second_last_name = student.second_last_name ?? ''
+        form.value.personal_email = student.personal_email ?? ''
       }
     } catch {
       error.value = 'No se pudo cargar la información del estudiante'
@@ -214,6 +235,7 @@
         name: form.value.name,
         first_last_name: form.value.first_last_name,
         second_last_name: form.value.second_last_name,
+        personal_email: form.value.personal_email || undefined,
         career_id: form.value.career_id,
       })
       router.push('/inscripciones/reporte')

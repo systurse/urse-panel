@@ -84,6 +84,19 @@
             />
           </v-col>
 
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="form.personal_email"
+              label="Correo personal"
+              placeholder="Ej: juan.perez@gmail.com"
+              :rules="personalEmailRules"
+              :disabled="loading"
+              type="email"
+              variant="outlined"
+              hint="Se usará para enviar las credenciales del alumno"
+            />
+          </v-col>
+
           <!-- Carrera -->
           <v-col cols="12">
             <v-autocomplete
@@ -154,9 +167,12 @@
     second_last_name: '',
     name: '',
     matricula: '',
+    personal_email: '',
     career: '',
     password: '',
   })
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
   const usernameRules = [
     (v: string) => !!v || 'El usuario SERVO es requerido',
@@ -170,6 +186,10 @@
 
   const careerRules = [
     (v: string | number) => !!v || 'La carrera es requerida',
+  ]
+
+  const personalEmailRules = [
+    (v: string) => !v || emailRegex.test(v) || 'Ingresa un correo válido',
   ]
 
   const nameRules = [
@@ -199,6 +219,7 @@
         second_last_name: form.value.second_last_name,
         name: form.value.name,
         matricula: form.value.matricula,
+        personal_email: form.value.personal_email || undefined,
         career_id: form.value.career,
         password: generatedPassword,
       })
