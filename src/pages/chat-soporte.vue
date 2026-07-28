@@ -27,7 +27,10 @@
           @click="selectSession(s.id)"
         >
           <div class="session-item-header">
-            <span class="session-name">{{ s.guest_name || s.student_name || 'Sin nombre' }}</span>
+            <span class="session-name">
+              <span v-if="s.guest_online" class="online-dot" title="En línea" />
+              {{ s.guest_name || s.student_name || 'Sin nombre' }}
+            </span>
             <v-chip :color="statusColor(s.status)" size="x-small" label>
               {{ statusLabel(s.status) }}
             </v-chip>
@@ -57,11 +60,17 @@
         <!-- Header de la conversación -->
         <div class="conversation-header">
           <div>
-            <div class="conv-title">{{ selectedSession.guest_name || selectedSession.student_name || 'Sin nombre' }}</div>
+            <div class="conv-title">
+              <span v-if="selectedSession.guest_online" class="online-dot" title="En línea" />
+              {{ selectedSession.guest_name || selectedSession.student_name || 'Sin nombre' }}
+            </div>
             <div class="conv-sub">
               <v-chip :color="statusColor(selectedSession.status)" size="x-small" label class="mr-2">
                 {{ statusLabel(selectedSession.status) }}
               </v-chip>
+              <span class="conv-presence" :class="selectedSession.guest_online ? 'is-online' : 'is-offline'">
+                {{ selectedSession.guest_online ? 'En línea' : 'Desconectado' }}
+              </span>
               <span v-if="selectedSession.contact_value" class="conv-contact">
                 <v-icon v-if="selectedSession.contact_whatsapp" size="14" color="#25D366">mdi-whatsapp</v-icon>
                 <v-icon v-else-if="selectedSession.contact_value.includes('@')" size="14" color="#666">mdi-email-outline</v-icon>
@@ -97,7 +106,16 @@
             >
               <div class="msg-sender">{{ msg.sender_name }}</div>
               <div class="msg-body">{{ msg.body }}</div>
-              <div class="msg-time">{{ formatTime(msg.created_at) }}</div>
+              <div class="msg-time">
+                {{ formatTime(msg.created_at) }}
+                <v-icon
+                  v-if="msg.sender_type === 'support'"
+                  size="12"
+                  :color="msg.read_at ? '#4fc3f7' : undefined"
+                >
+                  {{ msg.read_at ? 'mdi-check-all' : 'mdi-check' }}
+                </v-icon>
+              </div>
             </div>
           </div>
 
@@ -140,7 +158,9 @@
 <script setup lang="ts">
   import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
   import { chatSupportService, type ChatSession, type ChatMessage } from '@/services/chatService'
-  import { listenToSupportChats, leaveSupportChats } from '@/services/websocket'
+  import { listenToSupportChats, listenToSupportChatsRead, leaveSupportChats } from '@/services/websocket'
+
+  const PRESENCE_POLL_INTERVAL_MS = 15_000
 
   const sessions = ref<ChatSession[]>([])
   const selectedId = ref<number | null>(null)
@@ -151,6 +171,7 @@
   const replyText = ref('')
   const messagesEl = ref<HTMLElement | null>(null)
   const snackbar = ref({ show: false, text: '', color: 'success' })
+  let presenceTimer: ReturnType<typeof setInterval> | null = null
 
   const activeSessions = computed(() => sessions.value.filter(s => s.status !== 'closed'))
   const selectedSession = computed(() => sessions.value.find(s => s.id === selectedId.value) ?? null)
@@ -192,8 +213,29 @@
       const idx = sessions.value.findIndex(s => s.id === id)
       if (idx !== -1) sessions.value[idx] = { ...sessions.value[idx], ...full }
       scrollToBottom()
+      markStudentMessagesRead(id)
     } catch {
       notify('Error al cargar la sesión', 'error')
+    }
+  }
+
+  async function markStudentMessagesRead (id: number) {
+    const hasUnread = selectedMessages.value.some(m => m.sender_type === 'student' && !m.read_at)
+    if (!hasUnread) return
+    try {
+      await chatSupportService.markRead(id)
+      const now = new Date().toISOString()
+      selectedMessages.value = selectedMessages.value.map(m => (m.sender_type === 'student' && !m.read_at ? { ...m, read_at: now } : m))
+    } catch {
+      // se reintentará la próxima vez que se abra la conversación
+    }
+  }
+
+  async function pollSessionsQuietly () {
+    try {
+      sessions.value = await chatSupportService.getSessions()
+    } catch {
+      // se reintentará en el siguiente ciclo
     }
   }
 
@@ -254,14 +296,28 @@
         if (selectedSession.value?.session_token === token && event.message.sender_type === 'student') {
           selectedMessages.value.push(event.message as any)
           scrollToBottom()
+          if (selectedId.value) markStudentMessagesRead(selectedId.value)
         }
+      })
+
+      listenToSupportChatsRead((event) => {
+        if (event.read_by !== 'student') return
+        if (selectedSession.value?.session_token !== event.session_token) return
+        selectedMessages.value = selectedMessages.value.map(m => (
+          m.sender_type === 'support' && !m.read_at ? { ...m, read_at: event.read_at } : m
+        ))
       })
     } catch (err) {
       console.error('Error conectando a WebSocket de soporte:', err)
     }
+
+    presenceTimer = setInterval(pollSessionsQuietly, PRESENCE_POLL_INTERVAL_MS)
   })
 
-  onBeforeUnmount(leaveSupportChats)
+  onBeforeUnmount(() => {
+    leaveSupportChats()
+    if (presenceTimer) clearInterval(presenceTimer)
+  })
 </script>
 
 <style scoped>
@@ -336,6 +392,18 @@
   font-weight: 600;
   font-size: 0.9rem;
   color: #111;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.online-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4caf50;
+  flex-shrink: 0;
+  display: inline-block;
 }
 
 .session-contact {
@@ -393,6 +461,9 @@
   font-weight: 700;
   font-size: 1rem;
   color: #1e3a5f;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .conv-sub {
@@ -402,6 +473,14 @@
   flex-wrap: wrap;
   gap: 4px;
 }
+
+.conv-presence {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-right: 8px;
+}
+.conv-presence.is-online { color: #4caf50; }
+.conv-presence.is-offline { color: #9e9e9e; }
 
 .conv-contact {
   display: inline-flex;

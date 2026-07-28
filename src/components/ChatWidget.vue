@@ -91,7 +91,16 @@
                 :class="msg.sender_type === 'student' ? 'bubble-student' : 'bubble-support'"
               >
                 <div class="bubble-body">{{ msg.body }}</div>
-                <div class="bubble-time">{{ formatTime(msg.created_at) }}</div>
+                <div class="bubble-time">
+                  {{ formatTime(msg.created_at) }}
+                  <v-icon
+                    v-if="msg.sender_type === 'student'"
+                    size="12"
+                    :color="msg.read_at ? '#4fc3f7' : undefined"
+                  >
+                    {{ msg.read_at ? 'mdi-check-all' : 'mdi-check' }}
+                  </v-icon>
+                </div>
               </div>
             </div>
 
@@ -130,9 +139,10 @@
 <script setup lang="ts">
   import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
   import { chatPublicService, type ChatSession, type ChatMessage } from '@/services/chatService'
-  import { listenToChatSession, leaveChatSession } from '@/services/websocket'
+  import { listenToChatSession, listenToChatSessionRead, leaveChatSession } from '@/services/websocket'
 
   const SESSION_KEY = 'chat_session_token'
+  const HEARTBEAT_INTERVAL_MS = 20_000
 
   const open = ref(false)
   const starting = ref(false)
@@ -145,6 +155,7 @@
   const session = ref<ChatSession | null>(null)
   const messages = ref<ChatMessage[]>([])
   const messagesEl = ref<HTMLElement | null>(null)
+  let heartbeatTimer: ReturnType<typeof setInterval> | null = null
 
   const isPhone = computed(() => /^\d+$/.test(contactValue.value.trim()))
   const canStart = computed(() => !!guestName.value.trim() && !!contactValue.value.trim())
@@ -168,6 +179,7 @@
       session.value = s
       messages.value = s.messages ?? []
       subscribeToChannel(token)
+      if (s.status !== 'closed') startHeartbeat(token)
     } catch {
       localStorage.removeItem(SESSION_KEY)
     }
@@ -187,8 +199,37 @@
       messages.value = []
       localStorage.setItem(SESSION_KEY, s.session_token)
       subscribeToChannel(s.session_token)
+      startHeartbeat(s.session_token)
     } finally {
       starting.value = false
+    }
+  }
+
+  function startHeartbeat (token: string) {
+    stopHeartbeat()
+    chatPublicService.heartbeat(token).catch(() => {})
+    heartbeatTimer = setInterval(() => {
+      chatPublicService.heartbeat(token).catch(() => {})
+    }, HEARTBEAT_INTERVAL_MS)
+  }
+
+  function stopHeartbeat () {
+    if (heartbeatTimer) {
+      clearInterval(heartbeatTimer)
+      heartbeatTimer = null
+    }
+  }
+
+  async function markSupportMessagesRead () {
+    if (!session.value) return
+    const hasUnread = messages.value.some(m => m.sender_type === 'support' && !m.read_at)
+    if (!hasUnread) return
+    try {
+      await chatPublicService.markRead(session.value.session_token)
+      const now = new Date().toISOString()
+      messages.value = messages.value.map(m => (m.sender_type === 'support' && !m.read_at ? { ...m, read_at: now } : m))
+    } catch {
+      // el intento fallido se reintentará en la próxima apertura del chat
     }
   }
 
@@ -206,6 +247,7 @@
       if (status === 404 || status === 422 || status === 403) {
         localStorage.removeItem(SESSION_KEY)
         if (session.value) leaveChatSession(session.value.session_token)
+        stopHeartbeat()
         session.value = null
         messages.value = []
         guestName.value = ''
@@ -226,9 +268,18 @@
           body: event.message.body,
           created_at: event.message.created_at,
         })
-        if (!open.value) unread.value++
+        if (open.value) {
+          markSupportMessagesRead()
+        } else {
+          unread.value++
+        }
         scrollToBottom()
       }
+    })
+
+    listenToChatSessionRead(token, (event) => {
+      if (event.read_by !== 'support') return
+      messages.value = messages.value.map(m => (m.sender_type === 'student' && !m.read_at ? { ...m, read_at: event.read_at } : m))
     })
   }
 
@@ -237,6 +288,7 @@
     if (open.value) {
       unread.value = 0
       nextTick(scrollToBottom)
+      markSupportMessagesRead()
     }
   }
 
@@ -256,6 +308,7 @@
 
   onBeforeUnmount(() => {
     if (session.value) leaveChatSession(session.value.session_token)
+    stopHeartbeat()
   })
 </script>
 

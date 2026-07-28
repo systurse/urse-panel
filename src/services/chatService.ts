@@ -9,6 +9,7 @@ export interface ChatMessage {
   sender_name: string
   body: string
   created_at: string
+  read_at?: string | null
 }
 
 export interface ChatSession {
@@ -23,6 +24,7 @@ export interface ChatSession {
   last_message?: ChatMessage
   messages?: ChatMessage[]
   recoverable?: boolean
+  guest_online?: boolean
 }
 
 export interface CreateSessionPayload {
@@ -46,6 +48,14 @@ export const chatPublicService = {
   async sendMessage (token: string, body: string): Promise<ChatMessage> {
     return publicHttpClient.post(`${PUBLIC}/${token}/messages`, { body })
   },
+
+  async heartbeat (token: string): Promise<void> {
+    return publicHttpClient.post(`${PUBLIC}/${token}/heartbeat`, {})
+  },
+
+  async markRead (token: string): Promise<void> {
+    return publicHttpClient.post(`${PUBLIC}/${token}/read`, {})
+  },
 }
 
 // ── Soporte (requiere Bearer token) ──────────────────────
@@ -65,5 +75,9 @@ export const chatSupportService = {
 
   async closeSession (id: number): Promise<void> {
     return httpClient.put(`${SUPPORT}/${id}/close`, {})
+  },
+
+  async markRead (id: number): Promise<void> {
+    return httpClient.post(`${SUPPORT}/${id}/read`, {})
   },
 }

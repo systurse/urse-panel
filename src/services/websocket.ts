@@ -89,6 +89,18 @@ export function listenToChatSession (sessionToken: string, callback: (event: Cha
   return echo.channel(`chat.${sessionToken}`).listen('.chat.message', callback)
 }
 
+export interface ChatMessagesReadEvent {
+  session_id: number
+  session_token: string
+  read_by: 'student' | 'support'
+  read_at: string
+}
+
+export function listenToChatSessionRead (sessionToken: string, callback: (event: ChatMessagesReadEvent) => void) {
+  const echo = getEcho()
+  return echo.channel(`chat.${sessionToken}`).listen('.chat.messages.read', callback)
+}
+
 export function leaveChatSession (sessionToken: string) {
   const echo = getEcho()
   echo.leave(`chat.${sessionToken}`)
@@ -97,6 +109,11 @@ export function leaveChatSession (sessionToken: string) {
 export function listenToSupportChats (callback: (event: ChatMessageEvent) => void) {
   const echo = getEcho()
   return echo.private('support.chats').listen('.chat.message', callback)
+}
+
+export function listenToSupportChatsRead (callback: (event: ChatMessagesReadEvent) => void) {
+  const echo = getEcho()
+  return echo.private('support.chats').listen('.chat.messages.read', callback)
 }
 
 export function leaveSupportChats () {
