@@ -66,7 +66,7 @@
               rounded="lg"
               prepend-icon="mdi-microsoft-excel"
               :loading="downloading"
-              :disabled="dateRangeRef?.hasError"
+              :disabled="dateRangeRef?.hasError || selectedColumns.length === 0"
               style="margin-bottom: 8px;"
               @click="downloadExcel"
             >
@@ -92,21 +92,32 @@
           <v-card-text style="padding: 28px;">
             <div style="font-size: 1rem; font-weight: 700; color: #1e3a5f; display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
               <v-icon color="#1e3a5f" size="20">mdi-file-excel-outline</v-icon>
-              Exportación de credenciales
+              Columnas a exportar
             </div>
-            <div style="font-size: 0.88rem; color: #555; line-height: 1.6; margin-bottom: 20px;">
-              El archivo Excel generado contiene las credenciales de acceso de los alumnos
-              según los filtros aplicados. Cada fila corresponde a un alumno.
+            <div style="font-size: 0.88rem; color: #555; line-height: 1.6; margin-bottom: 16px;">
+              Elige qué columnas incluir en el archivo Excel. Cada fila corresponde a un alumno.
             </div>
 
+            <v-alert
+              v-if="selectedColumns.length === 0"
+              class="mb-4"
+              density="compact"
+              type="warning"
+              variant="tonal"
+            >
+              Selecciona al menos una columna para poder descargar.
+            </v-alert>
+
             <div class="columns-grid">
-              <div v-for="col in columns" :key="col.field" class="column-item">
-                <v-icon size="16" color="#1e3a5f">mdi-table-column</v-icon>
-                <div>
-                  <div class="col-label">{{ col.label }}</div>
-                  <div class="col-field">{{ col.field }}</div>
-                </div>
-              </div>
+              <v-checkbox
+                v-for="col in COLUMN_CATALOG"
+                :key="col.key"
+                v-model="selectedColumns"
+                density="compact"
+                hide-details
+                :label="col.label"
+                :value="col.key"
+              />
             </div>
           </v-card-text>
         </v-card>
@@ -189,15 +200,29 @@
     { label: 'Fecha de recogida de credenciales', value: 'credentials_retrieved_at' },
   ]
 
-  const columns = [
-    { label: 'Nombre', field: 'name' },
-    { label: 'Primer Apellido', field: 'first_last_name' },
-    { label: 'Segundo Apellido', field: 'second_last_name' },
-    { label: 'Carrera', field: 'careers.name' },
-    { label: 'Correo Institucional', field: 'institutional_email' },
-    { label: 'Usuario AD', field: 'ad_username' },
-    { label: 'Contraseña Wi-Fi', field: 'wifi_password' },
+  // Mantener sincronizado con App\Exports\StudentCredentialsColumns (backend).
+  const COLUMN_CATALOG = [
+    { key: 'matricula', label: 'Matrícula' },
+    { key: 'name', label: 'Nombre' },
+    { key: 'first_last_name', label: 'Primer Apellido' },
+    { key: 'second_last_name', label: 'Segundo Apellido' },
+    { key: 'servo_username', label: 'Usuario Servoescolar' },
+    { key: 'career', label: 'Carrera' },
+    { key: 'status', label: 'Estado' },
+    { key: 'institutional_email', label: 'Correo Institucional' },
+    { key: 'personal_email', label: 'Correo Personal' },
+    { key: 'phone', label: 'Teléfono' },
+    { key: 'enrollment_date', label: 'Fecha de Inscripción' },
+    { key: 'activated_at', label: 'Fecha de Activación' },
+    { key: 'credentials_retrieved_at', label: 'Fecha de Recogida de Credenciales' },
+    { key: 'ad_username', label: 'Usuario AD' },
+    { key: 'wifi_password', label: 'Contraseña Wi-Fi' },
+    { key: 'password', label: 'Contraseña del Portal' },
   ]
+
+  const DEFAULT_COLUMNS = ['name', 'first_last_name', 'second_last_name', 'career', 'institutional_email', 'ad_username', 'wifi_password']
+
+  const selectedColumns = ref<string[]>([...DEFAULT_COLUMNS])
 
   const hasActiveFilters = computed(() =>
     !!filters.career_id || !!filters.date_field,
@@ -213,11 +238,11 @@
   )
 
   async function downloadExcel () {
-    if (dateRangeRef.value?.hasError) return
+    if (dateRangeRef.value?.hasError || selectedColumns.value.length === 0) return
     downloading.value = true
     error.value = ''
     try {
-      const params: ExportParams = {}
+      const params: ExportParams = { columns: selectedColumns.value }
       if (filters.career_id) params.career_id = filters.career_id
       if (filters.date_field) params.date_field = filters.date_field
       if (filters.date_from) params.date_from = filters.date_from
@@ -289,31 +314,8 @@
 
 .columns-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 10px;
-}
-
-.column-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  background: #f4f6f9;
-  border-radius: 8px;
-  padding: 10px 12px;
-}
-
-.col-label {
-  font-size: 0.84rem;
-  font-weight: 600;
-  color: #222;
-  line-height: 1.3;
-}
-
-.col-field {
-  font-size: 0.74rem;
-  font-family: 'Courier New', monospace;
-  color: #888;
-  margin-top: 2px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  column-gap: 10px;
 }
 
 .no-filters {

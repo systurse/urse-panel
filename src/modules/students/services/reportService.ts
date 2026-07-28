@@ -64,6 +64,7 @@ export interface ExportParams {
   date_field?: 'created_at' | 'activated_at' | 'credentials_retrieved_at'
   date_from?: string
   date_to?: string
+  columns?: string[]
 }
 
 export const reportService = {
@@ -86,6 +87,7 @@ export const reportService = {
     if (filters.date_field) params.set('date_field', filters.date_field)
     if (filters.date_from) params.set('date_from', filters.date_from)
     if (filters.date_to) params.set('date_to', filters.date_to)
+    for (const column of filters.columns ?? []) params.append('columns[]', column)
     const query = params.toString()
     const url = `${STUDENTS_API}/credentials-export${query ? `?${query}` : ''}`
     const response = await httpClient.get<Blob>(url, { responseType: 'blob' })
