@@ -61,7 +61,7 @@
                 {{ statusLabel(exitPass.currentStatus) }}
               </v-chip>
               <v-chip color="#c89215" size="small" variant="tonal">
-                {{ exitPass.reason || 'Sin motivo' }}
+                {{ optionLabel(reasonOptions, exitPass.reason, 'Sin motivo') }}
               </v-chip>
             </div>
           </div>
@@ -69,7 +69,7 @@
           <div class="pass-grid">
             <div>
               <span class="label">Jornada</span>
-              <span>{{ exitPass.workSchedule || '—' }}</span>
+              <span>{{ optionLabel(workScheduleOptions, exitPass.workSchedule) }}</span>
             </div>
             <div>
               <span class="label">Horario</span>
@@ -542,6 +542,11 @@
   function humanizeEnum (value: string) {
     if (!value) return '—'
     return value.replaceAll('_', ' ')
+  }
+
+  function optionLabel (options: Array<{ title: string, value: string }>, value: string, fallback = '—') {
+    if (!value) return fallback
+    return options.find(option => option.value === value)?.title ?? humanizeEnum(value)
   }
 
   function statusLabel (status: string) {

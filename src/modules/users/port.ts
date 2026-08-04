@@ -1,3 +1,8 @@
+export interface UserRoleRef {
+  id: number | string
+  name: string
+}
+
 export interface User {
   active: boolean
   email: string
@@ -5,6 +10,7 @@ export interface User {
   initials: string
   name: string
   role: string
+  roles: UserRoleRef[]
 }
 
 export interface UserPayload {
@@ -12,7 +18,6 @@ export interface UserPayload {
   email: string
   name: string
   password?: string
-  role?: string
 }
 
 export interface UsersPort {

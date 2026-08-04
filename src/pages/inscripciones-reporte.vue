@@ -212,6 +212,7 @@
             career: event.student.career,
             status: event.student.status,
             institutional_email: '',
+            personal_email: null,
             created_at: new Date().toISOString(),
           })
           updateStats(event.stats)

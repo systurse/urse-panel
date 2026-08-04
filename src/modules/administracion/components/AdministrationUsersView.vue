@@ -50,6 +50,14 @@
         <div class="user-actions">
           <v-btn
             color="#1a1a1a"
+            icon="mdi-account-cog-outline"
+            size="small"
+            title="Asignar roles"
+            variant="text"
+            @click="openRolesDialog(user)"
+          />
+          <v-btn
+            color="#1a1a1a"
             icon="mdi-shield-key-outline"
             size="small"
             variant="text"
@@ -108,18 +116,7 @@
                 />
               </v-col>
 
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="formData.role"
-                  label="Rol"
-                  placeholder="Ej. Administrador"
-                  required
-                  :rules="roleRules"
-                  variant="outlined"
-                />
-              </v-col>
-
-              <v-col cols="12" md="6">
+              <v-col cols="12">
                 <v-select
                   v-model="formData.active"
                   item-title="text"
@@ -256,6 +253,51 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <v-dialog v-model="rolesDialog" max-width="600" persistent>
+    <v-card :loading="rolesDialogLoading || rolesCatalogLoading">
+      <v-card-title class="pt-6 pb-2">
+        Roles de usuario
+      </v-card-title>
+
+      <v-card-text class="pb-4">
+        <div class="text-body-2 mb-4 text-medium-emphasis">
+          <strong>{{ selectedUser?.name }}</strong> ({{ selectedUser?.email }})
+        </div>
+
+        <v-autocomplete
+          v-model="selectedRoleIds"
+          chips
+          clearable
+          closable-chips
+          item-title="name"
+          item-value="id"
+          :items="roles"
+          label="Selecciona roles"
+          :loading="rolesCatalogLoading || rolesDialogLoading"
+          multiple
+          no-data-text="No hay roles disponibles"
+          placeholder="Busca por nombre"
+          prepend-inner-icon="mdi-magnify"
+          variant="outlined"
+        />
+      </v-card-text>
+
+      <v-divider />
+
+      <v-card-actions>
+        <v-spacer />
+        <v-btn text="Cancelar" variant="text" @click="closeRolesDialog" />
+        <v-btn
+          color="#FAB21A"
+          :loading="rolesDialogLoading"
+          text="Guardar roles"
+          variant="flat"
+          @click="saveUserRoles"
+        />
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script lang="ts" setup>
@@ -263,10 +305,12 @@
   import type { User, UserPayload } from '@/modules/users/port'
   import { ref } from 'vue'
   import { usePermissions } from '@/modules/permissions/usePermissions'
+  import { useRoles } from '@/modules/roles/useRoles'
   import { useUsers } from '@/modules/users/useUsers'
   import { httpClient } from '@/services/http'
 
-  const { error, loading, users, createUser, updateUser, removeUser } = useUsers()
+  const { error, loading, users, createUser, updateUser, removeUser, loadUsers } = useUsers()
+  const { loadRoles, loading: rolesCatalogLoading, roles } = useRoles()
   const { loadPermissions, loading: permissionsCatalogLoading, permissions } = usePermissions()
 
   const formDialog = ref(false)
@@ -278,7 +322,6 @@
   const formData = ref({
     name: '',
     email: '',
-    role: '',
     active: true,
     password: '',
     passwordConfirmation: '',
@@ -302,11 +345,6 @@
     (v: string) => /.+@.+\..+/.test(v) || 'El correo electrónico debe ser válido',
   ]
 
-  const roleRules = [
-    (v: string) => !!v || 'El rol es requerido',
-    (v: string) => v.length >= 2 || 'El rol debe tener al menos 2 caracteres',
-  ]
-
   const passwordRules = [
     (v: string) => !!v || 'La contraseña es requerida',
     (v: string) => v.length >= 8 || 'La contraseña debe tener al menos 8 caracteres',
@@ -326,7 +364,6 @@
     formData.value = {
       name: '',
       email: '',
-      role: '',
       active: true,
       password: '',
       passwordConfirmation: '',
@@ -341,7 +378,6 @@
     formData.value = {
       name: user.name,
       email: user.email,
-      role: user.role,
       active: user.active,
       password: '',
       passwordConfirmation: '',
@@ -365,7 +401,6 @@
       const payload: UserPayload & { password_confirmation?: string } = {
         name: formData.value.name,
         email: formData.value.email,
-        role: formData.value.role,
         active: formData.value.active,
       }
 
@@ -510,6 +545,71 @@
       error.value = error_ instanceof Error ? error_.message : 'No fue posible guardar los permisos del usuario'
     } finally {
       permissionsDialogLoading.value = false
+    }
+  }
+
+  const rolesDialog = ref(false)
+  const rolesDialogLoading = ref(false)
+  const selectedRoleIds = ref<Array<number | string>>([])
+  const initialRoleIds = ref<Array<number | string>>([])
+
+  async function openRolesDialog (user: User) {
+    selectedUser.value = user
+    rolesDialog.value = true
+    rolesDialogLoading.value = true
+    error.value = null
+
+    try {
+      await loadRoles()
+      const assignedIds = user.roles.map(role => role.id)
+
+      initialRoleIds.value = assignedIds
+      selectedRoleIds.value = [...assignedIds]
+    } catch (error_) {
+      error.value = error_ instanceof Error ? error_.message : 'No fue posible cargar los roles del usuario'
+    } finally {
+      rolesDialogLoading.value = false
+    }
+  }
+
+  function closeRolesDialog () {
+    rolesDialog.value = false
+    selectedRoleIds.value = []
+    initialRoleIds.value = []
+    selectedUser.value = null
+  }
+
+  async function saveUserRoles () {
+    if (!selectedUser.value) return
+
+    rolesDialogLoading.value = true
+    error.value = null
+
+    const toAdd = selectedRoleIds.value.filter(id => !initialRoleIds.value.includes(id))
+    const toRemove = initialRoleIds.value.filter(id => !selectedRoleIds.value.includes(id))
+
+    try {
+      await Promise.all(
+        toAdd.map(roleId =>
+          httpClient.post<unknown, { role_id: number | string }>(
+            `/api/v1/users/${selectedUser.value?.id}/roles`,
+            { role_id: roleId },
+          ),
+        ),
+      )
+
+      await Promise.all(
+        toRemove.map(roleId =>
+          httpClient.delete<unknown>(`/api/v1/users/${selectedUser.value?.id}/roles/${roleId}`),
+        ),
+      )
+
+      closeRolesDialog()
+      await loadUsers()
+    } catch (error_) {
+      error.value = error_ instanceof Error ? error_.message : 'No fue posible guardar los roles del usuario'
+    } finally {
+      rolesDialogLoading.value = false
     }
   }
 </script>

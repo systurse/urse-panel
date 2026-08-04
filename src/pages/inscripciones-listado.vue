@@ -89,6 +89,10 @@
               {{ getCareerName(item.career) }}
             </template>
 
+            <template #item.personal_email="{ item }">
+              {{ item.personal_email || '—' }}
+            </template>
+
             <template #item.status="{ item }">
               <v-chip :color="getStatusColor(item.status)" label small>
                 {{ formatStatus(item.status) }}
@@ -174,6 +178,7 @@
     { title: 'Segundo Apellido', key: 'second_last_name' },
     { title: 'Carrera', key: 'career' },
     { title: 'Email', key: 'institutional_email' },
+    { title: 'Correo Personal', key: 'personal_email' },
     { title: 'Estado', key: 'status' },
     { title: 'Registrado', key: 'created_at' },
     { title: 'Acciones', key: 'actions', sortable: false },

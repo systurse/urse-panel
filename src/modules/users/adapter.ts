@@ -1,4 +1,4 @@
-import type { User, UserPayload, UsersPort } from '@/modules/users/port'
+import type { User, UserPayload, UserRoleRef, UsersPort } from '@/modules/users/port'
 import type { HttpClient } from '@/services/http'
 import { httpClient } from '@/services/http'
 
@@ -52,6 +52,33 @@ function getUserRole (user: ApiUser) {
   return 'Sin rol'
 }
 
+function normalizeRoleRef (entry: unknown): UserRoleRef | null {
+  if (entry && typeof entry === 'object') {
+    const record = entry as Record<string, unknown>
+    const id = record.id
+    const name = record.name
+
+    if ((typeof id === 'number' || typeof id === 'string') && typeof name === 'string') {
+      return { id, name }
+    }
+  }
+
+  return null
+}
+
+// Only object-shaped roles carry the `id` the roles endpoints need; a bare role
+// string has nothing to match against `/api/v1/users/{id}/roles/{roleId}`.
+function getUserRoles (user: ApiUser): UserRoleRef[] {
+  if (Array.isArray(user.roles)) {
+    return user.roles
+      .map(entry => normalizeRoleRef(entry))
+      .filter((role): role is UserRoleRef => role !== null)
+  }
+
+  const role = normalizeRoleRef(user.role)
+  return role ? [role] : []
+}
+
 function getUserActive (user: ApiUser) {
   if (typeof user.active === 'boolean') {
     return user.active
@@ -88,6 +115,7 @@ function mapUser (user: ApiUser): User {
     initials: getUserInitials(name),
     name,
     role: getUserRole(user),
+    roles: getUserRoles(user),
   }
 }
 

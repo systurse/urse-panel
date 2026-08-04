@@ -21,6 +21,7 @@ export interface StudentListItem {
   career: Career | string
   status: 'pending' | 'active' | 'suspended'
   institutional_email: string
+  personal_email: string | null
   created_at: string
 }
 
