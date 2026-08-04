@@ -1,5 +1,5 @@
 import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios'
-import { getAuthToken } from '@/services/storage'
+import { clearAuthPermissions, clearAuthRoles, clearAuthToken, clearAuthUser, getAuthToken } from '@/services/storage'
 
 export const http = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -57,6 +57,34 @@ async function parseBlobErrorResponse (error: any) {
 
 http.interceptors.response.use(response => response, parseBlobErrorResponse)
 publicHttp.interceptors.response.use(response => response, parseBlobErrorResponse)
+
+// The login/logout endpoints legitimately return 401 (wrong password, already-invalid
+// session on logout) — those must surface as normal errors, not as a session-expired redirect.
+const SESSION_EXPIRY_EXEMPT_PATHS = ['/api/auth/login', '/api/auth/logout']
+
+function isSessionExpiryExempt (config?: AxiosRequestConfig) {
+  const url = config?.url ?? ''
+  return SESSION_EXPIRY_EXEMPT_PATHS.some(path => url.includes(path))
+}
+
+function handleSessionExpired (error: any) {
+  if (error?.response?.status === 401 && !isSessionExpiryExempt(error.config)) {
+    clearAuthToken()
+    clearAuthUser()
+    clearAuthRoles()
+    clearAuthPermissions()
+
+    if (!window.location.pathname.startsWith('/login')) {
+      window.location.href = '/login?error=' + encodeURIComponent('Tu sesión ha expirado. Inicia sesión nuevamente.')
+    }
+  }
+
+  return Promise.reject(error)
+}
+
+// Only the authenticated `http` instance can have a session to expire — `publicHttp`
+// (OTP lookup/verify, anonymous chat) never carries a token and must not be affected.
+http.interceptors.response.use(response => response, handleSessionExpired)
 
 export const publicHttpClient: HttpClient = {
   delete<TResponse> (url: string, config?: AxiosRequestConfig) {
