@@ -170,6 +170,8 @@
   const headers = [
     { title: 'Matrícula', key: 'matricula' },
     { title: 'Nombre', key: 'name' },
+    { title: 'Primer Apellido', key: 'first_last_name' },
+    { title: 'Segundo Apellido', key: 'second_last_name' },
     { title: 'Carrera', key: 'career' },
     { title: 'Email', key: 'institutional_email' },
     { title: 'Estado', key: 'status' },
