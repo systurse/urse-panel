@@ -120,6 +120,15 @@
                 title="Abrir hoja de credenciales"
                 @click="downloadStudentPDF(item.id)"
               />
+              <v-btn
+                v-if="isAdmin"
+                icon="mdi-wifi-lock"
+                size="small"
+                variant="text"
+                color="info"
+                title="Cambiar contraseña de Wi-Fi"
+                @click="openWifiPasswordDialog(item)"
+              />
             </template>
           </v-data-table>
 
@@ -133,17 +142,37 @@
         </div>
       </v-card-text>
     </v-card>
+
+    <StudentWifiPasswordDialog
+      v-model="wifiPasswordDialog"
+      :student="selectedStudent"
+      @saved="onWifiPasswordSaved"
+    />
+
+    <v-snackbar
+      v-model="snackbar"
+      :color="snackbarColor"
+      location="top"
+      :timeout="6000"
+    >
+      {{ snackbarText }}
+    </v-snackbar>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { onMounted, ref } from 'vue'
+  import { computed, onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
+  import StudentWifiPasswordDialog from '@/modules/students/components/StudentWifiPasswordDialog.vue'
   import { useReport } from '@/modules/students/hooks/useReport'
   import { useStudent } from '@/modules/students/hooks/useStudent'
   import type { StudentFilters } from '@/modules/students/services/reportService'
+  import type { WifiPasswordUpdateResponse } from '@/modules/students/services/studentService'
+  import { useAuthStore } from '@/stores/auth'
 
   const router = useRouter()
+  const authStore = useAuthStore()
+  const isAdmin = computed(() => authStore.isAdmin)
   const {
     students,
     loading,
@@ -161,6 +190,12 @@
   const dateFrom = ref('')
   const dateTo = ref('')
   let searchDebounce: ReturnType<typeof setTimeout> | null = null
+
+  const wifiPasswordDialog = ref(false)
+  const selectedStudent = ref<any>(null)
+  const snackbar = ref(false)
+  const snackbarText = ref('')
+  const snackbarColor = ref<'success' | 'warning' | 'error'>('success')
 
   function currentFilters (): StudentFilters {
     return {
@@ -241,6 +276,32 @@
   function downloadStudentPDF (studentId: number) {
     const apiSoporteUrl = import.meta.env.VITE_API_SOPORTE_URL
     window.open(`${apiSoporteUrl}/api/v1/students/${studentId}/credential-sheet`, '_blank')
+  }
+
+  function openWifiPasswordDialog (student: any) {
+    selectedStudent.value = student
+    wifiPasswordDialog.value = true
+  }
+
+  function onWifiPasswordSaved (result: WifiPasswordUpdateResponse) {
+    const failed = Object.keys(result.failed_campuses ?? {})
+
+    /**
+     * Rosario todavía no tiene enlace con el servidor, así que se avisa cuando un
+     * campus quedó fuera: la contraseña no cambió ahí y el alumno lo notaría.
+     */
+    if (failed.length > 0) {
+      snackbarColor.value = 'warning'
+      snackbarText.value = `Contraseña actualizada en ${result.campuses.join(', ')}, pero falló en: ${failed.join(', ')}.`
+    } else if (result.skipped_campuses?.length > 0) {
+      snackbarColor.value = 'warning'
+      snackbarText.value = `Contraseña actualizada en ${result.campuses.join(', ')}. Sin cambios en: ${result.skipped_campuses.join(', ')} (sin enlace).`
+    } else {
+      snackbarColor.value = 'success'
+      snackbarText.value = 'Contraseña de Wi-Fi actualizada.'
+    }
+
+    snackbar.value = true
   }
 
   onMounted(() => {

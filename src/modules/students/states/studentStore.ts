@@ -80,6 +80,29 @@ export const useStudentStore = defineStore('student', () => {
     }
   }
 
+  const suggestWifiPassword = async () => {
+    const response = await studentService.suggestWifiPassword()
+    return response.password
+  }
+
+  /**
+   * El backend empuja la contraseña a Active Directory antes de guardarla, así que
+   * un error aquí significa que nada cambió: ni en el directorio ni en la base.
+   */
+  const updateWifiPassword = async (studentId: number, password: string) => {
+    loading.value = true
+    error.value = null
+
+    try {
+      return await studentService.updateWifiPassword(studentId, password)
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Error al actualizar la contraseña de Wi-Fi'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   const clearError = () => {
     error.value = null
   }
@@ -96,6 +119,8 @@ export const useStudentStore = defineStore('student', () => {
     registerStudent,
     fetchStudentStatus,
     resetStudentPassword,
+    suggestWifiPassword,
+    updateWifiPassword,
     loadCareers,
     clearError,
   }
