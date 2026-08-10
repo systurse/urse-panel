@@ -82,6 +82,21 @@ export interface StudentStatus {
   provisioning_steps: ProvisioningStep[]
 }
 
+export interface WifiPasswordSuggestion {
+  password: string
+}
+
+export interface WifiPasswordUpdateResponse {
+  message: string
+  /** Campus de Active Directory donde sí se aplicó el cambio. */
+  campuses: string[]
+  /** Campus sin enlace configurado todavía (hoy, Rosario). */
+  skipped_campuses: string[]
+  /** Campus que rechazaron el cambio, con el motivo. */
+  failed_campuses: Record<string, string>
+  wifi_password: string
+}
+
 export const studentService = {
   async registerStudent (data: StudentRegistration) {
 const response = await httpClient.post<RegisterResponse>(STUDENTS_API, data)
@@ -101,6 +116,21 @@ const response = await httpClient.post<RegisterResponse>(STUDENTS_API, data)
   async resetPassword (studentId: number, password: string) {
     const response = await httpClient.post<any>(
       `${STUDENTS_API}/${studentId}/reset-password`,
+      { password },
+    )
+    return response
+  },
+
+  async suggestWifiPassword () {
+    const response = await httpClient.get<WifiPasswordSuggestion>(
+      `${STUDENTS_API}/wifi-password/suggestion`,
+    )
+    return response
+  },
+
+  async updateWifiPassword (studentId: number, password: string) {
+    const response = await httpClient.post<WifiPasswordUpdateResponse>(
+      `${STUDENTS_API}/${studentId}/wifi-password`,
       { password },
     )
     return response

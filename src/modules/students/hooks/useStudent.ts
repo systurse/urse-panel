@@ -16,6 +16,8 @@ export function useStudent () {
     registerStudent: store.registerStudent,
     fetchStudentStatus: store.fetchStudentStatus,
     resetStudentPassword: store.resetStudentPassword,
+    suggestWifiPassword: store.suggestWifiPassword,
+    updateWifiPassword: store.updateWifiPassword,
     loadCareers: store.loadCareers,
     clearError: store.clearError,
   }
