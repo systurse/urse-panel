@@ -50,6 +50,7 @@
         alt-labels
         class="mt-6"
         flat
+        hide-actions
         :items="stepItems"
       >
         <template #item.1>
@@ -68,7 +69,7 @@
                 <v-text-field
                   v-model="employeeForm.last_name"
                   label="Apellido paterno"
-                  :rules="requiredRules"
+                  :rules="lastNameRules"
                   variant="outlined"
                 />
               </v-col>
@@ -76,7 +77,8 @@
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model="employeeForm.second_last_name"
-                  label="Apellido materno (opcional)"
+                  label="Apellido materno"
+                  :rules="secondLastNameRules"
                   variant="outlined"
                 />
               </v-col>
@@ -166,23 +168,25 @@
                 />
               </v-col>
 
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="passForm.afternoon_shift_start"
-                  label="Inicio turno vespertino (opcional)"
-                  type="time"
-                  variant="outlined"
-                />
-              </v-col>
+              <template v-if="passForm.work_schedule === 'split'">
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="passForm.afternoon_shift_start"
+                    label="Inicio turno vespertino"
+                    type="time"
+                    variant="outlined"
+                  />
+                </v-col>
 
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="passForm.afternoon_shift_end"
-                  label="Fin turno vespertino (opcional)"
-                  type="time"
-                  variant="outlined"
-                />
-              </v-col>
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="passForm.afternoon_shift_end"
+                    label="Fin turno vespertino"
+                    type="time"
+                    variant="outlined"
+                  />
+                </v-col>
+              </template>
 
               <v-col cols="12" md="6">
                 <v-select
@@ -214,73 +218,72 @@
                 />
               </v-col>
 
-              <v-col cols="12" md="4">
-                <v-text-field
-                  v-model="passForm.within_schedule_exit_at"
-                  label="Salida dentro horario"
-                  type="time"
-                  variant="outlined"
-                />
-              </v-col>
+              <template v-if="passForm.schedule_timing === 'within_schedule'">
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="passForm.within_schedule_exit_at"
+                    label="Salida dentro horario"
+                    type="time"
+                    variant="outlined"
+                  />
+                </v-col>
 
-              <v-col cols="12" md="4">
-                <v-text-field
-                  v-model="passForm.within_schedule_return_at"
-                  label="Regreso dentro horario"
-                  type="time"
-                  variant="outlined"
-                />
-              </v-col>
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="passForm.within_schedule_return_at"
+                    label="Regreso dentro horario"
+                    type="time"
+                    variant="outlined"
+                  />
+                </v-col>
 
-              <v-col cols="12" md="4">
-                <v-text-field
-                  v-model="passForm.within_schedule_duration"
-                  label="Duración dentro horario"
-                  placeholder="Ej. 01:30"
-                  variant="outlined"
-                />
-              </v-col>
+                <v-col class="duration-col" cols="12" md="4">
+                  <span class="duration-label">Duración dentro horario</span>
+                  <span class="duration-value">{{ withinScheduleDuration || '—' }}</span>
+                </v-col>
+              </template>
 
-              <v-col cols="12" md="4">
-                <v-text-field
-                  v-model="passForm.before_schedule_entry_at"
-                  label="Entrada antes del horario"
-                  type="time"
-                  variant="outlined"
-                />
-              </v-col>
+              <template v-else-if="passForm.schedule_timing === 'before_schedule'">
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="passForm.before_schedule_entry_at"
+                    label="Entrada antes del horario"
+                    type="time"
+                    variant="outlined"
+                  />
+                </v-col>
 
-              <v-col cols="12" md="4">
-                <v-text-field
-                  v-model="passForm.before_schedule_exit_at"
-                  label="Salida antes del horario"
-                  type="time"
-                  variant="outlined"
-                />
-              </v-col>
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model="passForm.before_schedule_exit_at"
+                    label="Salida antes del horario"
+                    type="time"
+                    variant="outlined"
+                  />
+                </v-col>
 
-              <v-col cols="12" md="4">
-                <v-text-field
-                  v-model="passForm.before_schedule_duration"
-                  label="Duración antes del horario"
-                  placeholder="Ej. 00:45"
-                  variant="outlined"
-                />
-              </v-col>
+                <v-col class="duration-col" cols="12" md="4">
+                  <span class="duration-label">Duración antes del horario</span>
+                  <span class="duration-value">{{ beforeScheduleDuration || '—' }}</span>
+                </v-col>
+              </template>
 
               <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="passForm.immediate_supervisor_name"
-                  label="Nombre jefe inmediato"
+                <v-select
+                  v-model="passForm.administrative_director_name"
+                  :items="administrativeDirectorOptions"
+                  label="Nombre dirección administrativa"
                   :rules="requiredRules"
                   variant="outlined"
                 />
               </v-col>
 
               <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="passForm.administrative_director_name"
-                  label="Nombre dirección administrativa"
+                <v-select
+                  v-model="passForm.immediate_supervisor_name"
+                  :disabled="!passForm.administrative_director_name"
+                  :items="immediateSupervisorOptions"
+                  label="Nombre jefe inmediato"
                   :rules="requiredRules"
                   variant="outlined"
                 />
@@ -310,7 +313,7 @@
 
 <script lang="ts" setup>
   import type { AxiosError } from 'axios'
-  import { computed, onMounted, ref } from 'vue'
+  import { computed, onMounted, ref, watch } from 'vue'
   import { useRouter } from 'vue-router'
   import { httpClient } from '@/services/http'
   import { useAuthStore } from '@/stores/auth'
@@ -357,10 +360,8 @@
     schedule_timing: '',
     within_schedule_exit_at: '',
     within_schedule_return_at: '',
-    within_schedule_duration: '',
     before_schedule_entry_at: '',
     before_schedule_exit_at: '',
-    before_schedule_duration: '',
     immediate_supervisor_name: '',
     immediate_supervisor_signature: '',
     administrative_director_name: '',
@@ -384,8 +385,59 @@
     { title: 'Antes del horario', value: 'before_schedule' },
   ]
 
+  // Cada dirección administrativa lista a su(s) jefe(s) inmediato(s); al agregar una
+  // nueva dirección, sumar aquí sus opciones de jefe inmediato correspondientes.
+  const directorSupervisors: Record<string, string[]> = {
+    'Departamento de Sistemas y Telecomunicaciones': ['Isaac Gonzalo Mancera Betancourt'],
+  }
+
+  const administrativeDirectorOptions = Object.keys(directorSupervisors)
+
+  const immediateSupervisorOptions = computed(() =>
+    directorSupervisors[passForm.value.administrative_director_name] ?? [],
+  )
+
+  watch(() => passForm.value.administrative_director_name, director => {
+    const supervisors = directorSupervisors[director] ?? []
+    passForm.value.immediate_supervisor_name = supervisors[0] ?? ''
+  })
+
+  function computeDuration (startTime: string, endTime: string) {
+    if (!startTime || !endTime) return ''
+
+    const [startHours, startMinutes] = startTime.split(':').map(Number)
+    const [endHours, endMinutes] = endTime.split(':').map(Number)
+
+    if ([startHours, startMinutes, endHours, endMinutes].some(value => Number.isNaN(value))) {
+      return ''
+    }
+
+    let diffMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes)
+    if (diffMinutes < 0) diffMinutes += 24 * 60
+
+    const hours = String(Math.floor(diffMinutes / 60)).padStart(2, '0')
+    const minutes = String(diffMinutes % 60).padStart(2, '0')
+    return `${hours}:${minutes}`
+  }
+
+  const withinScheduleDuration = computed(() =>
+    computeDuration(passForm.value.within_schedule_exit_at, passForm.value.within_schedule_return_at),
+  )
+
+  const beforeScheduleDuration = computed(() =>
+    computeDuration(passForm.value.before_schedule_entry_at, passForm.value.before_schedule_exit_at),
+  )
+
   const requiredRules = [
     (v: string) => !!v || 'Este campo es requerido',
+  ]
+
+  const lastNameRules = [
+    (v: string) => !!v || !!employeeForm.value.second_last_name || 'Registra al menos un apellido (paterno o materno)',
+  ]
+
+  const secondLastNameRules = [
+    (v: string) => !!v || !!employeeForm.value.last_name || 'Registra al menos un apellido (paterno o materno)',
   ]
 
   function normalizeOptional (value: string) {
@@ -425,7 +477,15 @@
       employee_number?: string
       category?: string
       assignment_area?: string
+      work_schedule?: string | null
+      shift_start?: string | null
+      shift_end?: string | null
     }
+  }
+
+  function normalizeTimeToInput (value: string) {
+    if (!value) return ''
+    return value.slice(0, 5)
   }
 
   async function preloadEmployeeByUserId () {
@@ -454,6 +514,11 @@
         category: employee.category ?? '',
         assignment_area: employee.assignment_area ?? '',
       }
+
+      // Precarga el horario ya registrado del empleado para no volver a capturarlo en cada pase.
+      passForm.value.work_schedule = employee.work_schedule ?? ''
+      passForm.value.shift_start = normalizeTimeToInput(employee.shift_start ?? '')
+      passForm.value.shift_end = normalizeTimeToInput(employee.shift_end ?? '')
 
       if (employee.id) {
         createdEmployeeId.value = employee.id
@@ -494,7 +559,7 @@
     try {
       const payload = {
         first_name: employeeForm.value.first_name,
-        last_name: employeeForm.value.last_name,
+        last_name: normalizeOptional(employeeForm.value.last_name),
         second_last_name: normalizeOptional(employeeForm.value.second_last_name),
         employee_number: employeeForm.value.employee_number,
         category: employeeForm.value.category,
@@ -547,10 +612,10 @@
         schedule_timing: passForm.value.schedule_timing,
         within_schedule_exit_at: normalizeTimeToApi(passForm.value.within_schedule_exit_at),
         within_schedule_return_at: normalizeTimeToApi(passForm.value.within_schedule_return_at),
-        within_schedule_duration: normalizeOptional(passForm.value.within_schedule_duration),
+        within_schedule_duration: normalizeOptional(withinScheduleDuration.value),
         before_schedule_entry_at: normalizeTimeToApi(passForm.value.before_schedule_entry_at),
         before_schedule_exit_at: normalizeTimeToApi(passForm.value.before_schedule_exit_at),
-        before_schedule_duration: normalizeOptional(passForm.value.before_schedule_duration),
+        before_schedule_duration: normalizeOptional(beforeScheduleDuration.value),
         immediate_supervisor_name: passForm.value.immediate_supervisor_name,
         immediate_supervisor_signature: normalizeOptional(passForm.value.immediate_supervisor_signature),
         administrative_director_name: passForm.value.administrative_director_name,
@@ -613,6 +678,25 @@
   display: flex;
   align-items: center;
   margin-top: 12px;
+}
+
+.duration-col {
+  display: grid;
+  gap: 2px;
+  align-content: center;
+}
+
+.duration-label {
+  font-size: 0.75rem;
+  color: #6f5a60;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.duration-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #000000;
 }
 
 @media (max-width: 900px) {
