@@ -25,7 +25,7 @@
 
 <script lang="ts" setup>
   import type { RouteMeta } from 'vue-router'
-  import { computed, ref, onMounted } from 'vue'
+  import { computed, onMounted, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
   import DashboardContent from '@/components/dashboard/DashboardContent.vue'
@@ -49,7 +49,7 @@
     }
   })
 
-  const moduleBase = computed(() => `/${route.path.split('/')[1]}`)
+  const moduleBase = computed(() => `/${route.path.split('/', 2)[1]}`)
 
   const navigationItems = computed(() => {
     if (moduleBase.value === '/administracion') {
@@ -83,6 +83,18 @@
           to: '/administracion/permisos',
           icon: 'mdi-lock-outline',
           subtitle: 'Listado de permisos y capacidades asociadas.',
+        },
+        {
+          title: 'Áreas',
+          to: '/administracion/areas',
+          icon: 'mdi-sitemap-outline',
+          subtitle: 'Jerarquía de direcciones, coordinaciones y departamentos.',
+        },
+        {
+          title: 'Empleados',
+          to: '/administracion/empleados',
+          icon: 'mdi-account-hard-hat-outline',
+          subtitle: 'Alta, edición y ficha de empleados.',
         },
         {
           title: 'Correos',
@@ -279,7 +291,7 @@
     router.push('/login')
   }
 
-  const closeDrawerOnNavigation = () => {
+  function closeDrawerOnNavigation () {
     if (display.xs.value || display.sm.value) {
       drawer.value = false
     }

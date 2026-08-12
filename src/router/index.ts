@@ -10,11 +10,24 @@ import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import ModulesLayout from '@/layouts/ModulesLayout.vue'
 import SSMLayout from '@/layouts/SSM.vue'
 import AdminExitPasses from '@/pages/admin-exit-passes.vue'
+import AdminMail from '@/pages/admin-mail.vue'
 import Administration from '@/pages/administracion.vue'
 import Aprobaciones from '@/pages/aprobaciones.vue'
+import Areas from '@/pages/areas.vue'
 import AuthCallback from '@/pages/auth-callback.vue'
+import ChatSoporte from '@/pages/chat-soporte.vue'
+import Credenciales from '@/pages/credenciales.vue'
+import Employees from '@/pages/employees.vue'
 import Index from '@/pages/index.vue'
+import InscripcionesConfirmacion from '@/pages/inscripciones-confirmacion.vue'
+import InscripcionesEditar from '@/pages/inscripciones-editar.vue'
+import InscripcionesExportar from '@/pages/inscripciones-exportar.vue'
+import InscripcionesImportar from '@/pages/inscripciones-importar.vue'
+import InscripcionesListado from '@/pages/inscripciones-listado.vue'
+import InscripcionesReporte from '@/pages/inscripciones-reporte.vue'
+import Inscripciones from '@/pages/inscripciones.vue'
 import Login from '@/pages/login.vue'
+import MisSolicitudes from '@/pages/mis-solicitudes.vue'
 import Negociaciones from '@/pages/negociaciones.vue'
 import Permissions from '@/pages/permissions.vue'
 import Roles from '@/pages/roles.vue'
@@ -22,19 +35,11 @@ import SACC from '@/pages/sacc.vue'
 import Settings from '@/pages/settings.vue'
 import SPSPasses from '@/pages/sps-pases.vue'
 import SPS from '@/pages/sps.vue'
+import SPSPassReturnCode from '@/pages/sps/pase-codigo-regreso.vue'
+import SPSPassReturnConfirm from '@/pages/sps/pase-confirmar-regreso.vue'
+import SPSPassDetail from '@/pages/sps/pase-detalle.vue'
 import SPSReportExitPasses from '@/pages/sps/report-exit-passes.vue'
 import SSM from '@/pages/ssm.vue'
-import Inscripciones from '@/pages/inscripciones.vue'
-import InscripcionesConfirmacion from '@/pages/inscripciones-confirmacion.vue'
-import InscripcionesEditar from '@/pages/inscripciones-editar.vue'
-import InscripcionesReporte from '@/pages/inscripciones-reporte.vue'
-import InscripcionesListado from '@/pages/inscripciones-listado.vue'
-import InscripcionesImportar from '@/pages/inscripciones-importar.vue'
-import InscripcionesExportar from '@/pages/inscripciones-exportar.vue'
-import Credenciales from '@/pages/credenciales.vue'
-import ChatSoporte from '@/pages/chat-soporte.vue'
-import AdminMail from '@/pages/admin-mail.vue'
-import MisSolicitudes from '@/pages/mis-solicitudes.vue'
 import Tickets from '@/pages/tickets.vue'
 import Users from '@/pages/users.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -103,6 +108,14 @@ const router = createRouter({
           component: Permissions,
         },
         {
+          path: 'areas',
+          component: Areas,
+        },
+        {
+          path: 'empleados',
+          component: Employees,
+        },
+        {
           path: 'pases-salida',
           component: AdminExitPasses,
           meta: { requiresAdministrator: true },
@@ -160,6 +173,18 @@ const router = createRouter({
         {
           path: 'pases',
           component: SPSPasses,
+        },
+        {
+          path: 'pases/:id',
+          component: SPSPassDetail,
+        },
+        {
+          path: 'pases/:id/regreso',
+          component: SPSPassReturnConfirm,
+        },
+        {
+          path: 'pases/:id/codigo',
+          component: SPSPassReturnCode,
         },
         {
           path: 'reportes',

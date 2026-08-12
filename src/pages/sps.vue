@@ -5,10 +5,12 @@
         <div>
           <div class="section-kicker">SPS</div>
           <h2 class="card-title">Solicitud de pase de salida</h2>
+
           <p class="card-subtitle">
             Captura de empleado y pase en dos secciones.
           </p>
         </div>
+
         <v-chip color="#c89215" variant="tonal">
           Paso {{ currentStep }}
         </v-chip>
@@ -34,6 +36,7 @@
       >
         {{ errorMessage }}
       </v-alert>
+
       <v-alert
         v-else-if="employeePrefilled"
         class="mt-4"
@@ -102,9 +105,13 @@
               </v-col>
 
               <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="employeeForm.assignment_area"
-                  label="Área de adscripción"
+                <v-select
+                  v-model="employeeForm.area_id"
+                  item-title="name"
+                  item-value="id"
+                  :items="areas"
+                  label="Área"
+                  :loading="areasLoading"
                   :rules="requiredRules"
                   variant="outlined"
                 />
@@ -113,6 +120,7 @@
 
             <div class="actions-row">
               <v-spacer />
+
               <v-btn
                 color="#c89215"
                 :loading="submittingEmployee || loadingEmployee"
@@ -268,25 +276,14 @@
                 </v-col>
               </template>
 
-              <v-col cols="12" md="6">
-                <v-select
-                  v-model="passForm.administrative_director_name"
-                  :items="administrativeDirectorOptions"
-                  label="Nombre dirección administrativa"
-                  :rules="requiredRules"
-                  variant="outlined"
-                />
+              <v-col class="duration-col" cols="12" md="6">
+                <span class="duration-label">Dirección administrativa</span>
+                <span class="duration-value">{{ employeeArea?.name ?? 'Sin área asignada' }}</span>
               </v-col>
 
-              <v-col cols="12" md="6">
-                <v-select
-                  v-model="passForm.immediate_supervisor_name"
-                  :disabled="!passForm.administrative_director_name"
-                  :items="immediateSupervisorOptions"
-                  label="Nombre jefe inmediato"
-                  :rules="requiredRules"
-                  variant="outlined"
-                />
+              <v-col class="duration-col" cols="12" md="6">
+                <span class="duration-label">Jefe inmediato</span>
+                <span class="duration-value">{{ supervisor ? supervisor.name : 'Sin encargado asignado aún' }}</span>
               </v-col>
             </v-row>
 
@@ -294,7 +291,9 @@
               <v-btn variant="text" @click="currentStep = 1">
                 Volver
               </v-btn>
+
               <v-spacer />
+
               <v-btn
                 color="#c89215"
                 :loading="submittingPass"
@@ -312,9 +311,12 @@
 </template>
 
 <script lang="ts" setup>
+  import type { Employee } from '@/modules/employees/port'
   import type { AxiosError } from 'axios'
-  import { computed, onMounted, ref, watch } from 'vue'
+  import { computed, onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
+  import { useAreas } from '@/modules/areas/useAreas'
+  import { employeesAdapter } from '@/modules/employees/adapter'
   import { httpClient } from '@/services/http'
   import { useAuthStore } from '@/stores/auth'
 
@@ -335,16 +337,28 @@
   const createdEmployeeId = ref<number | string | null>(null)
   const employeePrefilled = ref(false)
 
+  const { areas, loading: areasLoading } = useAreas()
+
   const employeeFormRef = ref()
   const employeeValid = ref(false)
-  const employeeForm = ref({
+  const employeeForm = ref<{
+    first_name: string
+    last_name: string
+    second_last_name: string
+    employee_number: string
+    category: string
+    area_id: number | string | null
+  }>({
     first_name: '',
     last_name: '',
     second_last_name: '',
     employee_number: '',
     category: '',
-    assignment_area: '',
+    area_id: null,
   })
+
+  const employeeArea = computed(() => areas.value.find(area => area.id === employeeForm.value.area_id) ?? null)
+  const supervisor = ref<Employee | null>(null)
 
   const passFormRef = ref()
   const passValid = ref(false)
@@ -362,9 +376,7 @@
     within_schedule_return_at: '',
     before_schedule_entry_at: '',
     before_schedule_exit_at: '',
-    immediate_supervisor_name: '',
     immediate_supervisor_signature: '',
-    administrative_director_name: '',
     administrative_director_signature: '',
     employee_signature: '',
   })
@@ -385,22 +397,18 @@
     { title: 'Antes del horario', value: 'before_schedule' },
   ]
 
-  // Cada dirección administrativa lista a su(s) jefe(s) inmediato(s); al agregar una
-  // nueva dirección, sumar aquí sus opciones de jefe inmediato correspondientes.
-  const directorSupervisors: Record<string, string[]> = {
-    'Departamento de Sistemas y Telecomunicaciones': ['Isaac Gonzalo Mancera Betancourt'],
+  async function loadSupervisor () {
+    if (!createdEmployeeId.value) {
+      supervisor.value = null
+      return
+    }
+
+    try {
+      supervisor.value = await employeesAdapter.getSupervisor(createdEmployeeId.value)
+    } catch {
+      supervisor.value = null
+    }
   }
-
-  const administrativeDirectorOptions = Object.keys(directorSupervisors)
-
-  const immediateSupervisorOptions = computed(() =>
-    directorSupervisors[passForm.value.administrative_director_name] ?? [],
-  )
-
-  watch(() => passForm.value.administrative_director_name, director => {
-    const supervisors = directorSupervisors[director] ?? []
-    passForm.value.immediate_supervisor_name = supervisors[0] ?? ''
-  })
 
   function computeDuration (startTime: string, endTime: string) {
     if (!startTime || !endTime) return ''
@@ -456,33 +464,6 @@
     return axiosError?.response?.data?.message ?? axiosError?.message ?? fallback
   }
 
-  function parseEmployeeResponse (response: unknown) {
-    if (!response || typeof response !== 'object') {
-      return null
-    }
-
-    const source = 'data' in response
-      ? (response as { data?: unknown }).data
-      : response
-
-    if (!source || typeof source !== 'object') {
-      return null
-    }
-
-    return source as {
-      id?: number | string
-      first_name?: string
-      last_name?: string
-      second_last_name?: string | null
-      employee_number?: string
-      category?: string
-      assignment_area?: string
-      work_schedule?: string | null
-      shift_start?: string | null
-      shift_end?: string | null
-    }
-  }
-
   function normalizeTimeToInput (value: string) {
     if (!value) return ''
     return value.slice(0, 5)
@@ -497,22 +478,20 @@
     loadingEmployee.value = true
 
     try {
-      const response = await httpClient.get<unknown>('/api/v1/employee', {
-        params: { user_id: userId },
-      })
-      const employee = parseEmployeeResponse(response)
+      const employee = await employeesAdapter.getByUserId(userId)
 
       if (!employee) {
+        // No existe empleado para este usuario: se captura manualmente.
         return
       }
 
       employeeForm.value = {
-        first_name: employee.first_name ?? '',
+        area_id: employee.area_id,
+        category: employee.category,
+        employee_number: employee.employee_number,
+        first_name: employee.first_name,
         last_name: employee.last_name ?? '',
         second_last_name: employee.second_last_name ?? '',
-        employee_number: employee.employee_number ?? '',
-        category: employee.category ?? '',
-        assignment_area: employee.assignment_area ?? '',
       }
 
       // Precarga el horario ya registrado del empleado para no volver a capturarlo en cada pase.
@@ -520,18 +499,11 @@
       passForm.value.shift_start = normalizeTimeToInput(employee.shift_start ?? '')
       passForm.value.shift_end = normalizeTimeToInput(employee.shift_end ?? '')
 
-      if (employee.id) {
-        createdEmployeeId.value = employee.id
-        employeePrefilled.value = true
-      }
+      createdEmployeeId.value = employee.id
+      employeePrefilled.value = true
+      await loadSupervisor()
     } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>
-      const status = axiosError.response?.status
-
-      if (status === 404) {
-        // No existe empleado para este usuario: se captura manualmente.
-        return
-      }
+      const status = (error as AxiosError)?.response?.status
 
       if (status === 422) {
         errorMessage.value = resolveApiMessage(error, 'El parámetro user_id no es válido.')
@@ -551,39 +523,25 @@
     }
 
     const { valid } = await employeeFormRef.value.validate()
-    if (!valid) return
+    if (!valid || !employeeForm.value.area_id) return
 
     submittingEmployee.value = true
     errorMessage.value = null
 
     try {
-      const payload = {
+      const employee = await employeesAdapter.create({
+        area_id: employeeForm.value.area_id,
+        category: employeeForm.value.category,
+        employee_number: employeeForm.value.employee_number,
         first_name: employeeForm.value.first_name,
         last_name: normalizeOptional(employeeForm.value.last_name),
         second_last_name: normalizeOptional(employeeForm.value.second_last_name),
-        employee_number: employeeForm.value.employee_number,
-        category: employeeForm.value.category,
-        assignment_area: employeeForm.value.assignment_area,
         user_id: authStore.user?.id ?? null,
-      }
+      })
 
-      const response = await httpClient.post<{ data?: { id?: number | string, employee_id?: number | string } } | { id?: number | string, employee_id?: number | string }, typeof payload>(
-        '/api/v1/employees',
-        payload,
-      )
-
-      const responseRecord = response && typeof response === 'object' && 'data' in response
-        ? response.data as { id?: number | string, employee_id?: number | string } | undefined
-        : response as { id?: number | string, employee_id?: number | string } | undefined
-
-      const employeeId = responseRecord?.id ?? responseRecord?.employee_id
-
-      if (!employeeId) {
-        throw new Error('No se recibió el ID del empleado creado.')
-      }
-
-      createdEmployeeId.value = employeeId
+      createdEmployeeId.value = employee.id
       currentStep.value = 2
+      await loadSupervisor()
     } catch (error) {
       errorMessage.value = resolveApiMessage(error, 'No fue posible registrar el empleado.')
     } finally {
@@ -616,9 +574,9 @@
         before_schedule_entry_at: normalizeTimeToApi(passForm.value.before_schedule_entry_at),
         before_schedule_exit_at: normalizeTimeToApi(passForm.value.before_schedule_exit_at),
         before_schedule_duration: normalizeOptional(beforeScheduleDuration.value),
-        immediate_supervisor_name: passForm.value.immediate_supervisor_name,
+        immediate_supervisor_name: supervisor.value?.name ?? '',
         immediate_supervisor_signature: normalizeOptional(passForm.value.immediate_supervisor_signature),
-        administrative_director_name: passForm.value.administrative_director_name,
+        administrative_director_name: employeeArea.value?.name ?? '',
         administrative_director_signature: normalizeOptional(passForm.value.administrative_director_signature),
         employee_signature: normalizeOptional(passForm.value.employee_signature),
       }

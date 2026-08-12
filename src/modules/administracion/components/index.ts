@@ -1,3 +1,5 @@
+export { default as AdministrationAreasView } from './AdministrationAreasView.vue'
+export { default as AdministrationEmployeesView } from './AdministrationEmployeesView.vue'
 export { default as AdministrationOverview } from './AdministrationOverview.vue'
 export { default as AdministrationPermissionsView } from './AdministrationPermissionsView.vue'
 export { default as AdministrationRolesView } from './AdministrationRolesView.vue'

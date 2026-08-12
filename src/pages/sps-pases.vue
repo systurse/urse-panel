@@ -4,10 +4,12 @@
       <div>
         <div class="section-kicker">SPS</div>
         <h2 class="card-title">Pases registrados</h2>
+
         <p class="card-subtitle">
           Historial de pases de salida registrados en el sistema.
         </p>
       </div>
+
       <v-btn
         color="#c89215"
         :loading="loading"
@@ -52,14 +54,17 @@
           <div class="pass-row-head">
             <div>
               <div class="pass-employee">{{ exitPass.employeeName }}</div>
+
               <div class="pass-meta">
                 #{{ exitPass.employeeNumber || 'N/A' }} · {{ formatDate(exitPass.usageDate) }}
               </div>
             </div>
+
             <div class="pass-head-badges">
               <v-chip :color="statusColor(exitPass.currentStatus)" size="small" variant="tonal">
                 {{ statusLabel(exitPass.currentStatus) }}
               </v-chip>
+
               <v-chip color="#c89215" size="small" variant="tonal">
                 {{ optionLabel(reasonOptions, exitPass.reason, 'Sin motivo') }}
               </v-chip>
@@ -71,14 +76,17 @@
               <span class="label">Jornada</span>
               <span>{{ optionLabel(workScheduleOptions, exitPass.workSchedule) }}</span>
             </div>
+
             <div>
               <span class="label">Horario</span>
               <span>{{ exitPass.shiftStart || '—' }} - {{ exitPass.shiftEnd || '—' }}</span>
             </div>
+
             <div>
               <span class="label">Jefe inmediato</span>
               <span>{{ exitPass.supervisorName || '—' }}</span>
             </div>
+
             <div>
               <span class="label">Director administrativo</span>
               <span>{{ exitPass.directorName || '—' }}</span>
@@ -91,6 +99,16 @@
           </div>
 
           <div class="pass-actions">
+            <v-btn
+              color="#1e3a5f"
+              prepend-icon="mdi-eye-outline"
+              size="small"
+              :to="`/sps/pases/${exitPass.id}`"
+              variant="text"
+            >
+              Ver detalle
+            </v-btn>
+
             <v-btn
               v-if="exitPass.currentStatus === 'pending'"
               color="#c89215"
@@ -306,6 +324,7 @@
       <v-card-actions>
         <v-spacer />
         <v-btn text="Cancelar" variant="text" @click="closeEditDialog" />
+
         <v-btn
           color="#c89215"
           :loading="editingLoading"

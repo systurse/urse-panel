@@ -21,6 +21,18 @@ export const useAdministrationStore = defineStore('administracion', () => {
       to: '/administracion/permisos',
       icon: 'mdi-lock-outline',
     },
+    {
+      title: 'Áreas',
+      description: 'Jerarquía de direcciones, coordinaciones y departamentos, y sus encargados.',
+      to: '/administracion/areas',
+      icon: 'mdi-sitemap-outline',
+    },
+    {
+      title: 'Empleados',
+      description: 'Alta, edición y ficha de los empleados registrados en el sistema.',
+      to: '/administracion/empleados',
+      icon: 'mdi-account-hard-hat-outline',
+    },
   ])
 
   return {
