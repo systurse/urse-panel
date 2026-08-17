@@ -5,10 +5,12 @@
         <div>
           <div class="section-kicker">Administración</div>
           <h2 class="card-title">Pases de salida</h2>
+
           <p class="card-subtitle">
             Consulta todos los pases y autoriza o rechaza los que estén en revisión.
           </p>
         </div>
+
         <v-btn
           color="#FAB21A"
           :loading="loading"
@@ -49,6 +51,7 @@
               <th class="th-actions">Acciones</th>
             </tr>
           </thead>
+
           <tbody>
             <tr v-for="pass in exitPasses" :key="String(pass.id)">
               <td>{{ pass.id }}</td>
@@ -56,11 +59,13 @@
               <td>{{ pass.employeeNumber || '—' }}</td>
               <td>{{ formatDate(pass.usageDate) }}</td>
               <td>{{ reasonLabel(pass.reason) }}</td>
+
               <td>
                 <v-chip :color="statusColor(pass.currentStatus)" size="small" variant="tonal">
                   {{ statusLabel(pass.currentStatus) }}
                 </v-chip>
               </td>
+
               <td class="td-actions">
                 <v-btn
                   color="primary"
@@ -92,6 +97,7 @@
             <v-chip :color="statusColor(selectedPass.currentStatus)" size="small" variant="tonal">
               {{ statusLabel(selectedPass.currentStatus) }}
             </v-chip>
+
             <span class="text-body-2 text-medium-emphasis ml-2">
               {{ selectedPass.employeeName }} · #{{ selectedPass.employeeNumber || 'N/A' }}
             </span>
@@ -107,6 +113,7 @@
                 variant="outlined"
               />
             </v-col>
+
             <v-col cols="12" md="6">
               <v-text-field
                 density="comfortable"
@@ -116,6 +123,7 @@
                 variant="outlined"
               />
             </v-col>
+
             <v-col cols="12" md="6">
               <v-text-field
                 density="comfortable"
@@ -125,6 +133,7 @@
                 variant="outlined"
               />
             </v-col>
+
             <v-col cols="12" md="6">
               <v-text-field
                 density="comfortable"
@@ -134,6 +143,7 @@
                 variant="outlined"
               />
             </v-col>
+
             <v-col cols="12" md="6">
               <v-text-field
                 density="comfortable"
@@ -143,6 +153,7 @@
                 variant="outlined"
               />
             </v-col>
+
             <v-col cols="12" md="6">
               <v-text-field
                 density="comfortable"
@@ -152,6 +163,7 @@
                 variant="outlined"
               />
             </v-col>
+
             <v-col cols="12" md="6">
               <v-text-field
                 density="comfortable"
@@ -161,6 +173,7 @@
                 variant="outlined"
               />
             </v-col>
+
             <v-col cols="12" md="6">
               <v-text-field
                 density="comfortable"
@@ -170,6 +183,7 @@
                 variant="outlined"
               />
             </v-col>
+
             <v-col cols="12">
               <v-textarea
                 auto-grow
@@ -181,6 +195,7 @@
                 variant="outlined"
               />
             </v-col>
+
             <v-col cols="12" md="4">
               <v-text-field
                 density="comfortable"
@@ -190,6 +205,7 @@
                 variant="outlined"
               />
             </v-col>
+
             <v-col cols="12" md="4">
               <v-text-field
                 density="comfortable"
@@ -199,6 +215,7 @@
                 variant="outlined"
               />
             </v-col>
+
             <v-col cols="12" md="4">
               <v-text-field
                 density="comfortable"
@@ -208,6 +225,7 @@
                 variant="outlined"
               />
             </v-col>
+
             <v-col cols="12" md="4">
               <v-text-field
                 density="comfortable"
@@ -217,6 +235,7 @@
                 variant="outlined"
               />
             </v-col>
+
             <v-col cols="12" md="4">
               <v-text-field
                 density="comfortable"
@@ -226,6 +245,7 @@
                 variant="outlined"
               />
             </v-col>
+
             <v-col cols="12" md="4">
               <v-text-field
                 density="comfortable"
@@ -235,6 +255,7 @@
                 variant="outlined"
               />
             </v-col>
+
             <v-col cols="12" md="6">
               <v-text-field
                 density="comfortable"
@@ -244,6 +265,7 @@
                 variant="outlined"
               />
             </v-col>
+
             <v-col cols="12" md="6">
               <v-text-field
                 density="comfortable"
@@ -253,6 +275,7 @@
                 variant="outlined"
               />
             </v-col>
+
             <v-col v-if="selectedPass.notes" cols="12">
               <v-textarea
                 auto-grow
@@ -266,11 +289,56 @@
             </v-col>
           </v-row>
 
+          <div v-if="canSendReturnCode" class="review-block mt-4">
+            <v-divider class="mb-4" />
+
+            <div class="text-subtitle-2 font-weight-bold mb-2">
+              Regreso del empleado
+            </div>
+
+            <p class="text-body-2 text-medium-emphasis mb-3">
+              Envía un código de 6 dígitos al correo institucional de
+              {{ selectedPass.employeeName }} para confirmar su regreso. El código vence a los
+              5 minutos y solo puede reenviarse una vez por minuto.
+            </p>
+
+            <div class="return-actions">
+              <v-btn
+                color="#c89215"
+                :disabled="returnCodeCooldown > 0"
+                :loading="returnCodeSending"
+                prepend-icon="mdi-email-fast-outline"
+                variant="flat"
+                @click="sendReturnCode"
+              >
+                {{ returnCodeCooldown > 0 ? `Reenviar en ${returnCodeCooldown}s` : 'Enviar código de regreso' }}
+              </v-btn>
+
+              <v-btn
+                prepend-icon="mdi-key-outline"
+                :to="`/sps/pases/${selectedPass.id}/codigo`"
+                variant="text"
+              >
+                Ver código vigente
+              </v-btn>
+
+              <v-btn
+                prepend-icon="mdi-check-decagram-outline"
+                :to="`/sps/pases/${selectedPass.id}/regreso`"
+                variant="text"
+              >
+                Confirmar regreso
+              </v-btn>
+            </div>
+          </div>
+
           <div v-if="canReviewPass" class="review-block mt-4">
             <v-divider class="mb-4" />
+
             <div class="text-subtitle-2 font-weight-bold mb-2">
               Resolución
             </div>
+
             <v-textarea
               v-model="rejectNotes"
               density="comfortable"
@@ -289,7 +357,9 @@
           <v-btn variant="text" @click="closeDetail">
             Cerrar
           </v-btn>
+
           <v-spacer />
+
           <template v-if="canReviewPass">
             <v-btn
               color="error"
@@ -300,6 +370,7 @@
             >
               Rechazar
             </v-btn>
+
             <v-btn
               color="success"
               :disabled="statusSubmitting"
@@ -327,7 +398,7 @@
 
 <script lang="ts" setup>
   import type { AxiosError } from 'axios'
-  import { computed, onMounted, ref } from 'vue'
+  import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
   import { httpClient } from '@/services/http'
 
   interface ExitPassItem {
@@ -374,6 +445,68 @@
   const snackbarColor = ref<'success' | 'error' | 'info'>('success')
 
   const canReviewPass = computed(() => selectedPass.value?.currentStatus === 'revision')
+
+  const returnCodeSending = ref(false)
+  const returnCodeCooldown = ref(0)
+  let returnCodeTimer: ReturnType<typeof setInterval> | null = null
+
+  // The return code only makes sense once the employee was cleared to leave and
+  // has not been registered back yet.
+  const canSendReturnCode = computed(() => {
+    const pass = selectedPass.value
+    if (!pass) return false
+    return pass.statuses.includes('authorized') && !pass.statuses.includes('returned')
+  })
+
+  function stopReturnCodeCooldown () {
+    if (returnCodeTimer) {
+      clearInterval(returnCodeTimer)
+      returnCodeTimer = null
+    }
+    returnCodeCooldown.value = 0
+  }
+
+  // Mirrors the backend's one-send-per-minute limit per pass so the admin gets a
+  // disabled button instead of a 429.
+  function startReturnCodeCooldown (seconds: number) {
+    stopReturnCodeCooldown()
+    returnCodeCooldown.value = seconds
+    returnCodeTimer = setInterval(() => {
+      returnCodeCooldown.value -= 1
+      if (returnCodeCooldown.value <= 0) {
+        stopReturnCodeCooldown()
+      }
+    }, 1000)
+  }
+
+  async function sendReturnCode () {
+    if (!selectedPass.value) return
+
+    returnCodeSending.value = true
+    errorMessage.value = null
+
+    try {
+      await httpClient.post(`/api/v1/exit-passes/${selectedPass.value.id}/return/otp`)
+      startReturnCodeCooldown(60)
+      showSnackbar('Código de regreso enviado al correo del empleado.', 'success')
+    } catch (error) {
+      const status = (error as AxiosError)?.response?.status
+
+      if (status === 429) {
+        startReturnCodeCooldown(60)
+        showSnackbar('Ya se envió un código hace menos de un minuto. Espera para reenviar.', 'error')
+      } else if (status === 403) {
+        showSnackbar(
+          'No tienes permiso para gestionar el regreso de este pase. Se requiere el rol de administrador, o supervisor del área con el permiso sps.pass.return.',
+          'error',
+        )
+      } else {
+        showSnackbar(resolveMessage(error, 'No fue posible enviar el código de regreso.'), 'error')
+      }
+    } finally {
+      returnCodeSending.value = false
+    }
+  }
 
   function resolveMessage (error: unknown, fallback: string) {
     const axiosError = error as AxiosError<{ message?: string }>
@@ -554,6 +687,9 @@
   function openDetail (pass: ExitPassItem) {
     selectedPass.value = pass
     rejectNotes.value = ''
+    // The send limit is per pass, so a cooldown from another pass must not
+    // carry over to this one.
+    stopReturnCodeCooldown()
     detailDialog.value = true
   }
 
@@ -561,6 +697,7 @@
     detailDialog.value = false
     selectedPass.value = null
     rejectNotes.value = ''
+    stopReturnCodeCooldown()
   }
 
   async function submitStatus (status: 'authorized' | 'refused') {
@@ -601,6 +738,8 @@
   onMounted(() => {
     void loadExitPasses()
   })
+
+  onBeforeUnmount(stopReturnCodeCooldown)
 </script>
 
 <style scoped>
@@ -698,6 +837,13 @@
   border-radius: 12px;
   background: rgb(250 178 26 / 0.06);
   padding: 12px;
+}
+
+.return-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 
 @media (max-width: 900px) {
