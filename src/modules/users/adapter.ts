@@ -1,4 +1,13 @@
-import type { User, UserPayload, UserRoleRef, UsersPort } from '@/modules/users/port'
+import type {
+  PaginatedUsers,
+  PaginationMeta,
+  User,
+  UserFilters,
+  UserPayload,
+  UserRoleRef,
+  UsersPort,
+  UsersQuery,
+} from '@/modules/users/port'
 import type { HttpClient } from '@/services/http'
 import { httpClient } from '@/services/http'
 
@@ -11,6 +20,8 @@ interface LaravelCollectionResponse<TItem> {
 interface SingleResourceResponse<TItem> {
   data?: TItem
 }
+
+export const DEFAULT_PER_PAGE = 10
 
 function getUserName (user: ApiUser) {
   const name = user.name ?? user.full_name ?? user.username
@@ -95,6 +106,22 @@ function getUserActive (user: ApiUser) {
   return true
 }
 
+function getNullableString (value: unknown): string | null {
+  return typeof value === 'string' && value.trim().length > 0 ? value : null
+}
+
+function getUserVerifiedAt (user: ApiUser) {
+  return getNullableString(user.email_verified_at ?? user.verified_at)
+}
+
+function getUserVerified (user: ApiUser, verifiedAt: string | null) {
+  if (typeof user.verified === 'boolean') {
+    return user.verified
+  }
+
+  return verifiedAt !== null
+}
+
 function getUserInitials (name: string) {
   return name
     .split(' ')
@@ -107,15 +134,20 @@ function getUserInitials (name: string) {
 function mapUser (user: ApiUser): User {
   const name = getUserName(user)
   const email = typeof user.email === 'string' ? user.email : ''
+  const verifiedAt = getUserVerifiedAt(user)
 
   return {
     active: getUserActive(user),
+    createdAt: getNullableString(user.created_at),
     email,
     id: typeof user.id === 'number' || typeof user.id === 'string' ? user.id : email,
     initials: getUserInitials(name),
+    microsoftId: getNullableString(user.microsoft_id),
     name,
     role: getUserRole(user),
     roles: getUserRoles(user),
+    verified: getUserVerified(user, verifiedAt),
+    verifiedAt,
   }
 }
 
@@ -138,6 +170,67 @@ function unwrapSingle (response: ApiUser | SingleResourceResponse<ApiUser>): Api
   return response as ApiUser
 }
 
+function toNumber (value: unknown, fallback: number): number {
+  const parsed = typeof value === 'string' ? Number(value) : value
+  return typeof parsed === 'number' && Number.isFinite(parsed) ? parsed : fallback
+}
+
+function toNullableNumber (value: unknown): number | null {
+  const parsed = typeof value === 'string' ? Number(value) : value
+  return typeof parsed === 'number' && Number.isFinite(parsed) ? parsed : null
+}
+
+// Laravel exposes pagination either at the root (`paginate()->toArray()`) or
+// nested under `meta` (API resource collections); both shapes reach this app
+// depending on the endpoint, so read whichever one is present.
+function parsePaginationMeta (response: unknown, itemCount: number, requestedPage: number, requestedPerPage: number): PaginationMeta {
+  const root = (response && typeof response === 'object' ? response : {}) as Record<string, unknown>
+  const nested = (root.meta && typeof root.meta === 'object' ? root.meta : {}) as Record<string, unknown>
+  const source = 'current_page' in nested || 'total' in nested ? nested : root
+
+  const perPage = toNumber(source.per_page, requestedPerPage)
+  const total = toNumber(source.total, itemCount)
+
+  return {
+    currentPage: toNumber(source.current_page, requestedPage),
+    from: toNullableNumber(source.from),
+    lastPage: toNumber(source.last_page, Math.max(1, Math.ceil(total / Math.max(1, perPage)))),
+    perPage,
+    to: toNullableNumber(source.to),
+    total,
+  }
+}
+
+const EMPTY_FILTER_VALUES = new Set<unknown>([undefined, null, ''])
+
+function appendFilterParams (params: Record<string, string>, filters: UserFilters) {
+  for (const [key, value] of Object.entries(filters)) {
+    if (EMPTY_FILTER_VALUES.has(value)) {
+      continue
+    }
+
+    params[`filter[${key}]`] = typeof value === 'boolean' ? String(value) : String(value).trim()
+  }
+
+  return params
+}
+
+function buildListParams (query: UsersQuery): Record<string, string> {
+  const page = query.page ?? 1
+  const perPage = query.perPage ?? DEFAULT_PER_PAGE
+
+  const params: Record<string, string> = {
+    page: String(page),
+    per_page: String(perPage),
+  }
+
+  if (query.sort) {
+    params.sort = query.sort
+  }
+
+  return appendFilterParams(params, query.filters ?? {})
+}
+
 export class HttpUsersAdapter implements UsersPort {
   constructor (private readonly client: HttpClient) {}
 
@@ -151,9 +244,15 @@ export class HttpUsersAdapter implements UsersPort {
     return mapUser(unwrapSingle(response))
   }
 
-  async list () {
-    const response = await this.client.get<ApiUser[] | LaravelCollectionResponse<ApiUser>>('/api/v1/users')
-    return unwrapUsers(response).map(user => mapUser(user))
+  async list (query: UsersQuery = {}): Promise<PaginatedUsers> {
+    const params = buildListParams(query)
+    const response = await this.client.get<ApiUser[] | LaravelCollectionResponse<ApiUser>>('/api/v1/users', { params })
+    const items = unwrapUsers(response).map(user => mapUser(user))
+
+    return {
+      items,
+      meta: parsePaginationMeta(response, items.length, query.page ?? 1, query.perPage ?? DEFAULT_PER_PAGE),
+    }
   }
 
   async remove (userId: number | string) {
