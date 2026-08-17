@@ -33,15 +33,27 @@
         <span>Este pase ya registró su regreso.</span>
       </div>
 
-      <div v-else-if="!isOwner" class="state-box">
+      <div v-else-if="!canManageReturn" class="state-box">
         <v-icon color="#c89215" icon="mdi-lock-outline" size="32" />
-        <span>Este pase no te pertenece — solo el empleado titular puede confirmar el regreso.</span>
+
+        <span>
+          No tienes permiso para gestionar el regreso de este pase. Se requiere ser el empleado
+          titular, tener el rol de administrador, o ser supervisor del área con el permiso
+          <code>sps.pass.return</code>.
+        </span>
       </div>
 
       <div v-else class="mt-4">
         <p class="text-body-2 text-medium-emphasis mb-4">
-          Al presionar "Ya regresé" te enviaremos un código de 6 dígitos a tu correo institucional,
-          vigente por 5 minutos.
+          <template v-if="isOwner">
+            Al presionar "Ya regresé" te enviaremos un código de 6 dígitos a tu correo institucional,
+            vigente por 5 minutos.
+          </template>
+
+          <template v-else>
+            Al presionar "Enviar código" se enviará un código de 6 dígitos al correo institucional
+            del empleado titular, vigente por 5 minutos.
+          </template>
         </p>
 
         <v-btn
@@ -52,7 +64,7 @@
           variant="flat"
           @click="sendOtp"
         >
-          {{ cooldownSeconds > 0 ? `Reenviar en ${cooldownSeconds}s` : 'Ya regresé' }}
+          {{ sendButtonLabel }}
         </v-btn>
 
         <v-divider class="my-5" />
@@ -66,9 +78,11 @@
             variant="outlined"
           />
 
+          <!-- Not gated on `codeSent`: the code may have been sent from the
+               admin view or an earlier visit, and would otherwise be unusable. -->
           <v-btn
             color="primary"
-            :disabled="!codeSent"
+            :disabled="!code"
             :loading="verifying"
             variant="flat"
             @click="verifyOtp"
@@ -87,7 +101,7 @@
 
 <script lang="ts" setup>
   import type { AxiosError } from 'axios'
-  import { onBeforeUnmount, onMounted, ref } from 'vue'
+  import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
   import { useRoute } from 'vue-router'
   import { employeesAdapter } from '@/modules/employees/adapter'
   import { httpClient } from '@/services/http'
@@ -103,7 +117,6 @@
   const alreadyReturned = ref(false)
 
   const sendingOtp = ref(false)
-  const codeSent = ref(false)
   const cooldownSeconds = ref(0)
   let cooldownTimer: ReturnType<typeof setInterval> | null = null
 
@@ -116,6 +129,21 @@
     (v: string) => !!v || 'El código es requerido',
     (v: string) => /^\d{6}$/.test(v) || 'El código debe tener 6 dígitos',
   ]
+
+  // Mirrors the backend's `canBeManagedForReturnBy`: the pass owner, the
+  // administrator role, or a supervisor holding `sps.pass.return`. The area a
+  // supervisor manages is only known server-side, so that half is left to the
+  // API — it answers 403 when the area doesn't match.
+  const canManageReturn = computed(() =>
+    isOwner.value
+    || authStore.isAdmin
+    || (authStore.hasRole('supervisor') && authStore.hasPermission('sps.pass.return')),
+  )
+
+  const sendButtonLabel = computed(() => {
+    if (cooldownSeconds.value > 0) return `Reenviar en ${cooldownSeconds.value}s`
+    return isOwner.value ? 'Ya regresé' : 'Enviar código'
+  })
 
   const snackbar = ref(false)
   const snackbarText = ref('')
@@ -183,10 +211,17 @@
       )
       alreadyReturned.value = statusNames.some(status => status.toLowerCase() === 'returned')
 
+      // Resolving the employee record only decides whether the operator is the
+      // pass owner. Administrators and supervisors have no employee record to
+      // match, so a failure here must not blank out the page for them.
       const userId = authStore.user?.id
       if (userId) {
-        const myEmployee = await employeesAdapter.getByUserId(userId)
-        isOwner.value = myEmployee !== null && myEmployee.id === employeeId
+        try {
+          const myEmployee = await employeesAdapter.getByUserId(userId)
+          isOwner.value = myEmployee !== null && myEmployee.id === employeeId
+        } catch {
+          isOwner.value = false
+        }
       }
     } catch (error) {
       errorMessage.value = resolveMessage(error, 'No fue posible cargar el pase.')
@@ -201,13 +236,19 @@
 
     try {
       await httpClient.post(`/api/v1/exit-passes/${passId}/return/otp`)
-      codeSent.value = true
       startCooldown(60)
-      showSnackbar('Código enviado a tu correo institucional.', 'success')
+      showSnackbar(
+        isOwner.value
+          ? 'Código enviado a tu correo institucional.'
+          : 'Código enviado al correo institucional del empleado.',
+        'success',
+      )
     } catch (error) {
       const axiosError = error as AxiosError
       if (axiosError?.response?.status === 429) {
         showSnackbar('Espera antes de solicitar otro código.', 'error')
+      } else if (axiosError?.response?.status === 403) {
+        showSnackbar('No tienes permiso para gestionar el regreso de este pase.', 'error')
       } else {
         showSnackbar(resolveMessage(error, 'No fue posible enviar el código.'), 'error')
       }
