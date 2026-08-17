@@ -5,6 +5,7 @@
         <div class="section-kicker">Administración</div>
         <h2 class="card-title">Usuarios del sistema</h2>
       </div>
+
       <v-btn color="#FAB21A" prepend-icon="mdi-account-plus-outline" variant="flat" @click="openCreateDialog">
         Nuevo usuario
       </v-btn>
@@ -22,31 +23,160 @@
       {{ error }}
     </v-alert>
 
-    <div v-if="loading" class="users-state">
-      <v-progress-circular color="#FAB21A" indeterminate />
-      <span>Cargando usuarios...</span>
+    <div class="users-toolbar">
+      <v-text-field
+        v-model="searchInput"
+        class="users-toolbar__search"
+        clearable
+        density="comfortable"
+        hide-details
+        placeholder="Buscar por nombre o correo..."
+        prepend-inner-icon="mdi-magnify"
+        variant="outlined"
+        @update:model-value="onSearchInput"
+      />
+
+      <div class="users-toolbar__meta">
+        <span class="users-toolbar__count">
+          {{ meta.total }} {{ meta.total === 1 ? 'usuario' : 'usuarios' }}
+        </span>
+
+        <v-btn
+          v-if="hasActiveFilters"
+          density="comfortable"
+          prepend-icon="mdi-filter-off-outline"
+          size="small"
+          text="Limpiar filtros"
+          variant="text"
+          @click="clearAllFilters"
+        />
+      </div>
     </div>
 
-    <div v-else-if="users.length === 0" class="users-state users-state--empty">
-      <v-icon color="#FAB21A" icon="mdi-account-off-outline" size="32" />
-      <span>No hay usuarios disponibles.</span>
-    </div>
+    <v-data-table-server
+      v-model:items-per-page="perPage"
+      v-model:page="page"
+      v-model:sort-by="sortBy"
+      class="users-table"
+      :headers="headers"
+      item-value="id"
+      :items="users"
+      :items-length="meta.total"
+      :items-per-page-options="PER_PAGE_OPTIONS"
+      items-per-page-text="Filas por página"
+      :loading="loading"
+      loading-text="Cargando usuarios..."
+      :mobile="false"
+      no-data-text="No hay usuarios que coincidan con los filtros."
+      page-text="{0}-{1} de {2}"
+      @update:options="onOptionsUpdate"
+    >
+      <template #header.name="{ column, getSortIcon }">
+        <div class="v-data-table-header__content">
+          <span>{{ column.title }}</span>
+          <v-icon v-if="column.sortable" class="v-data-table-header__sort-icon" :icon="getSortIcon(column)" />
 
-    <div v-else class="user-list">
-      <div v-for="user in users" :key="user.email" class="user-row">
-        <div class="user-main">
-          <v-avatar color="#f1ddd0" size="44">{{ user.initials }}</v-avatar>
-          <div>
-            <div class="user-name">{{ user.name }}</div>
-            <div class="user-email">{{ user.email }}</div>
-          </div>
+          <TableColumnFilter
+            label="Nombre"
+            :model-value="filters.name ?? null"
+            placeholder="Contiene..."
+            @update:model-value="value => applyFilter('name', value)"
+          />
         </div>
+      </template>
 
-        <div class="user-role">{{ user.role }}</div>
-        <v-chip :color="user.active ? 'success' : 'grey'" size="small" variant="tonal">
-          {{ user.active ? 'Activo' : 'Inactivo' }}
+      <template #header.email="{ column, getSortIcon }">
+        <div class="v-data-table-header__content">
+          <span>{{ column.title }}</span>
+          <v-icon v-if="column.sortable" class="v-data-table-header__sort-icon" :icon="getSortIcon(column)" />
+
+          <TableColumnFilter
+            label="Correo"
+            :model-value="filters.email ?? null"
+            placeholder="Ej. urse.edu.mx"
+            @update:model-value="value => applyFilter('email', value)"
+          />
+        </div>
+      </template>
+
+      <template #header.roles="{ column }">
+        <div class="v-data-table-header__content">
+          <span>{{ column.title }}</span>
+
+          <TableColumnFilter
+            :items="roleFilterItems"
+            label="Rol"
+            :model-value="filters.role ?? null"
+            type="select"
+            @update:model-value="value => applyFilter('role', value)"
+          />
+        </div>
+      </template>
+
+      <template #header.verified="{ column, getSortIcon }">
+        <div class="v-data-table-header__content">
+          <span>{{ column.title }}</span>
+          <v-icon v-if="column.sortable" class="v-data-table-header__sort-icon" :icon="getSortIcon(column)" />
+
+          <TableColumnFilter
+            :items="VERIFIED_FILTER_ITEMS"
+            label="Verificación"
+            :model-value="filters.verified ?? null"
+            type="select"
+            @update:model-value="value => applyFilter('verified', value)"
+          />
+        </div>
+      </template>
+
+      <template #item.name="{ item }">
+        <div class="user-cell">
+          <v-avatar color="#f1ddd0" size="36">{{ item.initials }}</v-avatar>
+          <span class="user-cell__name">{{ item.name }}</span>
+        </div>
+      </template>
+
+      <template #item.email="{ item }">
+        <span class="user-cell__email">{{ item.email || '—' }}</span>
+      </template>
+
+      <template #item.roles="{ item }">
+        <div class="role-chips">
+          <v-chip
+            v-for="(roleName, index) in displayRoles(item)"
+            :key="`${item.id}-${roleName}-${index}`"
+            color="#6a1b31"
+            size="small"
+            variant="tonal"
+          >
+            {{ roleName }}
+          </v-chip>
+
+          <span v-if="displayRoles(item).length === 0" class="text-medium-emphasis">Sin rol</span>
+        </div>
+      </template>
+
+      <template #item.active="{ item }">
+        <v-chip :color="item.active ? 'success' : 'grey'" size="small" variant="tonal">
+          {{ item.active ? 'Activo' : 'Inactivo' }}
         </v-chip>
+      </template>
 
+      <template #item.verified="{ item }">
+        <v-chip
+          :color="item.verified ? 'success' : 'warning'"
+          size="small"
+          :title="item.verifiedAt ? `Verificado el ${formatDate(item.verifiedAt)}` : 'Correo sin verificar'"
+          variant="tonal"
+        >
+          {{ item.verified ? 'Sí' : 'No' }}
+        </v-chip>
+      </template>
+
+      <template #item.createdAt="{ item }">
+        {{ formatDate(item.createdAt) }}
+      </template>
+
+      <template #item.actions="{ item }">
         <div class="user-actions">
           <v-btn
             color="#1a1a1a"
@@ -54,32 +184,38 @@
             size="small"
             title="Asignar roles"
             variant="text"
-            @click="openRolesDialog(user)"
+            @click="openRolesDialog(item)"
           />
+
           <v-btn
             color="#1a1a1a"
             icon="mdi-shield-key-outline"
             size="small"
+            title="Asignar permisos"
             variant="text"
-            @click="openPermissionsDialog(user)"
+            @click="openPermissionsDialog(item)"
           />
+
           <v-btn
             color="#FAB21A"
             icon="mdi-pencil"
             size="small"
+            title="Editar usuario"
             variant="text"
-            @click="openEditDialog(user)"
+            @click="openEditDialog(item)"
           />
+
           <v-btn
             color="error"
             icon="mdi-delete"
             size="small"
+            title="Eliminar usuario"
             variant="text"
-            @click="openDeleteDialog(user)"
+            @click="openDeleteDialog(item)"
           />
         </div>
-      </div>
-    </div>
+      </template>
+    </v-data-table-server>
   </v-card>
 
   <v-dialog v-model="formDialog" max-width="600" persistent>
@@ -159,6 +295,7 @@
         <v-card-actions>
           <v-spacer />
           <v-btn text="Cancelar" variant="text" @click="closeFormDialog" />
+
           <v-btn
             color="#FAB21A"
             :loading="loading"
@@ -187,6 +324,7 @@
       <v-card-actions>
         <v-spacer />
         <v-btn text="Cancelar" variant="text" @click="closeDeleteDialog" />
+
         <v-btn
           color="error"
           :loading="loading"
@@ -243,6 +381,7 @@
       <v-card-actions>
         <v-spacer />
         <v-btn text="Cancelar" variant="text" @click="closePermissionsDialog" />
+
         <v-btn
           color="#FAB21A"
           :loading="permissionsDialogLoading"
@@ -288,6 +427,7 @@
       <v-card-actions>
         <v-spacer />
         <v-btn text="Cancelar" variant="text" @click="closeRolesDialog" />
+
         <v-btn
           color="#FAB21A"
           :loading="rolesDialogLoading"
@@ -302,16 +442,145 @@
 
 <script lang="ts" setup>
   import type { Permission } from '@/modules/permissions/port'
-  import type { User, UserPayload } from '@/modules/users/port'
-  import { ref } from 'vue'
+  import type { User, UserFilters, UserPayload, UserSortField } from '@/modules/users/port'
+  import { computed, onBeforeUnmount, ref } from 'vue'
+  import TableColumnFilter from '@/modules/administracion/components/TableColumnFilter.vue'
   import { usePermissions } from '@/modules/permissions/usePermissions'
   import { useRoles } from '@/modules/roles/useRoles'
   import { useUsers } from '@/modules/users/useUsers'
   import { httpClient } from '@/services/http'
 
-  const { error, loading, users, createUser, updateUser, removeUser, loadUsers } = useUsers()
+  interface SortItem {
+    key: string
+    order?: 'asc' | 'desc' | boolean
+  }
+
+  const {
+    error,
+    filters,
+    hasActiveFilters,
+    loading,
+    loadUsers,
+    meta,
+    page,
+    perPage,
+    users,
+    createUser,
+    updateUser,
+    removeUser,
+    resetFilters,
+    setFilters,
+    setOptions,
+  } = useUsers()
   const { loadRoles, loading: rolesCatalogLoading, roles } = useRoles()
   const { loadPermissions, loading: permissionsCatalogLoading, permissions } = usePermissions()
+
+  const PER_PAGE_OPTIONS = [10, 25, 50, 100]
+
+  const VERIFIED_FILTER_ITEMS = [
+    { title: 'Verificado', value: true },
+    { title: 'Sin verificar', value: false },
+  ]
+
+  // Sortable table columns mapped to the `AllowedSort` list of the backend;
+  // anything outside this map is left unsorted so Spatie never answers 400.
+  const SORT_FIELDS: Record<string, UserSortField> = {
+    createdAt: 'created_at',
+    email: 'email',
+    name: 'name',
+    verified: 'email_verified_at',
+  }
+
+  const headers = [
+    { key: 'name', minWidth: '220px', sortable: true, title: 'Usuario' },
+    { key: 'email', minWidth: '220px', sortable: true, title: 'Correo' },
+    { key: 'roles', minWidth: '200px', sortable: false, title: 'Roles' },
+    { key: 'active', sortable: false, title: 'Estado', width: '120px' },
+    { key: 'verified', sortable: true, title: 'Verificado', width: '140px' },
+    { key: 'createdAt', sortable: true, title: 'Registro', width: '150px' },
+    { align: 'end', key: 'actions', sortable: false, title: 'Acciones', width: '180px' },
+  ] as const
+
+  const sortBy = ref<SortItem[]>([])
+  const searchInput = ref('')
+
+  const roleFilterItems = computed(() =>
+    roles.value.map(role => ({ title: role.name, value: role.name })),
+  )
+
+  let searchTimer: ReturnType<typeof setTimeout> | undefined
+
+  function toSortParam (sortItems: readonly SortItem[]): string | null {
+    const [first] = sortItems
+
+    if (!first) return null
+
+    const field = SORT_FIELDS[first.key]
+
+    if (!field) return null
+
+    return first.order === 'desc' ? `-${field}` : field
+  }
+
+  function onOptionsUpdate (options: { itemsPerPage: number, page: number, sortBy: readonly SortItem[] }) {
+    void setOptions({
+      page: Number(options.page),
+      perPage: Number(options.itemsPerPage),
+      sort: toSortParam(options.sortBy),
+    })
+  }
+
+  function applyFilter (key: keyof UserFilters, value: boolean | string | null) {
+    const next: UserFilters = { ...filters.value }
+
+    if (value === null || value === '') {
+      delete next[key]
+    } else {
+      Object.assign(next, { [key]: value })
+    }
+
+    void setFilters(next)
+  }
+
+  function onSearchInput (value: string | null) {
+    if (searchTimer) clearTimeout(searchTimer)
+
+    searchTimer = setTimeout(() => {
+      searchTimer = undefined
+      applyFilter('search', value)
+    }, 400)
+  }
+
+  function clearAllFilters () {
+    if (searchTimer) clearTimeout(searchTimer)
+    searchTimer = undefined
+    searchInput.value = ''
+    void resetFilters()
+  }
+
+  onBeforeUnmount(() => {
+    if (searchTimer) clearTimeout(searchTimer)
+  })
+
+  // The API can describe roles either as objects or as a single `role` string;
+  // both shapes are surfaced so no assignment is hidden from the list.
+  function displayRoles (user: User): string[] {
+    if (user.roles.length > 0) {
+      return user.roles.map(role => role.name)
+    }
+
+    return user.role && user.role !== 'Sin rol' ? [user.role] : []
+  }
+
+  function formatDate (value: string | null) {
+    if (!value) return '—'
+
+    const date = new Date(value)
+
+    return Number.isNaN(date.getTime())
+      ? '—'
+      : date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
+  }
 
   const formDialog = ref(false)
   const formRef = ref()
@@ -605,7 +874,9 @@
       )
 
       closeRolesDialog()
-      await loadUsers()
+      // The page query is unchanged, so the reload has to be forced past the
+      // composable's duplicate-request guard.
+      await loadUsers({ force: true })
     } catch (error_) {
       error.value = error_ instanceof Error ? error_.message : 'No fue posible guardar los roles del usuario'
     } finally {
@@ -620,15 +891,9 @@
   background: #ffffff;
 }
 
-.card-head,
-.user-row,
-.user-main {
+.card-head {
   display: flex;
   align-items: center;
-}
-
-.card-head,
-.user-row {
   justify-content: space-between;
   gap: 16px;
 }
@@ -648,72 +913,79 @@
   font-weight: 800;
 }
 
-.user-list {
-  display: grid;
-  gap: 14px;
-  margin-top: 24px;
-}
-
-.users-state {
+.users-toolbar {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  min-height: 180px;
+  gap: 16px;
   margin-top: 24px;
-  color: #6f5a60;
-  text-align: center;
 }
 
-.users-state--empty {
-  flex-direction: column;
+.users-toolbar__search {
+  max-width: 420px;
 }
 
-.user-row {
-  padding: 16px 0;
-  border-bottom: 1px solid rgb(106 27 49 / 0.08);
+.users-toolbar__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
 }
 
-.user-row:last-child {
-  border-bottom: 0;
+.users-toolbar__count {
+  color: #5e5e5e;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
-.user-main {
-  gap: 14px;
-  flex: 1;
+.users-table {
+  margin-top: 16px;
+  border: 1px solid rgb(106 27 49 / 0.08);
+  border-radius: 12px;
 }
 
-.user-name {
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.user-cell__name {
   color: #000000;
   font-weight: 700;
 }
 
-.user-email {
+.user-cell__email {
   color: #5e5e5e;
 }
 
-.user-role {
-  color: #5d3641;
-  font-weight: 600;
-  min-width: 120px;
-  text-align: center;
+.role-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 0;
 }
 
 .user-actions {
   display: flex;
+  justify-content: flex-end;
   gap: 4px;
 }
 
 @media (max-width: 960px) {
   .card-head,
-  .user-row {
+  .users-toolbar {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .user-role,
-  .user-actions {
-    align-self: flex-end;
+  .users-toolbar__search {
+    max-width: none;
+    width: 100%;
+  }
+
+  .users-toolbar__meta {
+    margin-inline-start: 0;
   }
 }
 </style>
