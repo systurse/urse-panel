@@ -134,19 +134,29 @@ export function useCrmBoard () {
   }
 
   function subscribe () {
-    const echo = getEcho()
+    // Realtime es mejora progresiva: sin Reverb configurado (p. ej. dev
+    // local) el tablero funciona igual, solo sin refrescos automáticos.
+    try {
+      const echo = getEcho()
 
-    echo.private('crm.board')
-      .listen('.lead.created', (event: LeadAlert & { pipeline_id: number }) => {
-        leadAlert.value = event
-        scheduleRefresh()
-      })
-      .listen('.deal.moved', () => scheduleRefresh())
-      .listen('.deal.updated', () => scheduleRefresh())
+      echo.private('crm.board')
+        .listen('.lead.created', (event: LeadAlert & { pipeline_id: number }) => {
+          leadAlert.value = event
+          scheduleRefresh()
+        })
+        .listen('.deal.moved', () => scheduleRefresh())
+        .listen('.deal.updated', () => scheduleRefresh())
+    } catch (error_) {
+      console.warn('CRM realtime deshabilitado:', error_)
+    }
   }
 
   function unsubscribe () {
-    getEcho().leave('private-crm.board')
+    try {
+      getEcho().leave('private-crm.board')
+    } catch {
+      // sin conexión realtime no hay nada que abandonar
+    }
   }
 
   onMounted(() => {
