@@ -1,7 +1,7 @@
 <template>
-  <div class="support-page">
-    <div class="support-container">
-      <header class="support-header">
+  <div class="support-page" :class="{ 'support-page--embed': embedded }">
+    <div ref="container" class="support-container">
+      <header v-if="!embedded" class="support-header">
         <h1>Atención al usuario</h1>
         <p>Solicita atención o soporte por cualquiera de nuestros canales.</p>
       </header>
@@ -125,11 +125,32 @@
 
 <script lang="ts" setup>
   import type { WidgetConfig } from '@/modules/crm/types'
-  import { computed, onMounted, reactive, ref } from 'vue'
+  import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
   import { useReCaptcha } from 'vue-recaptcha-v3'
+  import { useRoute } from 'vue-router'
   import { getWidgetConfig, matchPublicContact, submitPublicLead } from '@/modules/crm/service'
 
   const recaptcha = useReCaptcha()
+  const route = useRoute()
+
+  /**
+   * Modo embebido (?embed=1): sin encabezado ni fondo propios, pensado para
+   * incrustarse en sitios externos vía iframe con public/widget-ssm.js.
+   */
+  const embedded = route.query.embed === '1'
+  const container = ref<HTMLElement | null>(null)
+
+  let resizeObserver: ResizeObserver | null = null
+
+  function reportHeight () {
+    if (!embedded || !container.value) {
+      return
+    }
+    window.parent.postMessage(
+      { type: 'ssm-widget:height', height: container.value.offsetHeight + 32 },
+      '*',
+    )
+  }
 
   const config = ref<WidgetConfig | null>(null)
   const sending = ref(false)
@@ -230,11 +251,21 @@
   }
 
   onMounted(async () => {
+    if (embedded && container.value) {
+      resizeObserver = new ResizeObserver(reportHeight)
+      resizeObserver.observe(container.value)
+      reportHeight()
+    }
+
     try {
       config.value = await getWidgetConfig()
     } catch {
       // los canales alternos simplemente no se muestran
     }
+  })
+
+  onBeforeUnmount(() => {
+    resizeObserver?.disconnect()
   })
 </script>
 
@@ -245,6 +276,12 @@
   display: flex;
   justify-content: center;
   padding: 32px 16px;
+}
+
+.support-page--embed {
+  min-height: 0;
+  background: transparent;
+  padding: 16px 8px;
 }
 
 .support-container {
