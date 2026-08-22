@@ -28,19 +28,24 @@ import InscripcionesReporte from '@/pages/inscripciones-reporte.vue'
 import Inscripciones from '@/pages/inscripciones.vue'
 import Login from '@/pages/login.vue'
 import MisSolicitudes from '@/pages/mis-solicitudes.vue'
-import Negociaciones from '@/pages/negociaciones.vue'
 import Permissions from '@/pages/permissions.vue'
 import Roles from '@/pages/roles.vue'
 import SACC from '@/pages/sacc.vue'
 import Settings from '@/pages/settings.vue'
+import Soporte from '@/pages/soporte.vue'
 import SPSPasses from '@/pages/sps-pases.vue'
 import SPS from '@/pages/sps.vue'
 import SPSPassReturnCode from '@/pages/sps/pase-codigo-regreso.vue'
 import SPSPassReturnConfirm from '@/pages/sps/pase-confirmar-regreso.vue'
 import SPSPassDetail from '@/pages/sps/pase-detalle.vue'
 import SPSReportExitPasses from '@/pages/sps/report-exit-passes.vue'
+import SSMCrmContactos from '@/pages/ssm-crm-contactos.vue'
+import SSMCrmNegociacion from '@/pages/ssm-crm-negociacion.vue'
+import SSMCrmPipelines from '@/pages/ssm-crm-pipelines.vue'
+import SSMCrmReportes from '@/pages/ssm-crm-reportes.vue'
+import SSMCrm from '@/pages/ssm-crm.vue'
+import SSMTareas from '@/pages/ssm-tareas.vue'
 import SSM from '@/pages/ssm.vue'
-import Tickets from '@/pages/tickets.vue'
 import Users from '@/pages/users.vue'
 import VerifySignature from '@/pages/verificar.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -141,12 +146,34 @@ const router = createRouter({
           component: SSM,
         },
         {
-          path: 'negociaciones',
-          component: Negociaciones,
+          path: 'crm',
+          component: SSMCrm,
+          meta: { requiresAnyPermission: ['crm.deals.view'] },
         },
         {
-          path: 'tickets',
-          component: Tickets,
+          path: 'crm/negociaciones/:id',
+          component: SSMCrmNegociacion,
+          meta: { requiresAnyPermission: ['crm.deals.view'] },
+        },
+        {
+          path: 'crm/contactos',
+          component: SSMCrmContactos,
+          meta: { requiresAnyPermission: ['crm.contacts.view'] },
+        },
+        {
+          path: 'crm/reportes',
+          component: SSMCrmReportes,
+          meta: { requiresAnyPermission: ['crm.reports.view'] },
+        },
+        {
+          path: 'crm/pipelines',
+          component: SSMCrmPipelines,
+          meta: { requiresAdministrator: true },
+        },
+        {
+          path: 'tareas',
+          component: SSMTareas,
+          meta: { requiresAnyPermission: ['crm.tasks.view'] },
         },
         {
           path: 'mis-solicitudes',
@@ -155,6 +182,7 @@ const router = createRouter({
         {
           path: 'aprobaciones',
           component: Aprobaciones,
+          meta: { requiresAdministrator: true },
         },
         {
           path: 'configuracion',
@@ -255,6 +283,11 @@ const router = createRouter({
       // usually from a phone.
       path: '/verificar/:code',
       component: VerifySignature,
+      meta: { public: true },
+    },
+    {
+      path: '/soporte',
+      component: Soporte,
       meta: { public: true },
     },
     {

@@ -15,7 +15,7 @@ export class HttpEncargadoAdapter implements EncargadoPort {
   constructor (private readonly client: HttpClient) {}
 
   async fetchKey (): Promise<SshKeyInfo | null> {
-    const response = await this.client.get<KeyStatusResponse>('/api/v1/encargado/key')
+    const response = await this.client.get<KeyStatusResponse>('/api/v1/crm/encargado/key')
     if (!response.has_key) {
       return null
     }
@@ -23,7 +23,7 @@ export class HttpEncargadoAdapter implements EncargadoPort {
   }
 
   async storeKey (privateKey: string): Promise<SshKeyInfo> {
-    const response = await this.client.post<StoreKeyResponse, { private_key: string }>('/api/v1/encargado/key', {
+    const response = await this.client.post<StoreKeyResponse, { private_key: string }>('/api/v1/crm/encargado/key', {
       private_key: privateKey,
     })
 
@@ -33,7 +33,7 @@ export class HttpEncargadoAdapter implements EncargadoPort {
   }
 
   async deleteKey () {
-    await this.client.delete<unknown>('/api/v1/encargado/key')
+    await this.client.delete<unknown>('/api/v1/crm/encargado/key')
   }
 }
 
