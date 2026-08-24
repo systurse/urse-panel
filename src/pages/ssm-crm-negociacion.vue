@@ -486,7 +486,7 @@
 
   const general = reactive({ description: '', due_date: '' })
   const details = reactive({ type: '', channel: 'manual' as string, started_at: '', visible_to_all: true })
-  const order = reactive({ solution: '', diagnosis: '', requirements: '', service_type: '', team_manager: '' })
+  const order = reactive({ solution: '', diagnosis: '', requirements: '', recommendations: '', service_type: '', team_manager: '' })
 
   const reminderBody = ref('')
   const reminderAt = ref('')
@@ -554,6 +554,7 @@
     order.solution = value.service_order?.solution ?? ''
     order.diagnosis = value.service_order?.diagnosis ?? ''
     order.requirements = value.service_order?.requirements ?? ''
+    order.recommendations = value.service_order?.recommendations ?? ''
     order.service_type = value.service_order?.service_type ?? ''
     order.team_manager = value.service_order?.team_manager ?? ''
   }, { immediate: true })
@@ -604,6 +605,7 @@
       solution: order.solution || null,
       diagnosis: order.diagnosis || null,
       requirements: order.requirements || null,
+      recommendations: order.recommendations || null,
       service_type: order.service_type || null,
       team_manager: order.team_manager || null,
     })
@@ -614,6 +616,7 @@
       solution: order.solution || null,
       diagnosis: order.diagnosis || null,
       requirements: order.requirements || null,
+      recommendations: order.recommendations || null,
       service_type: order.service_type || null,
       team_manager: order.team_manager || null,
     })
@@ -625,6 +628,7 @@
       solution: order.solution || null,
       diagnosis: order.diagnosis || null,
       requirements: order.requirements || null,
+      recommendations: order.recommendations || null,
       service_type: order.service_type || null,
       team_manager: order.team_manager || null,
     })

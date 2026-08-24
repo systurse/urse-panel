@@ -78,6 +78,7 @@ export interface ServiceOrder {
   solution: string | null
   diagnosis: string | null
   requirements: string | null
+  recommendations: string | null
   service_type: string | null
   team_manager: string | null
   status: ServiceOrderStatus
@@ -218,6 +219,7 @@ export interface ServiceOrderPayload {
   solution?: string | null
   diagnosis?: string | null
   requirements?: string | null
+  recommendations?: string | null
   service_type?: string | null
   team_manager?: string | null
 }

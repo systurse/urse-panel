@@ -68,6 +68,8 @@
           <v-col cols="12" md="6">
             <p class="field-label">Requerimientos</p>
             <p class="field-value">{{ order.requirements ?? '—' }}</p>
+            <p class="field-label">Recomendaciones</p>
+            <p class="field-value">{{ order.recommendations ?? '—' }}</p>
             <p class="field-label">Tipo de servicio / Responsable de equipo</p>
             <p class="field-value">{{ order.service_type ?? '—' }} · {{ order.team_manager ?? '—' }}</p>
           </v-col>
