@@ -71,9 +71,22 @@
     + 'box-shadow:0 12px 40px rgba(0,0,0,.28);display:none;flex-direction:column;z-index:2147483000;'
 
   const header = document.createElement('div')
-  header.textContent = text
   header.style.cssText = 'background:' + color + ';color:#fff;font:600 14px/1 system-ui,sans-serif;'
-    + 'padding:14px 16px;flex:0 0 auto;'
+    + 'padding:14px 16px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;'
+
+  const headerTitle = document.createElement('span')
+  headerTitle.textContent = text
+  header.append(headerTitle)
+
+  // Salida alterna si el navegador bloquea el iframe (X-Frame-Options/CSP)
+  const popout = document.createElement('a')
+  popout.href = panelUrl + '/soporte'
+  popout.target = '_blank'
+  popout.rel = 'noopener'
+  popout.textContent = 'Abrir en pestaña nueva ↗'
+  popout.style.cssText = 'color:#fff;font:400 11px/1 system-ui,sans-serif;text-decoration:underline;opacity:.85;white-space:nowrap;'
+  header.append(popout)
+
   panel.append(header)
 
   const frameWrap = document.createElement('div')
