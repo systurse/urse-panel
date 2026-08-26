@@ -141,8 +141,9 @@ export function useExitPassSignatures (
 
     try {
       const result = await port.sign(passId, { code, signerRole })
+      // The response already carries fresh progress. Refetching the list is
+      // left to whoever displays it, so signing costs a single request.
       progress.value = result.progress
-      await loadSignatures()
       return result
     } catch (error_) {
       const status = statusOf(error_)

@@ -289,6 +289,15 @@
             </v-col>
           </v-row>
 
+          <v-divider class="my-4" />
+
+          <ExitPassSignaturePanel
+            :key="selectedPass.id"
+            :is-owner="isSelectedPassOwner"
+            :pass-id="selectedPass.id"
+            @signed="onPassSigned"
+          />
+
           <div v-if="canSendReturnCode" class="review-block mt-4">
             <v-divider class="mb-4" />
 
@@ -366,10 +375,10 @@
           <v-btn
             v-if="selectedPass"
             prepend-icon="mdi-draw-pen"
-            :to="`/sps/pases/${selectedPass.id}`"
+            :to="`/sps/pases/${selectedPass.id}?from=admin`"
             variant="text"
           >
-            Ver firmas
+            Ver detalle completo
           </v-btn>
 
           <v-spacer />
@@ -404,7 +413,10 @@
 <script lang="ts" setup>
   import type { AxiosError } from 'axios'
   import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+  import { employeesAdapter } from '@/modules/employees/adapter'
+  import ExitPassSignaturePanel from '@/modules/sps/components/ExitPassSignaturePanel.vue'
   import { httpClient } from '@/services/http'
+  import { useAuthStore } from '@/stores/auth'
 
   interface ExitPassItem {
     id: number | string
@@ -446,7 +458,43 @@
   const snackbarText = ref('')
   const snackbarColor = ref<'success' | 'error' | 'info'>('success')
 
+  const authStore = useAuthStore()
+  const myEmployeeId = ref<number | string | null>(null)
+
+  // The signature panel needs to know whether the reader owns this pass, since
+  // nobody may hold two signing roles on the same one.
+  const isSelectedPassOwner = computed(() =>
+    myEmployeeId.value !== null && selectedPass.value?.employeeId === myEmployeeId.value,
+  )
+
   const canReviewPass = computed(() => selectedPass.value?.currentStatus === 'revision')
+
+  // A signature can flip the pass to `authorized` on its own, so the row behind
+  // the dialog has to be refreshed.
+  async function onPassSigned () {
+    await loadExitPasses()
+
+    if (selectedPass.value) {
+      const refreshed = exitPasses.value.find(pass => pass.id === selectedPass.value?.id)
+      if (refreshed) {
+        selectedPass.value = refreshed
+      }
+    }
+  }
+
+  // Administrators and supervisors have no employee record of their own to
+  // match, so a failed lookup just means "not the owner".
+  async function loadMyEmployee () {
+    const userId = authStore.user?.id
+    if (!userId) return
+
+    try {
+      const employee = await employeesAdapter.getByUserId(userId)
+      myEmployeeId.value = employee?.id ?? null
+    } catch {
+      myEmployeeId.value = null
+    }
+  }
 
   const returnCodeSending = ref(false)
   const returnCodeCooldown = ref(0)
@@ -731,6 +779,7 @@
 
   onMounted(() => {
     void loadExitPasses()
+    void loadMyEmployee()
   })
 
   onBeforeUnmount(stopReturnCodeCooldown)

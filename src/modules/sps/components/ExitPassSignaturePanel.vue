@@ -135,7 +135,10 @@
     passId: number | string
   }>()
 
-  const emit = defineEmits<{ signed: [role: SignerRole, isComplete: boolean] }>()
+  const emit = defineEmits<{
+    loaded: [signatures: ExitPassSignature[]]
+    signed: [role: SignerRole, isComplete: boolean]
+  }>()
 
   const authStore = useAuthStore()
 
@@ -210,7 +213,7 @@
 
   async function onSigned () {
     const role = dialogRole.value
-    await loadSignatures()
+    await refresh()
 
     // The pass flips to `authorized` on its own once the last required
     // signature lands, so the parent has to refetch it. Emitted only as a
@@ -221,11 +224,16 @@
     }
   }
 
+  async function refresh () {
+    await loadSignatures()
+    emit('loaded', signatures.value)
+  }
+
   onMounted(() => {
-    void loadSignatures()
+    void refresh()
   })
 
-  defineExpose({ loadSignatures })
+  defineExpose({ refresh })
 </script>
 
 <style scoped>
