@@ -1,1 +1,1 @@
-// sps - components
+export { default as ExitPassSignaturePanel } from './ExitPassSignaturePanel.vue'

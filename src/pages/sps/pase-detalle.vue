@@ -79,6 +79,14 @@
 
         <v-divider class="my-4" />
 
+        <ExitPassSignaturePanel
+          :is-owner="isOwner"
+          :pass-id="passId"
+          @signed="loadPass"
+        />
+
+        <v-divider class="my-4" />
+
         <div class="actions-row">
           <v-btn
             :loading="pdfLoading"
@@ -161,6 +169,7 @@
   import { computed, onMounted, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { employeesAdapter } from '@/modules/employees/adapter'
+  import ExitPassSignaturePanel from '@/modules/sps/components/ExitPassSignaturePanel.vue'
   import { httpClient } from '@/services/http'
   import { useAuthStore } from '@/stores/auth'
 
