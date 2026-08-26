@@ -11,8 +11,28 @@ export function canAccessRouteMeta (meta: RouteMeta | undefined, evaluator: Acce
     return true
   }
 
-  if (meta.requiresAdministrator && !evaluator.hasRole('administrator')) {
+  const isAdministrator = evaluator.hasRole('administrator')
+
+  if (meta.requiresAdministrator && !isAdministrator) {
     return false
+  }
+
+  // The administrator role stands in for any permission requirement. The SSM
+  // sidebar already gates its entries as `isAdmin || hasPermission(...)`, so
+  // without this an administrator was shown menu items the guard then bounced.
+  if (isAdministrator) {
+    return true
+  }
+
+  // Roles listed here grant access on their own. Every other key below is a
+  // requirement that must hold; this one is an alternative to them, which is
+  // how a route can be opened to a whole role without also handing that role
+  // the individual permissions.
+  if (
+    Array.isArray(meta.grantedToRoles)
+    && meta.grantedToRoles.some(role => typeof role === 'string' && evaluator.hasRole(role))
+  ) {
+    return true
   }
 
   if (

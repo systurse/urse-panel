@@ -132,14 +132,17 @@
           to: '/sps/reportes',
           icon: 'mdi-file-chart-outline',
           subtitle: 'Vista de reporte con filtros y exportación.',
-          meta: { requiresAnyPermission: ['sps.pass.filter', 'sps.pass.export'] },
+          meta: {
+            grantedToRoles: ['supervisor'],
+            requiresAnyPermission: ['sps.pass.filter', 'sps.pass.export'],
+          },
         },
         {
           title: 'Pases de salida',
           to: '/sps/administracion/pases-salida',
           icon: 'mdi-clipboard-check-multiple-outline',
-          subtitle: 'Consulta y resuelve pases de salida (autorizar o rechazar).',
-          meta: { requiresAdministrator: true },
+          subtitle: 'Consulta y resuelve pases de salida (firmar o rechazar).',
+          meta: { requiresAnyPermission: ['sps.pass-signature.sign-as-supervisor'] },
         },
       ]
 

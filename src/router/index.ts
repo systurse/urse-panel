@@ -119,7 +119,7 @@ const router = createRouter({
         {
           path: 'pases-salida',
           component: AdminExitPasses,
-          meta: { requiresAdministrator: true },
+          meta: { requiresAnyPermission: ['sps.pass-signature.sign-as-supervisor'] },
         },
         {
           path: 'correos',
@@ -190,7 +190,10 @@ const router = createRouter({
         {
           path: 'reportes',
           component: SPSReportExitPasses,
-          meta: { requiresAnyPermission: ['sps.pass.filter', 'sps.pass.export'] },
+          meta: {
+            grantedToRoles: ['supervisor'],
+            requiresAnyPermission: ['sps.pass.filter', 'sps.pass.export'],
+          },
         },
         {
           path: 'configuracion',
@@ -199,7 +202,7 @@ const router = createRouter({
         {
           path: 'administracion/pases-salida',
           component: AdminExitPasses,
-          meta: { requiresAdministrator: true },
+          meta: { requiresAnyPermission: ['sps.pass-signature.sign-as-supervisor'] },
         },
       ],
     },
