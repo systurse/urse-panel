@@ -42,6 +42,7 @@ import SPSReportExitPasses from '@/pages/sps/report-exit-passes.vue'
 import SSM from '@/pages/ssm.vue'
 import Tickets from '@/pages/tickets.vue'
 import Users from '@/pages/users.vue'
+import VerifySignature from '@/pages/verificar.vue'
 import { useAuthStore } from '@/stores/auth'
 import { canAccessRouteMeta } from '@/utils/routeAccess'
 
@@ -244,6 +245,13 @@ const router = createRouter({
     {
       path: '/credenciales',
       component: Credenciales,
+      meta: { public: true },
+    },
+    {
+      // Target of the QR printed on signed PDFs: opened without a session,
+      // usually from a phone.
+      path: '/verificar/:code',
+      component: VerifySignature,
       meta: { public: true },
     },
     {
