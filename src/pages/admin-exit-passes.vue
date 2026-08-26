@@ -339,6 +339,11 @@
               Resolución
             </div>
 
+            <p class="text-body-2 text-medium-emphasis mb-3">
+              El pase se autoriza cuando el jefe inmediato lo firma desde el detalle. Desde aquí
+              solo puede rechazarse.
+            </p>
+
             <v-textarea
               v-model="rejectNotes"
               density="comfortable"
@@ -358,6 +363,15 @@
             Cerrar
           </v-btn>
 
+          <v-btn
+            v-if="selectedPass"
+            prepend-icon="mdi-draw-pen"
+            :to="`/sps/pases/${selectedPass.id}`"
+            variant="text"
+          >
+            Ver firmas
+          </v-btn>
+
           <v-spacer />
 
           <template v-if="canReviewPass">
@@ -366,20 +380,11 @@
               :disabled="statusSubmitting"
               prepend-icon="mdi-close-circle-outline"
               variant="tonal"
-              @click="submitStatus('refused')"
+              @click="refusePass"
             >
               Rechazar
             </v-btn>
 
-            <v-btn
-              color="success"
-              :disabled="statusSubmitting"
-              prepend-icon="mdi-check-decagram"
-              variant="flat"
-              @click="submitStatus('authorized')"
-            >
-              Autorizar
-            </v-btn>
           </template>
         </v-card-actions>
       </v-card>
@@ -694,31 +699,26 @@
     stopReturnCodeCooldown()
   }
 
-  async function submitStatus (status: 'authorized' | 'refused') {
+  async function refusePass () {
     if (!selectedPass.value) return
 
-    if (status === 'refused') {
-      const notes = rejectNotes.value.trim()
-      if (!notes) {
-        showSnackbar('Debes escribir una anotación en notas para rechazar el pase.', 'error')
-        return
-      }
+    const notes = rejectNotes.value.trim()
+
+    if (!notes) {
+      showSnackbar('Debes escribir una anotación en notas para rechazar el pase.', 'error')
+      return
     }
 
     statusSubmitting.value = true
     errorMessage.value = null
 
     try {
-      const payload = status === 'authorized'
-        ? { status: 'authorized' }
-        : { status: 'refused', notes: rejectNotes.value.trim() }
+      await httpClient.post(`/api/v1/exit-passes/${selectedPass.value.id}/statuses`, {
+        notes,
+        status: 'refused',
+      })
 
-      await httpClient.post(`/api/v1/exit-passes/${selectedPass.value.id}/statuses`, payload)
-
-      showSnackbar(
-        status === 'authorized' ? 'Pase autorizado correctamente.' : 'Pase rechazado correctamente.',
-        'success',
-      )
+      showSnackbar('Pase rechazado correctamente.', 'success')
       closeDetail()
       await loadExitPasses()
     } catch (error) {

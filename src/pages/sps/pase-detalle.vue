@@ -98,7 +98,7 @@
           </v-btn>
 
           <v-btn
-            v-if="isOwner"
+            v-if="isOwner && pass.currentStatus === 'authorized'"
             color="primary"
             prepend-icon="mdi-login-variant"
             :to="`/sps/pases/${passId}/regreso`"
@@ -123,6 +123,11 @@
             Resolución
           </div>
 
+          <p class="text-body-2 text-medium-emphasis mb-3">
+            El pase se autoriza al firmarlo como jefe inmediato, arriba. Este bloque solo sirve
+            para rechazarlo.
+          </p>
+
           <v-textarea
             v-model="rejectNotes"
             density="comfortable"
@@ -139,20 +144,11 @@
               :disabled="statusSubmitting"
               prepend-icon="mdi-close-circle-outline"
               variant="tonal"
-              @click="submitStatus('refused')"
+              @click="refusePass"
             >
               Rechazar
             </v-btn>
 
-            <v-btn
-              color="success"
-              :disabled="statusSubmitting"
-              prepend-icon="mdi-check-decagram"
-              variant="flat"
-              @click="submitStatus('authorized')"
-            >
-              Autorizar
-            </v-btn>
           </div>
         </div>
       </template>
@@ -399,10 +395,10 @@
     }
   }
 
-  async function submitStatus (status: 'authorized' | 'refused') {
+  async function refusePass () {
     if (!pass.value) return
 
-    if (status === 'refused' && !rejectNotes.value.trim()) {
+    if (!rejectNotes.value.trim()) {
       showSnackbar('Debes escribir una anotación en notas para rechazar el pase.', 'error')
       return
     }
@@ -410,15 +406,11 @@
     statusSubmitting.value = true
 
     try {
-      const payload = status === 'authorized'
-        ? { status: 'authorized' }
-        : { status: 'refused', notes: rejectNotes.value.trim() }
-
-      await httpClient.post(`/api/v1/exit-passes/${passId}/statuses`, payload)
-      showSnackbar(
-        status === 'authorized' ? 'Pase autorizado correctamente.' : 'Pase rechazado correctamente.',
-        'success',
-      )
+      await httpClient.post(`/api/v1/exit-passes/${passId}/statuses`, {
+        notes: rejectNotes.value.trim(),
+        status: 'refused',
+      })
+      showSnackbar('Pase rechazado correctamente.', 'success')
       rejectNotes.value = ''
       await loadPass()
     } catch (error) {
