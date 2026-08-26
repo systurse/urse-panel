@@ -138,9 +138,9 @@
               prepend-icon="mdi-send-outline"
               size="small"
               variant="text"
-              @click="sendToRevision(exitPass.id)"
+              @click="startRevision(exitPass)"
             >
-              Enviar a revisión
+              Firmar y enviar a revisión
             </v-btn>
 
             <v-btn
@@ -153,6 +153,17 @@
               @click="printPassPdf(exitPass.id)"
             >
               Imprimir
+            </v-btn>
+
+            <v-btn
+              v-if="exitPass.currentStatus === 'authorized'"
+              color="#c89215"
+              prepend-icon="mdi-login-variant"
+              size="small"
+              :to="`/sps/pases/${exitPass.id}/regreso`"
+              variant="text"
+            >
+              Confirmar regreso
             </v-btn>
           </div>
         </v-card-text>
@@ -346,11 +357,23 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <ExitPassSignDialog
+    v-if="revisionPass"
+    :key="revisionPass.id"
+    v-model="signDialog"
+    intro="Para enviar el pase a revisión primero debes firmarlo como empleado."
+    :pass-id="revisionPass.id"
+    role-label="Empleado"
+    signer-role="employee"
+    @signed="onEmployeeSigned"
+  />
 </template>
 
 <script lang="ts" setup>
   import type { AxiosError } from 'axios'
   import { onMounted, ref } from 'vue'
+  import ExitPassSignDialog from '@/modules/sps/components/ExitPassSignDialog.vue'
   import { http, httpClient } from '@/services/http'
 
   interface ExitPassItem {
@@ -692,6 +715,26 @@
         ?? resolveMessage(error, 'No fue posible actualizar el pase.')
     } finally {
       editingLoading.value = false
+    }
+  }
+
+  const signDialog = ref(false)
+  const revisionPass = ref<ExitPassItem | null>(null)
+
+  // A pass must reach the supervisor already carrying the employee's signature,
+  // so signing is the first half of "send to review" rather than a separate
+  // step the requester can skip.
+  function startRevision (pass: ExitPassItem) {
+    revisionPass.value = pass
+    signDialog.value = true
+  }
+
+  async function onEmployeeSigned () {
+    const pass = revisionPass.value
+    revisionPass.value = null
+
+    if (pass) {
+      await sendToRevision(pass.id)
     }
   }
 
