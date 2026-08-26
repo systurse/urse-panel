@@ -110,7 +110,7 @@
             </v-btn>
 
             <v-btn
-              v-if="exitPass.currentStatus === 'pending'"
+              v-if="exitPass.currentStatus === 'pending' && exitPass.signedRoleCount === 0"
               color="#c89215"
               prepend-icon="mdi-pencil-outline"
               size="small"
@@ -119,6 +119,17 @@
             >
               Editar
             </v-btn>
+
+            <v-chip
+              v-else-if="exitPass.signedRoleCount > 0"
+              color="success"
+              prepend-icon="mdi-draw-pen"
+              size="small"
+              title="Un pase firmado ya no puede editarse"
+              variant="tonal"
+            >
+              Firmado
+            </v-chip>
 
             <v-btn
               v-if="exitPass.currentStatus === 'pending'"
@@ -363,10 +374,8 @@
     beforeScheduleExitAt: string
     beforeScheduleDuration: string
     supervisorName: string
-    supervisorSignature: string
     directorName: string
-    directorSignature: string
-    employeeSignature: string
+    signedRoleCount: number
     currentStatus: string
     statuses: string[]
   }
@@ -406,10 +415,7 @@
     before_schedule_exit_at: '',
     before_schedule_duration: '',
     immediate_supervisor_name: '',
-    immediate_supervisor_signature: '',
     administrative_director_name: '',
-    administrative_director_signature: '',
-    employee_signature: '',
   })
 
   const requiredRules = [
@@ -432,9 +438,40 @@
     { title: 'Antes del horario', value: 'before_schedule' },
   ]
 
+  // The pass resource may carry either the progress object or the signature
+  // list depending on the endpoint; a pass with no signature data reads as 0 and
+  // the API remains the authority.
+  function getSignedRoleCount (item: Record<string, unknown>) {
+    const progress = item.signature_progress
+    if (progress && typeof progress === 'object') {
+      const signed = (progress as Record<string, unknown>).signed_roles
+      if (Array.isArray(signed)) {
+        return signed.length
+      }
+    }
+
+    return Array.isArray(item.signatures) ? item.signatures.length : 0
+  }
+
   function resolveMessage (error: unknown, fallback: string) {
     const axiosError = error as AxiosError<{ message?: string }>
     return axiosError?.response?.data?.message ?? axiosError?.message ?? fallback
+  }
+
+  // A signed pass rejects content changes with 422 and the reason under the
+  // `signatures` key; that message explains which signature blocks the edit.
+  function resolveSignatureBlock (error: unknown): string | null {
+    const errors = (error as { response?: { data?: { errors?: Record<string, string[] | string> } } })
+      ?.response
+      ?.data
+      ?.errors
+      ?.signatures
+
+    if (Array.isArray(errors) && errors.length > 0) {
+      return errors[0]
+    }
+
+    return typeof errors === 'string' && errors.trim().length > 0 ? errors : null
   }
 
   function readString (source: Record<string, unknown>, ...keys: string[]) {
@@ -512,10 +549,8 @@
       beforeScheduleExitAt: readString(item, 'before_schedule_exit_at'),
       beforeScheduleDuration: readString(item, 'before_schedule_duration'),
       supervisorName: readString(item, 'immediate_supervisor_name'),
-      supervisorSignature: readString(item, 'immediate_supervisor_signature'),
       directorName: readString(item, 'administrative_director_name'),
-      directorSignature: readString(item, 'administrative_director_signature'),
-      employeeSignature: readString(item, 'employee_signature'),
+      signedRoleCount: getSignedRoleCount(item),
       currentStatus,
       statuses,
     }
@@ -608,10 +643,7 @@
       before_schedule_exit_at: normalizeTimeToInput(pass.beforeScheduleExitAt),
       before_schedule_duration: pass.beforeScheduleDuration,
       immediate_supervisor_name: pass.supervisorName,
-      immediate_supervisor_signature: pass.supervisorSignature,
       administrative_director_name: pass.directorName,
-      administrative_director_signature: pass.directorSignature,
-      employee_signature: pass.employeeSignature,
     }
     editDialog.value = true
   }
@@ -649,17 +681,15 @@
         before_schedule_exit_at: normalizeTimeToApi(editForm.value.before_schedule_exit_at),
         before_schedule_duration: normalizeOptional(editForm.value.before_schedule_duration),
         immediate_supervisor_name: editForm.value.immediate_supervisor_name,
-        immediate_supervisor_signature: normalizeOptional(editForm.value.immediate_supervisor_signature),
         administrative_director_name: editForm.value.administrative_director_name,
-        administrative_director_signature: normalizeOptional(editForm.value.administrative_director_signature),
-        employee_signature: normalizeOptional(editForm.value.employee_signature),
       }
 
       await httpClient.put(`/api/v1/exit-passes/${editingPassId.value}`, payload)
       closeEditDialog()
       await loadExitPasses()
     } catch (error) {
-      errorMessage.value = resolveMessage(error, 'No fue posible actualizar el pase.')
+      errorMessage.value = resolveSignatureBlock(error)
+        ?? resolveMessage(error, 'No fue posible actualizar el pase.')
     } finally {
       editingLoading.value = false
     }

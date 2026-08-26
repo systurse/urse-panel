@@ -422,10 +422,7 @@
     beforeScheduleExitAt: string
     beforeScheduleDuration: string
     supervisorName: string
-    supervisorSignature: string
     directorName: string
-    directorSignature: string
-    employeeSignature: string
     notes: string
     currentStatus: string
     statuses: string[]
@@ -588,10 +585,7 @@
       beforeScheduleExitAt: readString(item, 'before_schedule_exit_at'),
       beforeScheduleDuration: readString(item, 'before_schedule_duration'),
       supervisorName: readString(item, 'immediate_supervisor_name'),
-      supervisorSignature: readString(item, 'immediate_supervisor_signature'),
       directorName: readString(item, 'administrative_director_name'),
-      directorSignature: readString(item, 'administrative_director_signature'),
-      employeeSignature: readString(item, 'employee_signature'),
       notes: readString(item, 'notes'),
       currentStatus,
       statuses,

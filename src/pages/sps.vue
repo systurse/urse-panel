@@ -376,9 +376,6 @@
     within_schedule_return_at: '',
     before_schedule_entry_at: '',
     before_schedule_exit_at: '',
-    immediate_supervisor_signature: '',
-    administrative_director_signature: '',
-    employee_signature: '',
   })
 
   const workScheduleOptions = [
@@ -575,10 +572,7 @@
         before_schedule_exit_at: normalizeTimeToApi(passForm.value.before_schedule_exit_at),
         before_schedule_duration: normalizeOptional(beforeScheduleDuration.value),
         immediate_supervisor_name: supervisor.value?.name ?? '',
-        immediate_supervisor_signature: normalizeOptional(passForm.value.immediate_supervisor_signature),
         administrative_director_name: employeeArea.value?.name ?? '',
-        administrative_director_signature: normalizeOptional(passForm.value.administrative_director_signature),
-        employee_signature: normalizeOptional(passForm.value.employee_signature),
       }
 
       await httpClient.post('/api/v1/exit-passes', payload)
