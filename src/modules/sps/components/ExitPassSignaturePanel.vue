@@ -91,55 +91,17 @@
       <template v-if="!progress.isComplete && signableRoles.length > 0">
         <v-divider class="my-3" />
 
-        <div v-for="role in signableRoles" :key="`sign-${role}`" class="sign-block">
-          <div class="text-body-2 font-weight-bold mb-1">
+        <div class="sign-actions">
+          <v-btn
+            v-for="role in signableRoles"
+            :key="`sign-${role}`"
+            color="#c89215"
+            prepend-icon="mdi-draw-pen"
+            variant="flat"
+            @click="openSignDialog(role)"
+          >
             Firmar como {{ roleLabel(role) }}
-          </div>
-
-          <p class="text-caption text-medium-emphasis mb-3">
-            Te enviaremos un código de 6 dígitos por correo. Vence a los 5 minutos y solo puede
-            usarse una vez.
-          </p>
-
-          <div v-if="destinations[role]" class="sign-block__destination">
-            <v-icon icon="mdi-email-check-outline" size="16" />
-            <span>Código enviado a <strong>{{ destinations[role] }}</strong></span>
-          </div>
-
-          <div class="sign-block__actions">
-            <v-btn
-              :disabled="cooldowns[role] > 0"
-              :loading="requestingOtp"
-              prepend-icon="mdi-email-fast-outline"
-              variant="tonal"
-              @click="onRequestOtp(role)"
-            >
-              {{ cooldowns[role] > 0 ? `Reenviar en ${cooldowns[role]}s` : 'Solicitar código' }}
-            </v-btn>
-
-            <v-text-field
-              v-model="codes[role]"
-              class="sign-block__code"
-              density="comfortable"
-              hide-details
-              inputmode="numeric"
-              label="Código"
-              maxlength="6"
-              placeholder="000000"
-              variant="outlined"
-            />
-
-            <v-btn
-              color="#c89215"
-              :disabled="!isCodeComplete(role)"
-              :loading="signing"
-              prepend-icon="mdi-draw-pen"
-              variant="flat"
-              @click="onSign(role)"
-            >
-              Firmar
-            </v-btn>
-          </div>
+          </v-btn>
         </div>
       </template>
 
@@ -147,13 +109,24 @@
         No tienes un rol pendiente de firma en este pase.
       </p>
     </template>
+
+    <ExitPassSignDialog
+      v-if="dialogRole"
+      :key="`${passId}-${dialogRole}`"
+      v-model="signDialog"
+      :pass-id="passId"
+      :role-label="roleLabel(dialogRole)"
+      :signer-role="dialogRole"
+      @signed="onSigned"
+    />
   </div>
 </template>
 
 <script lang="ts" setup>
   import type { ExitPassSignature, SignerRole } from '@/modules/exit-pass-signatures/port'
-  import { computed, onBeforeUnmount, onMounted, reactive } from 'vue'
+  import { computed, onMounted, ref } from 'vue'
   import { useExitPassSignatures } from '@/modules/exit-pass-signatures/useExitPassSignatures'
+  import ExitPassSignDialog from '@/modules/sps/components/ExitPassSignDialog.vue'
   import { useAuthStore } from '@/stores/auth'
 
   const props = defineProps<{
@@ -172,11 +145,7 @@
     loading,
     loadSignatures,
     progress,
-    requestingOtp,
-    requestOtp,
-    sign,
     signatures,
-    signing,
   } = useExitPassSignatures(props.passId)
 
   const ROLE_LABELS: Record<SignerRole, string> = {
@@ -185,10 +154,8 @@
     immediate_supervisor: 'Jefe inmediato',
   }
 
-  const codes = reactive<Record<string, string>>({})
-  const destinations = reactive<Record<string, string>>({})
-  const cooldowns = reactive<Record<string, number>>({})
-  const timers = new Map<string, ReturnType<typeof setInterval>>()
+  const signDialog = ref(false)
+  const dialogRole = ref<SignerRole | null>(null)
 
   const requiredCount = computed(() => progress.value.requiredRoles.length)
 
@@ -236,64 +203,26 @@
     return `Firmado por ${signature.signerName} · ${formatDateTime(signature.signedAt)}`
   }
 
-  function isCodeComplete (role: SignerRole) {
-    return /^\d{6}$/.test(codes[role] ?? '')
+  function openSignDialog (role: SignerRole) {
+    dialogRole.value = role
+    signDialog.value = true
   }
 
-  function stopCooldown (role: SignerRole) {
-    const timer = timers.get(role)
-    if (timer) {
-      clearInterval(timer)
-      timers.delete(role)
-    }
-    cooldowns[role] = 0
-  }
-
-  // Matches the API's one-request-per-60s rule so the signer sees a disabled
-  // button rather than a 429.
-  function startCooldown (role: SignerRole, seconds: number) {
-    stopCooldown(role)
-    cooldowns[role] = seconds
-    timers.set(role, setInterval(() => {
-      cooldowns[role] -= 1
-      if (cooldowns[role] <= 0) {
-        stopCooldown(role)
-      }
-    }, 1000))
-  }
-
-  async function onRequestOtp (role: SignerRole) {
-    const result = await requestOtp(role)
-    if (!result) return
-
-    destinations[role] = result.destination
-    startCooldown(role, 60)
-  }
-
-  async function onSign (role: SignerRole) {
-    const result = await sign(role, codes[role] ?? '')
-    if (!result) return
-
-    codes[role] = ''
-    destinations[role] = ''
-    stopCooldown(role)
+  async function onSigned () {
+    const role = dialogRole.value
+    await loadSignatures()
 
     // The pass flips to `authorized` on its own once the last required
     // signature lands, so the parent has to refetch it. Emitted only as a
     // result of signing — never by observing state, because the parent
     // remounts this panel while it reloads, which would loop forever.
-    emit('signed', role, result.progress.isComplete)
+    if (role) {
+      emit('signed', role, progress.value.isComplete)
+    }
   }
 
   onMounted(() => {
     void loadSignatures()
-  })
-
-  onBeforeUnmount(() => {
-    for (const timer of timers.values()) {
-      clearInterval(timer)
-    }
-    timers.clear()
   })
 
   defineExpose({ loadSignatures })
@@ -360,34 +289,9 @@
   margin-inline-start: auto;
 }
 
-.sign-block {
-  padding-top: 4px;
-}
-
-.sign-block__destination {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 10px;
-  color: #2e7d5b;
-  font-size: 0.85rem;
-}
-
-.sign-block__actions {
+.sign-actions {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
   gap: 10px;
-}
-
-.sign-block__code {
-  max-width: 160px;
-}
-
-@media (max-width: 900px) {
-  .sign-block__code {
-    max-width: none;
-    width: 100%;
-  }
 }
 </style>
