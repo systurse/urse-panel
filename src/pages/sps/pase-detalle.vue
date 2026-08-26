@@ -7,8 +7,8 @@
           <h2 class="card-title">Detalle del pase #{{ passId }}</h2>
         </div>
 
-        <v-btn prepend-icon="mdi-arrow-left" variant="text" @click="router.push('/sps/pases')">
-          Volver al listado
+        <v-btn prepend-icon="mdi-arrow-left" variant="text" @click="goBackToList">
+          {{ backLabel }}
         </v-btn>
       </div>
 
@@ -65,15 +65,21 @@
 
         <div class="text-subtitle-2 font-weight-bold mb-3">Histórico de estatus</div>
 
-        <div v-if="pass.statuses.length === 0" class="text-medium-emphasis">
+        <div v-if="timeline.length === 0" class="text-medium-emphasis">
           Sin histórico disponible.
         </div>
 
         <v-timeline v-else density="compact" side="end">
-          <v-timeline-item v-for="(entry, index) in pass.statuses" :key="index" :dot-color="statusColor(entry.status)" size="small">
-            <div class="timeline-status">{{ statusLabel(entry.status) }}</div>
-            <div v-if="entry.created_at" class="timeline-date">{{ formatDateTime(entry.created_at) }}</div>
-            <div v-if="entry.notes" class="timeline-notes">{{ entry.notes }}</div>
+          <v-timeline-item
+            v-for="(entry, index) in timeline"
+            :key="index"
+            :dot-color="entry.color"
+            :icon="entry.icon"
+            size="small"
+          >
+            <div class="timeline-status">{{ entry.title }}</div>
+            <div v-if="entry.at" class="timeline-date">{{ formatDateTime(entry.at) }}</div>
+            <div v-if="entry.detail" class="timeline-notes">{{ entry.detail }}</div>
           </v-timeline-item>
         </v-timeline>
 
@@ -82,6 +88,7 @@
         <ExitPassSignaturePanel
           :is-owner="isOwner"
           :pass-id="passId"
+          @loaded="signatures = $event"
           @signed="loadPass"
         />
 
@@ -161,6 +168,7 @@
 </template>
 
 <script lang="ts" setup>
+  import type { ExitPassSignature } from '@/modules/exit-pass-signatures/port'
   import type { AxiosError } from 'axios'
   import { computed, onMounted, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
@@ -194,6 +202,19 @@
 
   const passId = String(route.params.id)
 
+  // Supervisors reach this screen from their own list, and used to be dropped
+  // into the employee's one on the way back. The origin travels in the query so
+  // the destination does not have to be guessed from roles.
+  const cameFromAdminList = computed(() => route.query.from === 'admin')
+
+  const backLabel = computed(() =>
+    cameFromAdminList.value ? 'Volver a pases de salida' : 'Volver al listado',
+  )
+
+  function goBackToList () {
+    void router.push(cameFromAdminList.value ? '/sps/administracion/pases-salida' : '/sps/pases')
+  }
+
   const loading = ref(false)
   const errorMessage = ref<string | null>(null)
   const pass = ref<ExitPassDetail | null>(null)
@@ -214,6 +235,59 @@
   const canSeeBackupCode = computed(() =>
     authStore.isAdmin || authStore.hasRole('supervisor'),
   )
+
+  const signatures = ref<ExitPassSignature[]>([])
+
+  const ROLE_LABELS: Record<string, string> = {
+    administrative_director: 'Dirección de Asuntos Administrativos',
+    employee: 'Empleado',
+    immediate_supervisor: 'Jefe inmediato',
+  }
+
+  interface TimelineEntry {
+    at: string
+    color: string
+    detail: string
+    icon: string
+    title: string
+  }
+
+  // Status changes alone read as a near-empty history, because most of what
+  // happens to a pass now is signatures. Both are shown on one line, ordered by
+  // when they happened; entries without a date keep their original order at the
+  // front, since that is the sequence the API returned them in.
+  const timeline = computed<TimelineEntry[]>(() => {
+    const statusEntries: TimelineEntry[] = (pass.value?.statuses ?? []).map(entry => ({
+      at: entry.created_at,
+      color: statusColor(entry.status),
+      detail: entry.notes,
+      icon: '',
+      title: statusLabel(entry.status),
+    }))
+
+    const signatureEntries: TimelineEntry[] = signatures.value.map(signature => ({
+      at: signature.signedAt,
+      color: 'success',
+      detail: `Firmado por ${signature.signerName}`,
+      icon: 'mdi-draw-pen',
+      title: `Firma · ${signature.roleLabel || ROLE_LABELS[signature.role] || signature.role}`,
+    }))
+
+    // Sorting in place is safe here: the array was just built by the spread,
+    // and sort is stable, so entries sharing a timestamp keep the order they
+    // came in. `toSorted` is not available at this project's TS lib level.
+    // eslint-disable-next-line unicorn/no-array-sort
+    return [...statusEntries, ...signatureEntries].sort((a, b) => {
+      const timeA = Date.parse(a.at)
+      const timeB = Date.parse(b.at)
+
+      if (Number.isNaN(timeA) && Number.isNaN(timeB)) return 0
+      if (Number.isNaN(timeA)) return -1
+      if (Number.isNaN(timeB)) return 1
+
+      return timeA - timeB
+    })
+  })
 
   const canReview = computed(() =>
     authStore.isAdmin && pass.value?.currentStatus === 'revision',
