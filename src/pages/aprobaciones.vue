@@ -71,7 +71,7 @@
             <p class="field-label">Recomendaciones</p>
             <p class="field-value">{{ order.recommendations ?? '—' }}</p>
             <p class="field-label">Tipo de atención / Problema en</p>
-            <p class="field-value">{{ order.service_type ?? '—' }} · {{ order.problem_area ?? '—' }}</p>
+            <p class="field-value">{{ order.deal?.type ?? order.service_type ?? '—' }} · {{ order.problem_area ?? '—' }}</p>
             <p class="field-label">Equipo</p>
 
             <p class="field-value">

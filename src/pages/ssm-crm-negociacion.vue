@@ -87,6 +87,14 @@
               type="date"
             />
 
+            <v-select
+              v-model="general.type"
+              clearable
+              :disabled="isClosed"
+              :items="SERVICE_TYPE_OPTIONS"
+              label="Tipo de atención"
+            />
+
             <div v-if="deal.contact" class="contact-block">
               <p class="contact-name">
                 <v-icon icon="mdi-account-circle-outline" size="18" />
@@ -132,8 +140,6 @@
         <v-card rounded="xl">
           <v-card-text>
             <h2 class="section-title">Detalles</h2>
-
-            <v-text-field v-model="details.type" :disabled="isClosed" label="Tipo de negociación" />
 
             <v-select
               v-model="details.channel"
@@ -225,17 +231,7 @@
             />
 
             <v-row dense>
-              <v-col cols="6">
-                <v-select
-                  v-model="order.service_type"
-                  clearable
-                  :disabled="orderLocked"
-                  :items="SERVICE_TYPE_OPTIONS"
-                  label="Tipo de atención"
-                />
-              </v-col>
-
-              <v-col cols="6">
+              <v-col cols="12">
                 <v-select
                   v-model="order.problem_area"
                   clearable
@@ -548,14 +544,13 @@
   const showClose = ref(false)
   const showDelete = ref(false)
 
-  const general = reactive({ description: '', due_date: '' })
-  const details = reactive({ type: '', channel: 'manual' as string, started_at: '', visible_to_all: true })
+  const general = reactive({ description: '', due_date: '', type: null as string | null })
+  const details = reactive({ channel: 'manual' as string, started_at: '', visible_to_all: true })
   const order = reactive({
     solution: '',
     diagnosis: '',
     requirements: '',
     recommendations: '',
-    service_type: null as string | null,
     problem_area: null as string | null,
     warranty: null as boolean | null,
     loan: null as boolean | null,
@@ -629,7 +624,7 @@
 
     general.description = value.description ?? ''
     general.due_date = value.due_date ?? ''
-    details.type = value.type ?? ''
+    general.type = value.type ?? null
     details.channel = value.channel
     details.started_at = value.started_at ?? ''
     details.visible_to_all = value.visible_to_all
@@ -637,7 +632,6 @@
     order.diagnosis = value.service_order?.diagnosis ?? ''
     order.requirements = value.service_order?.requirements ?? ''
     order.recommendations = value.service_order?.recommendations ?? ''
-    order.service_type = value.service_order?.service_type ?? null
     order.problem_area = value.service_order?.problem_area ?? null
     order.warranty = value.service_order?.warranty ?? null
     order.loan = value.service_order?.loan ?? null
@@ -676,12 +670,15 @@
   }
 
   function saveGeneral () {
-    updateDeal({ description: general.description || null, due_date: general.due_date || null })
+    updateDeal({
+      description: general.description || null,
+      due_date: general.due_date || null,
+      type: general.type as never,
+    })
   }
 
   function saveDetails () {
     updateDeal({
-      type: details.type || null,
       channel: details.channel as never,
       started_at: details.started_at || null,
       visible_to_all: details.visible_to_all,
@@ -694,7 +691,6 @@
       diagnosis: order.diagnosis || null,
       requirements: order.requirements || null,
       recommendations: order.recommendations || null,
-      service_type: order.service_type,
       problem_area: order.problem_area,
       warranty: order.warranty,
       loan: order.loan,
@@ -711,7 +707,6 @@
       diagnosis: order.diagnosis || null,
       requirements: order.requirements || null,
       recommendations: order.recommendations || null,
-      service_type: order.service_type,
       problem_area: order.problem_area,
       warranty: order.warranty,
       loan: order.loan,
@@ -729,7 +724,6 @@
       diagnosis: order.diagnosis || null,
       requirements: order.requirements || null,
       recommendations: order.recommendations || null,
-      service_type: order.service_type,
       problem_area: order.problem_area,
       warranty: order.warranty,
       loan: order.loan,

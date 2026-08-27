@@ -226,7 +226,6 @@ export interface ServiceOrderPayload {
   diagnosis?: string | null
   requirements?: string | null
   recommendations?: string | null
-  service_type?: string | null
   problem_area?: string | null
   warranty?: boolean | null
   loan?: boolean | null
