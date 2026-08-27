@@ -507,7 +507,12 @@
 
   const isClosed = computed(() => deal.value?.status !== 'open')
   const canAssign = computed(() => authStore.isAdmin || authStore.hasPermission('crm.deals.assign'))
-  const canClose = computed(() => authStore.isAdmin || authStore.hasPermission('crm.deals.close'))
+  // Agentes cierran cualquiera; técnicos solo las negociaciones asignadas a ellos
+  const canClose = computed(() =>
+    authStore.isAdmin
+    || authStore.hasPermission('crm.deals.close')
+    || (authStore.hasPermission('crm.deals.close-own') && deal.value?.assignee?.id === authStore.user?.id),
+  )
   const canDelete = computed(() => authStore.isAdmin || authStore.hasPermission('crm.deals.delete'))
 
   const orderLocked = computed(() => {
