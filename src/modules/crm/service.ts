@@ -261,6 +261,15 @@ export function deleteTask (id: number) {
   return httpClient.delete<void>(`${BASE}/tasks/${id}`)
 }
 
+// --------------------------------------------- notification preferences
+export function getNotificationPreferences () {
+  return httpClient.get<{ notify_new_leads: boolean }>('/api/v1/me/notification-preferences')
+}
+
+export function updateNotificationPreferences (payload: { notify_new_leads: boolean }) {
+  return httpClient.put<{ notify_new_leads: boolean }>('/api/v1/me/notification-preferences', payload)
+}
+
 // ------------------------------------------------------------ public widget
 export function submitPublicLead (payload: PublicLeadPayload) {
   return publicHttpClient.post<{ message: string, folio: number }>(`${PUBLIC_BASE}/leads`, payload)

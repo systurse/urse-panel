@@ -3,11 +3,14 @@
     <v-card class="settings-card" rounded="xl" variant="flat">
       <div class="section-kicker">Sistema</div>
       <h2 class="settings-title">Configuración general</h2>
+
       <p class="settings-copy">
         Ajusta parámetros clave del sistema, revisa la conectividad de integraciones y define
         lineamientos operativos del panel.
       </p>
     </v-card>
+
+    <NotificationPreferencesCard v-if="authStore.hasRole('agent')" />
 
     <v-card class="settings-card" rounded="xl" variant="flat">
       <div v-for="setting in settings" :key="setting.title" class="setting-row">
@@ -15,6 +18,7 @@
           <div class="setting-title">{{ setting.title }}</div>
           <div class="setting-caption">{{ setting.caption }}</div>
         </div>
+
         <v-switch color="#FAB21A" inset :model-value="setting.enabled" />
       </div>
     </v-card>
@@ -22,6 +26,11 @@
 </template>
 
 <script lang="ts" setup>
+  import NotificationPreferencesCard from '@/modules/crm/components/NotificationPreferencesCard.vue'
+  import { useAuthStore } from '@/stores/auth'
+
+  const authStore = useAuthStore()
+
   const settings = [
     {
       title: 'Notificaciones críticas',
