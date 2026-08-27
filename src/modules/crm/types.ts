@@ -109,6 +109,23 @@ export interface Project {
   tasks_count?: number
 }
 
+export interface TaskCommentAttachment {
+  id: number
+  original_name: string
+  mime_type: string | null
+  size: number
+  download_url: string
+}
+
+export interface TaskComment {
+  id: number
+  task_id: number
+  body: string
+  created_at: string
+  user?: CrmUser | null
+  attachments?: TaskCommentAttachment[]
+}
+
 export interface Task {
   id: number
   project_id: number | null
@@ -120,6 +137,7 @@ export interface Task {
   due_date: string | null
   position: number
   created_at: string
+  comments_count?: number
   assignee?: CrmUser | null
   creator?: CrmUser | null
   project?: Project | null

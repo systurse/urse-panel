@@ -65,6 +65,7 @@
             class="task-card"
             draggable="true"
             rounded="lg"
+            @click="openDetail(task)"
             @dragstart="onDragStart(task, $event)"
           >
             <v-card-text class="task-card-body">
@@ -84,6 +85,22 @@
               </div>
 
               <div class="task-actions" @click.stop>
+                <v-chip
+                  v-if="task.comments_count"
+                  prepend-icon="mdi-comment-text-outline"
+                  size="x-small"
+                  variant="tonal"
+                >{{ task.comments_count }}</v-chip>
+
+                <v-btn
+                  density="comfortable"
+                  icon="mdi-pencil-outline"
+                  size="x-small"
+                  title="Abrir tarea"
+                  variant="text"
+                  @click="openDetail(task)"
+                />
+
                 <v-btn
                   v-if="canDelete"
                   density="comfortable"
@@ -118,6 +135,16 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <TaskDetailDialog
+      v-model="showDetail"
+      :assignables="assignables"
+      :can-comment="selectedCanComment"
+      :can-manage="selectedCanManage"
+      :can-reassign="canReassign"
+      :task="selectedTask"
+      @saved="loadTasks"
+    />
 
     <!-- Nueva tarea -->
     <v-dialog v-model="showNewTask" max-width="520">
@@ -162,6 +189,7 @@
 <script lang="ts" setup>
   import type { Task, TaskStatus } from '@/modules/crm/types'
   import { computed, reactive, ref } from 'vue'
+  import TaskDetailDialog from '@/modules/crm/components/TaskDetailDialog.vue'
   import { TASK_COLUMNS, useTasksBoard } from '@/modules/crm/useTasksBoard'
   import { useAuthStore } from '@/stores/auth'
 
@@ -197,6 +225,29 @@
 
   const canCreate = computed(() => authStore.isAdmin || authStore.hasPermission('crm.tasks.create'))
   const canDelete = computed(() => authStore.isAdmin || authStore.hasPermission('crm.tasks.delete'))
+  const canReassign = computed(() => authStore.isAdmin || authStore.hasPermission('crm.tasks.update'))
+
+  const showDetail = ref(false)
+  const selectedTask = ref<Task | null>(null)
+
+  // Agentes gestionan cualquier tarea; el asignado la suya; el creador comenta
+  const selectedCanManage = computed(() => {
+    const task = selectedTask.value
+    if (!task) {
+      return false
+    }
+    return canReassign.value
+      || (authStore.hasPermission('crm.tasks.update-own') && task.assignee?.id === authStore.user?.id)
+  })
+
+  const selectedCanComment = computed(() =>
+    selectedCanManage.value || selectedTask.value?.creator?.id === authStore.user?.id,
+  )
+
+  function openDetail (task: Task) {
+    selectedTask.value = task
+    showDetail.value = true
+  }
 
   function onDragStart (task: Task, event: DragEvent) {
     event.dataTransfer?.setData('text/task-id', String(task.id))

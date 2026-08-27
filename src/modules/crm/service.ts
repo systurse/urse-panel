@@ -13,6 +13,7 @@ import type {
   ServiceOrderPayload,
   Stage,
   Task,
+  TaskComment,
   TaskStatus,
   WidgetConfig,
 } from '@/modules/crm/types'
@@ -268,6 +269,26 @@ export function getNotificationPreferences () {
 
 export function updateNotificationPreferences (payload: { notify_new_leads: boolean }) {
   return httpClient.put<{ notify_new_leads: boolean }>('/api/v1/me/notification-preferences', payload)
+}
+
+// -------------------------------------------------------- task comments
+export async function listTaskComments (taskId: number) {
+  const response = await httpClient.get<ApiCollection<TaskComment>>(`${BASE}/tasks/${taskId}/comments`)
+  return response.data
+}
+
+export async function createTaskComment (taskId: number, payload: { body: string, attachments?: File[] }) {
+  const form = new FormData()
+  form.append('body', payload.body)
+
+  for (const file of payload.attachments ?? []) {
+    form.append('attachments[]', file)
+  }
+
+  const response = await httpClient.post<ApiItem<TaskComment>>(`${BASE}/tasks/${taskId}/comments`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return response.data
 }
 
 // ------------------------------------------------------------ public widget
