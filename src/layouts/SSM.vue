@@ -103,7 +103,7 @@
     },
     {
       title: 'Configuración',
-      to: '/configuracion',
+      to: '/ssm/configuracion',
       icon: 'mdi-cog-outline',
       subtitle: 'Parámetros generales e integraciones del panel.',
     },
