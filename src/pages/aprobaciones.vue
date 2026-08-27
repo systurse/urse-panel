@@ -70,8 +70,18 @@
             <p class="field-value">{{ order.requirements ?? '—' }}</p>
             <p class="field-label">Recomendaciones</p>
             <p class="field-value">{{ order.recommendations ?? '—' }}</p>
-            <p class="field-label">Tipo de servicio / Responsable de equipo</p>
-            <p class="field-value">{{ order.service_type ?? '—' }} · {{ order.team_manager ?? '—' }}</p>
+            <p class="field-label">Tipo de atención / Problema en</p>
+            <p class="field-value">{{ order.service_type ?? '—' }} · {{ order.problem_area ?? '—' }}</p>
+            <p class="field-label">Equipo</p>
+
+            <p class="field-value">
+              {{ order.equipment_description ?? '—' }} · Inv: {{ order.inventory_number ?? '—' }}
+              · Garantía: {{ order.warranty === null ? '—' : (order.warranty ? 'Sí' : 'No') }}
+              · Préstamo: {{ order.loan === null ? '—' : (order.loan ? 'Sí' : 'No') }}
+            </p>
+
+            <p class="field-label">Ubicación / Responsable de equipo</p>
+            <p class="field-value">{{ order.location ?? '—' }} · {{ order.team_manager ?? '—' }}</p>
           </v-col>
         </v-row>
 

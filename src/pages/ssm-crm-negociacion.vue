@@ -216,8 +216,71 @@
               rows="2"
             />
 
-            <v-text-field v-model="order.service_type" :disabled="orderLocked" label="Tipo de servicio" />
-            <v-text-field v-model="order.team_manager" :disabled="orderLocked" label="Responsable de equipo" />
+            <v-textarea
+              v-model="order.recommendations"
+              auto-grow
+              :disabled="orderLocked"
+              label="Recomendaciones"
+              rows="2"
+            />
+
+            <v-row dense>
+              <v-col cols="6">
+                <v-select
+                  v-model="order.service_type"
+                  clearable
+                  :disabled="orderLocked"
+                  :items="SERVICE_TYPE_OPTIONS"
+                  label="Tipo de atención"
+                />
+              </v-col>
+
+              <v-col cols="6">
+                <v-select
+                  v-model="order.problem_area"
+                  clearable
+                  :disabled="orderLocked"
+                  :items="PROBLEM_AREA_OPTIONS"
+                  label="Presenta el problema en"
+                />
+              </v-col>
+
+              <v-col cols="6">
+                <v-select
+                  v-model="order.warranty"
+                  clearable
+                  :disabled="orderLocked"
+                  :items="YES_NO_OPTIONS"
+                  label="Garantía"
+                />
+              </v-col>
+
+              <v-col cols="6">
+                <v-select
+                  v-model="order.loan"
+                  clearable
+                  :disabled="orderLocked"
+                  :items="YES_NO_OPTIONS"
+                  label="Préstamo"
+                />
+              </v-col>
+
+              <v-col cols="6">
+                <v-text-field v-model="order.inventory_number" :disabled="orderLocked" label="Núm. inventario / serie" />
+              </v-col>
+
+              <v-col cols="6">
+                <v-text-field v-model="order.location" :disabled="orderLocked" label="Ubicación" />
+              </v-col>
+
+              <v-col cols="12">
+                <v-text-field v-model="order.equipment_description" :disabled="orderLocked" label="Descripción del equipo" />
+              </v-col>
+
+              <v-col cols="12">
+                <v-text-field v-model="order.team_manager" :disabled="orderLocked" label="Responsable de equipo" />
+              </v-col>
+            </v-row>
 
             <p class="order-hint">
               Los campos son opcionales; solo se exigen al generar la orden o solicitar su aprobación.
@@ -448,6 +511,7 @@
   import CloseDealDialog from '@/modules/crm/components/CloseDealDialog.vue'
   import TimelineList from '@/modules/crm/components/TimelineList.vue'
   import * as crm from '@/modules/crm/service'
+  import { PROBLEM_AREA_OPTIONS, SERVICE_TYPE_OPTIONS, YES_NO_OPTIONS } from '@/modules/crm/types'
   import { useDealDetail } from '@/modules/crm/useDealDetail'
   import { useAuthStore } from '@/stores/auth'
 
@@ -486,7 +550,20 @@
 
   const general = reactive({ description: '', due_date: '' })
   const details = reactive({ type: '', channel: 'manual' as string, started_at: '', visible_to_all: true })
-  const order = reactive({ solution: '', diagnosis: '', requirements: '', recommendations: '', service_type: '', team_manager: '' })
+  const order = reactive({
+    solution: '',
+    diagnosis: '',
+    requirements: '',
+    recommendations: '',
+    service_type: null as string | null,
+    problem_area: null as string | null,
+    warranty: null as boolean | null,
+    loan: null as boolean | null,
+    inventory_number: '',
+    equipment_description: '',
+    location: '',
+    team_manager: '',
+  })
 
   const reminderBody = ref('')
   const reminderAt = ref('')
@@ -560,7 +637,13 @@
     order.diagnosis = value.service_order?.diagnosis ?? ''
     order.requirements = value.service_order?.requirements ?? ''
     order.recommendations = value.service_order?.recommendations ?? ''
-    order.service_type = value.service_order?.service_type ?? ''
+    order.service_type = value.service_order?.service_type ?? null
+    order.problem_area = value.service_order?.problem_area ?? null
+    order.warranty = value.service_order?.warranty ?? null
+    order.loan = value.service_order?.loan ?? null
+    order.inventory_number = value.service_order?.inventory_number ?? ''
+    order.equipment_description = value.service_order?.equipment_description ?? ''
+    order.location = value.service_order?.location ?? ''
     order.team_manager = value.service_order?.team_manager ?? ''
   }, { immediate: true })
 
@@ -611,7 +694,13 @@
       diagnosis: order.diagnosis || null,
       requirements: order.requirements || null,
       recommendations: order.recommendations || null,
-      service_type: order.service_type || null,
+      service_type: order.service_type,
+      problem_area: order.problem_area,
+      warranty: order.warranty,
+      loan: order.loan,
+      inventory_number: order.inventory_number || null,
+      equipment_description: order.equipment_description || null,
+      location: order.location || null,
       team_manager: order.team_manager || null,
     })
   }
@@ -622,7 +711,13 @@
       diagnosis: order.diagnosis || null,
       requirements: order.requirements || null,
       recommendations: order.recommendations || null,
-      service_type: order.service_type || null,
+      service_type: order.service_type,
+      problem_area: order.problem_area,
+      warranty: order.warranty,
+      loan: order.loan,
+      inventory_number: order.inventory_number || null,
+      equipment_description: order.equipment_description || null,
+      location: order.location || null,
       team_manager: order.team_manager || null,
     })
     await generateOrderAction()
@@ -634,7 +729,13 @@
       diagnosis: order.diagnosis || null,
       requirements: order.requirements || null,
       recommendations: order.recommendations || null,
-      service_type: order.service_type || null,
+      service_type: order.service_type,
+      problem_area: order.problem_area,
+      warranty: order.warranty,
+      loan: order.loan,
+      inventory_number: order.inventory_number || null,
+      equipment_description: order.equipment_description || null,
+      location: order.location || null,
       team_manager: order.team_manager || null,
     })
     await requestOrderApprovalAction()

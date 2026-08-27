@@ -80,6 +80,12 @@ export interface ServiceOrder {
   requirements: string | null
   recommendations: string | null
   service_type: string | null
+  problem_area: string | null
+  warranty: boolean | null
+  loan: boolean | null
+  inventory_number: string | null
+  equipment_description: string | null
+  location: string | null
   team_manager: string | null
   status: ServiceOrderStatus
   status_label: string
@@ -221,8 +227,28 @@ export interface ServiceOrderPayload {
   requirements?: string | null
   recommendations?: string | null
   service_type?: string | null
+  problem_area?: string | null
+  warranty?: boolean | null
+  loan?: boolean | null
+  inventory_number?: string | null
+  equipment_description?: string | null
+  location?: string | null
   team_manager?: string | null
 }
+
+export const SERVICE_TYPE_OPTIONS = [
+  { value: 'Servicio', title: 'Servicio' },
+  { value: 'Equipo', title: 'Equipo (CPU)' },
+  { value: 'Asesoría', title: 'Asesoría' },
+  { value: 'Soporte', title: 'Soporte' },
+]
+
+export const PROBLEM_AREA_OPTIONS = ['Hardware', 'Software', 'Redes', 'Otro']
+
+export const YES_NO_OPTIONS = [
+  { value: true, title: 'Sí' },
+  { value: false, title: 'No' },
+]
 
 export interface PublicLeadPayload {
   first_name: string
