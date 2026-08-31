@@ -11,6 +11,7 @@
           <v-list-item prepend-icon="mdi-email-outline" :subtitle="contact.email ?? 'Sin correo'" title="Correo institucional" />
           <v-list-item prepend-icon="mdi-phone-outline" :subtitle="contact.phone ?? 'Sin teléfono'" title="Teléfono / WhatsApp" />
           <v-list-item prepend-icon="mdi-school-outline" :subtitle="contact.faculty ?? 'Sin registrar'" title="Facultad o escuela" />
+          <v-list-item prepend-icon="mdi-office-building-marker-outline" :subtitle="contact.campus ?? 'Sin registrar'" title="Campus" />
           <v-list-item prepend-icon="mdi-map-marker-outline" :subtitle="contact.location ?? 'Sin registrar'" title="Aula u oficina" />
         </v-list>
       </v-card-text>

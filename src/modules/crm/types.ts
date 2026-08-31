@@ -36,6 +36,7 @@ export interface Contact {
   email: string | null
   phone: string | null
   faculty: string | null
+  campus: string | null
   location: string | null
   terms_accepted_at?: string | null
   created_at?: string
@@ -235,6 +236,7 @@ export interface DealPayload {
     email?: string | null
     phone?: string | null
     faculty?: string | null
+    campus?: string | null
     location?: string | null
   }
 }
@@ -261,6 +263,8 @@ export const SERVICE_TYPE_OPTIONS = [
 ]
 
 export const PROBLEM_AREA_OPTIONS = ['Hardware', 'Software', 'Redes', 'Otro']
+
+export const CAMPUS_OPTIONS = ['Rosario', 'Alemán', 'IMSS', 'HRAEO']
 
 export const YES_NO_OPTIONS = [
   { value: true, title: 'Sí' },

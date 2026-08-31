@@ -80,6 +80,11 @@
             <v-col cols="6"><v-text-field v-model="form.email" label="Correo institucional" type="email" /></v-col>
             <v-col cols="6"><v-text-field v-model="form.phone" label="Teléfono / WhatsApp" /></v-col>
             <v-col cols="6"><v-text-field v-model="form.faculty" label="Facultad o escuela" /></v-col>
+
+            <v-col cols="6">
+              <v-select v-model="form.campus" clearable :items="CAMPUS_OPTIONS" label="Campus" />
+            </v-col>
+
             <v-col cols="6"><v-text-field v-model="form.location" label="Aula u oficina" /></v-col>
           </v-row>
         </v-card-text>
@@ -105,6 +110,7 @@
   import type { Contact } from '@/modules/crm/types'
   import { computed, onMounted, reactive, ref } from 'vue'
   import * as crm from '@/modules/crm/service'
+  import { CAMPUS_OPTIONS } from '@/modules/crm/types'
   import { useAuthStore } from '@/stores/auth'
 
   const authStore = useAuthStore()
@@ -118,7 +124,7 @@
   const showForm = ref(false)
   const editing = ref<Contact | null>(null)
 
-  const form = reactive({ first_name: '', last_name: '', email: '', phone: '', faculty: '', location: '' })
+  const form = reactive({ first_name: '', last_name: '', email: '', phone: '', faculty: '', campus: null as string | null, location: '' })
 
   const canCreate = computed(() => authStore.isAdmin || authStore.hasPermission('crm.contacts.create'))
   const canEdit = computed(() => authStore.isAdmin || authStore.hasPermission('crm.contacts.update'))
@@ -128,6 +134,7 @@
     { title: 'Correo', key: 'email' },
     { title: 'Teléfono', key: 'phone' },
     { title: 'Facultad/Escuela', key: 'faculty' },
+    { title: 'Campus', key: 'campus' },
     { title: 'Aula u oficina', key: 'location' },
     { title: 'Solicitudes', key: 'deals_count', sortable: false },
     { title: '', key: 'actions', sortable: false, width: 110 },
@@ -154,7 +161,7 @@
 
   function openNew () {
     editing.value = null
-    Object.assign(form, { first_name: '', last_name: '', email: '', phone: '', faculty: '', location: '' })
+    Object.assign(form, { first_name: '', last_name: '', email: '', phone: '', faculty: '', campus: null, location: '' })
     formError.value = null
     showForm.value = true
   }
@@ -167,6 +174,7 @@
       email: contact.email ?? '',
       phone: contact.phone ?? '',
       faculty: contact.faculty ?? '',
+      campus: contact.campus ?? null,
       location: contact.location ?? '',
     })
     formError.value = null
@@ -183,6 +191,7 @@
       email: form.email || null,
       phone: form.phone || null,
       faculty: form.faculty || null,
+      campus: form.campus,
       location: form.location || null,
     }
 

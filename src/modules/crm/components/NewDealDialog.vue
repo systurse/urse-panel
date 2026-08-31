@@ -40,6 +40,17 @@
             <v-col cols="6"><v-text-field v-model="form.contact.email" density="comfortable" label="Correo institucional" type="email" /></v-col>
             <v-col cols="6"><v-text-field v-model="form.contact.phone" density="comfortable" label="Teléfono / WhatsApp" /></v-col>
             <v-col cols="6"><v-text-field v-model="form.contact.faculty" density="comfortable" label="Facultad o escuela" /></v-col>
+
+            <v-col cols="6">
+              <v-select
+                v-model="form.contact.campus"
+                clearable
+                density="comfortable"
+                :items="CAMPUS_OPTIONS"
+                label="Campus"
+              />
+            </v-col>
+
             <v-col cols="6"><v-text-field v-model="form.contact.location" density="comfortable" label="Aula u oficina" /></v-col>
           </v-row>
         </v-form>
@@ -67,6 +78,7 @@
   import type { CrmUser, Deal, DealChannel } from '@/modules/crm/types'
   import { reactive, ref } from 'vue'
   import * as crm from '@/modules/crm/service'
+  import { CAMPUS_OPTIONS } from '@/modules/crm/types'
 
   const props = defineProps<{
     pipelineId: number | null
@@ -97,6 +109,7 @@
       email: '',
       phone: '',
       faculty: '',
+      campus: null as string | null,
       location: '',
     },
   })
@@ -118,6 +131,7 @@
           email: form.contact.email || null,
           phone: form.contact.phone || null,
           faculty: form.contact.faculty || null,
+          campus: form.contact.campus,
           location: form.contact.location || null,
         },
       })
@@ -126,7 +140,7 @@
       open.value = false
       form.title = ''
       form.assigned_to = null
-      Object.assign(form.contact, { first_name: '', last_name: '', email: '', phone: '', faculty: '', location: '' })
+      Object.assign(form.contact, { first_name: '', last_name: '', email: '', phone: '', faculty: '', campus: null, location: '' })
     } catch (error_: any) {
       const data = error_?.response?.data
       const validation = data?.errors ? Object.values(data.errors as Record<string, string[]>).flat()[0] : null
