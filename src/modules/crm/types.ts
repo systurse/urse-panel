@@ -154,6 +154,9 @@ export interface Deal {
   channel: DealChannel
   channel_label: string
   type: string | null
+  faculty: string | null
+  campus: string | null
+  location: string | null
   status: DealStatus
   status_label: string
   visible_to_all: boolean
@@ -277,6 +280,7 @@ export interface PublicLeadPayload {
   email: string
   phone?: string | null
   faculty: string
+  campus: string
   location: string
   request: string
   terms_accepted: boolean

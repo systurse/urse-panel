@@ -90,6 +90,10 @@
                 </v-col>
 
                 <v-col cols="12" sm="6">
+                  <v-select v-model="form.campus" :items="CAMPUS_OPTIONS" label="Campus *" />
+                </v-col>
+
+                <v-col cols="12" sm="6">
                   <v-text-field v-model="form.location" label="Aula u oficina *" />
                 </v-col>
 
@@ -129,6 +133,7 @@
   import { useReCaptcha } from 'vue-recaptcha-v3'
   import { useRoute } from 'vue-router'
   import { getWidgetConfig, matchPublicContact, submitPublicLead } from '@/modules/crm/service'
+  import { CAMPUS_OPTIONS } from '@/modules/crm/types'
 
   const recaptcha = useReCaptcha()
   const route = useRoute()
@@ -164,6 +169,7 @@
     last_name: '',
     email: '',
     faculty: '',
+    campus: null as string | null,
     location: '',
     request: '',
     terms_accepted: false,
@@ -174,6 +180,7 @@
     && form.last_name.trim() !== ''
     && form.email.trim() !== ''
     && form.faculty.trim() !== ''
+    && form.campus !== null
     && form.location.trim() !== ''
     && form.request.trim() !== ''
     && form.terms_accepted,
@@ -218,6 +225,7 @@
         last_name: form.last_name,
         email: form.email,
         faculty: form.faculty,
+        campus: form.campus!,
         location: form.location,
         request: form.request,
         terms_accepted: form.terms_accepted,
@@ -244,6 +252,7 @@
       last_name: '',
       email: '',
       faculty: '',
+      campus: null,
       location: '',
       request: '',
       terms_accepted: false,

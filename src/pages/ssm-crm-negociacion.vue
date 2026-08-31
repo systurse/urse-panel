@@ -102,7 +102,10 @@
               </p>
 
               <p class="contact-line">{{ deal.contact.email ?? 'Sin correo' }}</p>
-              <p class="contact-line">{{ deal.contact.faculty ?? '' }}{{ deal.contact.campus ? ' · Campus ' + deal.contact.campus : '' }}{{ deal.contact.location ? ' · ' + deal.contact.location : '' }}</p>
+
+              <p class="contact-line">
+                {{ deal.faculty ?? deal.contact.faculty ?? '' }}{{ (deal.campus ?? deal.contact.campus) ? ' · Campus ' + (deal.campus ?? deal.contact.campus) : '' }}{{ (deal.location ?? deal.contact.location) ? ' · ' + (deal.location ?? deal.contact.location) : '' }}
+              </p>
 
               <div class="contact-actions">
                 <v-btn
