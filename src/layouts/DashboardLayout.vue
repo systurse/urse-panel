@@ -128,6 +128,16 @@
           subtitle: 'Consulta el historial de pases de salida capturados.',
         },
         {
+          title: 'Permisos F011A',
+          to: '/sps/permisos',
+          icon: 'mdi-file-document-edit-outline',
+          subtitle: 'Permiso económico y no económico: captura, firma y autorización.',
+          meta: {
+            grantedToRoles: ['supervisor'],
+            requiresAnyPermission: ['sps.permit.index'],
+          },
+        },
+        {
           title: 'Reporte de pases',
           to: '/sps/reportes',
           icon: 'mdi-file-chart-outline',

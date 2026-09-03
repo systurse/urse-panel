@@ -38,6 +38,8 @@ import SPS from '@/pages/sps.vue'
 import SPSPassReturnCode from '@/pages/sps/pase-codigo-regreso.vue'
 import SPSPassReturnConfirm from '@/pages/sps/pase-confirmar-regreso.vue'
 import SPSPassDetail from '@/pages/sps/pase-detalle.vue'
+import LeavePermitDetail from '@/pages/sps/permiso-detalle.vue'
+import LeavePermits from '@/pages/sps/permisos.vue'
 import SPSReportExitPasses from '@/pages/sps/report-exit-passes.vue'
 import SSMCrmContactos from '@/pages/ssm-crm-contactos.vue'
 import SSMCrmNegociacion from '@/pages/ssm-crm-negociacion.vue'
@@ -214,6 +216,22 @@ const router = createRouter({
         {
           path: 'pases/:id/codigo',
           component: SPSPassReturnCode,
+        },
+        {
+          path: 'permisos',
+          component: LeavePermits,
+          meta: {
+            grantedToRoles: ['supervisor'],
+            requiresAnyPermission: ['sps.permit.index'],
+          },
+        },
+        {
+          path: 'permisos/:id',
+          component: LeavePermitDetail,
+          meta: {
+            grantedToRoles: ['supervisor'],
+            requiresAnyPermission: ['sps.permit.show'],
+          },
         },
         {
           path: 'reportes',
