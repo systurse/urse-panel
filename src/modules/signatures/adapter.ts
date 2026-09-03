@@ -1,17 +1,18 @@
 import type {
-  ExitPassSignature,
-  ExitPassSignaturesPort,
+  DocumentSignature,
   OtpRequestResult,
   PublicSignatureSummary,
   PublicVerification,
+  SignableResource,
   SignatureCollection,
   SignatureEvidence,
   SignatureProgress,
+  SignaturesPort,
   SignerRole,
   SignPayload,
   SignResult,
   VerificationStatus,
-} from '@/modules/exit-pass-signatures/port'
+} from '@/modules/signatures/port'
 import type { HttpClient } from '@/services/http'
 import { httpClient, publicHttpClient } from '@/services/http'
 
@@ -58,7 +59,7 @@ function unwrapData (response: unknown): unknown {
   return 'data' in record ? record.data : response
 }
 
-function mapSignature (raw: unknown): ExitPassSignature {
+function mapSignature (raw: unknown): DocumentSignature {
   const item = asRecord(raw)
   const id = item.id
 
@@ -130,15 +131,19 @@ function mapVerification (response: unknown): PublicVerification {
   }
 }
 
-export class HttpExitPassSignaturesAdapter implements ExitPassSignaturesPort {
+export class HttpSignaturesAdapter implements SignaturesPort {
   constructor (
     private readonly client: HttpClient,
     private readonly openClient: HttpClient,
   ) {}
 
-  async getEvidence (passId: number | string, signatureId: number | string): Promise<SignatureEvidence> {
+  async getEvidence (
+    resource: SignableResource,
+    documentId: number | string,
+    signatureId: number | string,
+  ): Promise<SignatureEvidence> {
     const response = await this.client.get<unknown>(
-      `/api/v1/exit-passes/${passId}/signatures/${signatureId}/evidence`,
+      `/api/v1/${resource}/${documentId}/signatures/${signatureId}/evidence`,
     )
     const item = asRecord(unwrapData(response))
 
@@ -148,8 +153,8 @@ export class HttpExitPassSignaturesAdapter implements ExitPassSignaturesPort {
     }
   }
 
-  async list (passId: number | string): Promise<SignatureCollection> {
-    const response = await this.client.get<unknown>(`/api/v1/exit-passes/${passId}/signatures`)
+  async list (resource: SignableResource, documentId: number | string): Promise<SignatureCollection> {
+    const response = await this.client.get<unknown>(`/api/v1/${resource}/${documentId}/signatures`)
     const data = unwrapData(response)
 
     return {
@@ -158,9 +163,13 @@ export class HttpExitPassSignaturesAdapter implements ExitPassSignaturesPort {
     }
   }
 
-  async requestOtp (passId: number | string, signerRole: SignerRole): Promise<OtpRequestResult> {
+  async requestOtp (
+    resource: SignableResource,
+    documentId: number | string,
+    signerRole: SignerRole,
+  ): Promise<OtpRequestResult> {
     const response = await this.client.post<unknown, { signer_role: SignerRole }>(
-      `/api/v1/exit-passes/${passId}/signatures/otp`,
+      `/api/v1/${resource}/${documentId}/signatures/otp`,
       { signer_role: signerRole },
     )
     const item = asRecord(response)
@@ -174,7 +183,11 @@ export class HttpExitPassSignaturesAdapter implements ExitPassSignaturesPort {
     }
   }
 
-  async sign (passId: number | string, payload: SignPayload): Promise<SignResult> {
+  async sign (
+    resource: SignableResource,
+    documentId: number | string,
+    payload: SignPayload,
+  ): Promise<SignResult> {
     const body: Record<string, unknown> = {
       code: payload.code,
       signer_role: payload.signerRole,
@@ -189,7 +202,7 @@ export class HttpExitPassSignaturesAdapter implements ExitPassSignaturesPort {
     }
 
     const response = await this.client.post<unknown, Record<string, unknown>>(
-      `/api/v1/exit-passes/${passId}/signatures`,
+      `/api/v1/${resource}/${documentId}/signatures`,
       body,
     )
 
@@ -207,4 +220,4 @@ export class HttpExitPassSignaturesAdapter implements ExitPassSignaturesPort {
   }
 }
 
-export const exitPassSignaturesAdapter = new HttpExitPassSignaturesAdapter(httpClient, publicHttpClient)
+export const signaturesAdapter = new HttpSignaturesAdapter(httpClient, publicHttpClient)

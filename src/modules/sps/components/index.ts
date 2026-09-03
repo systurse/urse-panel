@@ -1,2 +1,2 @@
-export { default as ExitPassSignaturePanel } from './ExitPassSignaturePanel.vue'
-export { default as ExitPassSignDialog } from './ExitPassSignDialog.vue'
+export { default as SignaturePanel } from './SignaturePanel.vue'
+export { default as SignDialog } from './SignDialog.vue'

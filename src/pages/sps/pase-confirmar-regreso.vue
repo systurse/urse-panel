@@ -106,6 +106,7 @@
   import { employeesAdapter } from '@/modules/employees/adapter'
   import { httpClient } from '@/services/http'
   import { useAuthStore } from '@/stores/auth'
+  import { isSameId } from '@/utils/identity'
 
   const route = useRoute()
   const authStore = useAuthStore()
@@ -218,7 +219,7 @@
       if (userId) {
         try {
           const myEmployee = await employeesAdapter.getByUserId(userId)
-          isOwner.value = myEmployee !== null && myEmployee.id === employeeId
+          isOwner.value = isSameId(myEmployee?.id, employeeId)
         } catch {
           isOwner.value = false
         }

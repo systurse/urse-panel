@@ -85,12 +85,38 @@
 
         <v-divider class="my-4" />
 
-        <ExitPassSignaturePanel
+        <SignaturePanel
+          :document-id="passId"
           :is-owner="isOwner"
-          :pass-id="passId"
+          resource="exit-passes"
           @loaded="signatures = $event"
           @signed="loadPass"
         />
+
+        <div v-if="canSendToRevision" class="revision-block">
+          <div class="text-body-2">
+            <template v-if="employeeSigned">
+              El pase ya lleva tu firma. Envíalo a tu jefe inmediato para que lo firme y quede
+              autorizado.
+            </template>
+
+            <template v-else>
+              Firma el pase arriba como empleado; después podrás enviarlo a tu jefe inmediato.
+            </template>
+          </div>
+
+          <v-btn
+            class="mt-3"
+            color="primary"
+            :disabled="!employeeSigned"
+            :loading="revisionSubmitting"
+            prepend-icon="mdi-send-outline"
+            variant="flat"
+            @click="sendToRevision"
+          >
+            Enviar a revisión
+          </v-btn>
+        </div>
 
         <v-divider class="my-4" />
 
@@ -168,14 +194,15 @@
 </template>
 
 <script lang="ts" setup>
-  import type { ExitPassSignature } from '@/modules/exit-pass-signatures/port'
+  import type { DocumentSignature } from '@/modules/signatures/port'
   import type { AxiosError } from 'axios'
   import { computed, onMounted, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { employeesAdapter } from '@/modules/employees/adapter'
-  import ExitPassSignaturePanel from '@/modules/sps/components/ExitPassSignaturePanel.vue'
+  import SignaturePanel from '@/modules/sps/components/SignaturePanel.vue'
   import { httpClient } from '@/services/http'
   import { useAuthStore } from '@/stores/auth'
+  import { isSameId } from '@/utils/identity'
 
   interface StatusEntry {
     status: string
@@ -229,14 +256,14 @@
   const snackbarColor = ref<'success' | 'error' | 'info'>('success')
 
   const isOwner = computed(() =>
-    myEmployeeId.value !== null && pass.value?.employeeId === myEmployeeId.value,
+    isSameId(pass.value?.employeeId, myEmployeeId.value),
   )
 
   const canSeeBackupCode = computed(() =>
     authStore.isAdmin || authStore.hasRole('supervisor'),
   )
 
-  const signatures = ref<ExitPassSignature[]>([])
+  const signatures = ref<DocumentSignature[]>([])
 
   const ROLE_LABELS: Record<string, string> = {
     administrative_director: 'Dirección de Asuntos Administrativos',
@@ -288,6 +315,33 @@
       return timeA - timeB
     })
   })
+
+  const revisionSubmitting = ref(false)
+
+  const employeeSigned = computed(() =>
+    signatures.value.some(signature => signature.role === 'employee'),
+  )
+
+  // Only the requester moves their own pass forward, and only while it is still
+  // waiting to be sent.
+  const canSendToRevision = computed(() =>
+    isOwner.value && pass.value?.currentStatus === 'pending',
+  )
+
+  async function sendToRevision () {
+    revisionSubmitting.value = true
+    errorMessage.value = null
+
+    try {
+      await httpClient.post(`/api/v1/exit-passes/${passId}/statuses`, { status: 'revision' })
+      showSnackbar('Pase enviado a tu jefe inmediato.', 'success')
+      await loadPass()
+    } catch (error) {
+      errorMessage.value = resolveMessage(error, 'No fue posible enviar el pase a revisión.')
+    } finally {
+      revisionSubmitting.value = false
+    }
+  }
 
   const canReview = computed(() =>
     authStore.isAdmin && pass.value?.currentStatus === 'revision',
@@ -344,7 +398,10 @@
       ? item.statuses.map(entry => mapStatusEntry(entry)).filter((entry): entry is StatusEntry => entry !== null)
       : []
     const fallbackStatus = readString(item, 'status').toLowerCase()
-    const currentStatus = statuses.at(-1)?.status ?? fallbackStatus
+    // The backend creates a pass without a status row, so an empty history
+    // means it was just captured. Reading that as blank hid every action
+    // that waits on a pending pass.
+    const currentStatus = statuses.at(-1)?.status || fallbackStatus || 'pending'
 
     return {
       currentStatus,
@@ -562,6 +619,12 @@
   color: #5e5e5e;
   font-size: 0.9rem;
   margin-top: 2px;
+}
+
+.revision-block {
+  padding: 16px;
+  border-radius: 12px;
+  background: rgb(30 58 95 / 0.06);
 }
 
 .actions-row {

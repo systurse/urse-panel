@@ -140,7 +140,7 @@
               variant="text"
               @click="startRevision(exitPass)"
             >
-              Firmar y enviar a revisión
+              {{ exitPass.signedRoleCount > 0 ? 'Enviar a revisión' : 'Firmar y enviar a revisión' }}
             </v-btn>
 
             <v-btn
@@ -358,12 +358,13 @@
     </v-card>
   </v-dialog>
 
-  <ExitPassSignDialog
+  <SignDialog
     v-if="revisionPass"
     :key="revisionPass.id"
     v-model="signDialog"
+    :document-id="revisionPass.id"
     intro="Para enviar el pase a revisión primero debes firmarlo como empleado."
-    :pass-id="revisionPass.id"
+    resource="exit-passes"
     role-label="Empleado"
     signer-role="employee"
     @signed="onEmployeeSigned"
@@ -373,7 +374,8 @@
 <script lang="ts" setup>
   import type { AxiosError } from 'axios'
   import { onMounted, ref } from 'vue'
-  import ExitPassSignDialog from '@/modules/sps/components/ExitPassSignDialog.vue'
+  import { signaturesAdapter } from '@/modules/signatures/adapter'
+  import SignDialog from '@/modules/sps/components/SignDialog.vue'
   import { http, httpClient } from '@/services/http'
 
   interface ExitPassItem {
@@ -547,7 +549,10 @@
     const employee = (item.employee && typeof item.employee === 'object' ? item.employee : {}) as Record<string, unknown>
     const statuses = getStatuses(item)
     const fallbackStatus = readString(item, 'status').toLowerCase()
-    const currentStatus = statuses.at(-1) ?? fallbackStatus ?? ''
+    // The backend creates a pass without a status row, so an empty history
+    // means it was just captured. Reading that as blank hid every action
+    // that waits on a pending pass.
+    const currentStatus = statuses.at(-1) || fallbackStatus || 'pending'
 
     return {
       id: readId(item, 'id') ?? crypto.randomUUID(),
@@ -724,7 +729,31 @@
   // A pass must reach the supervisor already carrying the employee's signature,
   // so signing is the first half of "send to review" rather than a separate
   // step the requester can skip.
-  function startRevision (pass: ExitPassItem) {
+  //
+  // The signature is asked for first, but it may already be there — the owner
+  // can sign from the detail screen. The list payload does not always carry
+  // signature data, so the progress is read before deciding: opening the sign
+  // dialog for an already-signed pass would only earn a 409 and leave the pass
+  // with no way forward.
+  async function startRevision (pass: ExitPassItem) {
+    actionLoading.value = { id: pass.id, type: 'revision' }
+
+    let alreadySigned = pass.signedRoleCount > 0
+
+    try {
+      const { progress } = await signaturesAdapter.list('exit-passes', pass.id)
+      alreadySigned = progress.signedRoles.includes('employee')
+    } catch {
+      // Fall back to whatever the list reported.
+    } finally {
+      actionLoading.value = { id: null, type: null }
+    }
+
+    if (alreadySigned) {
+      await sendToRevision(pass.id)
+      return
+    }
+
     revisionPass.value = pass
     signDialog.value = true
   }

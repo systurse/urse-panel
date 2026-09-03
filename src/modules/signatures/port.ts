@@ -1,10 +1,16 @@
-/** Roles that can sign an exit pass, in the order the backend requires them. */
+/**
+ * Documents that share the electronic signature subsystem. The value is the URL
+ * segment the endpoints live under, so adding a format is adding a member here.
+ */
+export type SignableResource = 'exit-passes' | 'leave-permits'
+
+/** Roles that can sign a document, in the order the backend requires them. */
 export type SignerRole = 'administrative_director' | 'employee' | 'immediate_supervisor'
 
 /** Result of the public verification endpoint. */
 export type VerificationStatus = 'altered' | 'incomplete' | 'valid'
 
-export interface ExitPassSignature {
+export interface DocumentSignature {
   documentHash: string
   id: number | string
   revokedAt: string | null
@@ -25,7 +31,7 @@ export interface SignatureProgress {
 
 export interface SignatureCollection {
   progress: SignatureProgress
-  signatures: ExitPassSignature[]
+  signatures: DocumentSignature[]
 }
 
 export interface OtpRequestResult {
@@ -46,7 +52,7 @@ export interface SignPayload {
 
 export interface SignResult {
   progress: SignatureProgress
-  signature: ExitPassSignature
+  signature: DocumentSignature
 }
 
 export interface SignatureEvidence {
@@ -67,6 +73,7 @@ export interface PublicVerification {
   document: {
     folio: number | string
     issuedOn: string
+    /** Not a constant: "Pase de salida", "Permiso", and more formats to come. */
     type: string
   }
   documentHash: string
@@ -80,11 +87,23 @@ export interface PublicVerification {
   verifiedAt: string
 }
 
-export interface ExitPassSignaturesPort {
-  getEvidence: (passId: number | string, signatureId: number | string) => Promise<SignatureEvidence>
-  list: (passId: number | string) => Promise<SignatureCollection>
-  requestOtp: (passId: number | string, signerRole: SignerRole) => Promise<OtpRequestResult>
-  sign: (passId: number | string, payload: SignPayload) => Promise<SignResult>
-  /** Public: no token, used by the QR printed on the PDF. */
+export interface SignaturesPort {
+  getEvidence: (
+    resource: SignableResource,
+    documentId: number | string,
+    signatureId: number | string,
+  ) => Promise<SignatureEvidence>
+  list: (resource: SignableResource, documentId: number | string) => Promise<SignatureCollection>
+  requestOtp: (
+    resource: SignableResource,
+    documentId: number | string,
+    signerRole: SignerRole,
+  ) => Promise<OtpRequestResult>
+  sign: (
+    resource: SignableResource,
+    documentId: number | string,
+    payload: SignPayload,
+  ) => Promise<SignResult>
+  /** Public: no token, shared by every format, used by the QR printed on the PDF. */
   verify: (code: string) => Promise<PublicVerification>
 }

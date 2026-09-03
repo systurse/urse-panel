@@ -291,10 +291,11 @@
 
           <v-divider class="my-4" />
 
-          <ExitPassSignaturePanel
+          <SignaturePanel
             :key="selectedPass.id"
+            :document-id="selectedPass.id"
             :is-owner="isSelectedPassOwner"
-            :pass-id="selectedPass.id"
+            resource="exit-passes"
             @signed="onPassSigned"
           />
 
@@ -414,9 +415,10 @@
   import type { AxiosError } from 'axios'
   import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
   import { employeesAdapter } from '@/modules/employees/adapter'
-  import ExitPassSignaturePanel from '@/modules/sps/components/ExitPassSignaturePanel.vue'
+  import SignaturePanel from '@/modules/sps/components/SignaturePanel.vue'
   import { httpClient } from '@/services/http'
   import { useAuthStore } from '@/stores/auth'
+  import { isSameId } from '@/utils/identity'
 
   interface ExitPassItem {
     id: number | string
@@ -464,7 +466,7 @@
   // The signature panel needs to know whether the reader owns this pass, since
   // nobody may hold two signing roles on the same one.
   const isSelectedPassOwner = computed(() =>
-    myEmployeeId.value !== null && selectedPass.value?.employeeId === myEmployeeId.value,
+    isSameId(selectedPass.value?.employeeId, myEmployeeId.value),
   )
 
   const canReviewPass = computed(() => selectedPass.value?.currentStatus === 'revision')
@@ -613,7 +615,10 @@
     const employee = (item.employee && typeof item.employee === 'object' ? item.employee : {}) as Record<string, unknown>
     const statuses = getStatuses(item)
     const fallbackStatus = readString(item, 'status').toLowerCase()
-    const currentStatus = statuses.at(-1) ?? fallbackStatus ?? ''
+    // The backend creates a pass without a status row, so an empty history
+    // means it was just captured. Reading that as blank hid every action
+    // that waits on a pending pass.
+    const currentStatus = statuses.at(-1) || fallbackStatus || 'pending'
 
     return {
       id: readId(item, 'id') ?? crypto.randomUUID(),

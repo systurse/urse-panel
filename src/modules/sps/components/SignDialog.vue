@@ -77,19 +77,20 @@
 </template>
 
 <script lang="ts" setup>
-  import type { SignerRole } from '@/modules/exit-pass-signatures/port'
+  import type { SignableResource, SignerRole } from '@/modules/signatures/port'
   import { computed, onBeforeUnmount, ref } from 'vue'
-  import { useExitPassSignatures } from '@/modules/exit-pass-signatures/useExitPassSignatures'
+  import { useSignatures } from '@/modules/signatures/useSignatures'
 
   const props = defineProps<{
     /** Extra line explaining why the signature is being asked for. */
     intro?: string
     modelValue: boolean
     /**
-     * Captured once when this dialog mounts, so the parent must key it by pass
-     * (`:key="passId"`) when reusing it across rows.
+     * Captured once when this dialog mounts, so the parent must key it by
+     * document (`:key="documentId"`) when reusing it across rows.
      */
-    passId: number | string
+    documentId: number | string
+    resource: SignableResource
     roleLabel: string
     signerRole: SignerRole
   }>()
@@ -103,7 +104,7 @@
     requestOtp,
     sign,
     signing,
-  } = useExitPassSignatures(props.passId)
+  } = useSignatures(props.resource, props.documentId)
 
   const code = ref('')
   const destination = ref('')

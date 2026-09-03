@@ -1,13 +1,14 @@
 import type {
-  ExitPassSignature,
-  ExitPassSignaturesPort,
+  DocumentSignature,
   OtpRequestResult,
+  SignableResource,
   SignatureProgress,
+  SignaturesPort,
   SignerRole,
   SignResult,
-} from '@/modules/exit-pass-signatures/port'
+} from '@/modules/signatures/port'
 import { computed, ref } from 'vue'
-import { exitPassSignaturesAdapter } from '@/modules/exit-pass-signatures/adapter'
+import { signaturesAdapter } from '@/modules/signatures/adapter'
 
 interface ApiErrorShape {
   message?: string
@@ -54,11 +55,12 @@ function statusOf (error: unknown): number | undefined {
   return (error as ApiErrorShape)?.response?.status
 }
 
-export function useExitPassSignatures (
-  passId: number | string,
-  port: ExitPassSignaturesPort = exitPassSignaturesAdapter,
+export function useSignatures (
+  resource: SignableResource,
+  documentId: number | string,
+  port: SignaturesPort = signaturesAdapter,
 ) {
-  const signatures = ref<ExitPassSignature[]>([])
+  const signatures = ref<DocumentSignature[]>([])
   const progress = ref<SignatureProgress>(emptyProgress())
 
   const loading = ref(false)
@@ -79,11 +81,11 @@ export function useExitPassSignatures (
     error.value = null
 
     try {
-      const result = await port.list(passId)
+      const result = await port.list(resource, documentId)
       signatures.value = result.signatures
       progress.value = result.progress
     } catch (error_) {
-      error.value = resolveApiMessage(error_, 'signatures', 'No fue posible cargar las firmas del pase.')
+      error.value = resolveApiMessage(error_, 'signatures', 'No fue posible cargar las firmas del documento.')
     } finally {
       loading.value = false
     }
@@ -98,7 +100,7 @@ export function useExitPassSignatures (
     error.value = null
 
     try {
-      return await port.requestOtp(passId, signerRole)
+      return await port.requestOtp(resource, documentId, signerRole)
     } catch (error_) {
       const status = statusOf(error_)
 
@@ -108,7 +110,7 @@ export function useExitPassSignatures (
           break
         }
         case 409: {
-          error.value = resolveApiMessage(error_, 'signer_role', 'Ese rol ya firmó este pase.')
+          error.value = resolveApiMessage(error_, 'signer_role', 'Ese rol ya firmó este documento.')
           // The screen is stale if the role was signed elsewhere.
           await loadSignatures()
           break
@@ -140,7 +142,7 @@ export function useExitPassSignatures (
     error.value = null
 
     try {
-      const result = await port.sign(passId, { code, signerRole })
+      const result = await port.sign(resource, documentId, { code, signerRole })
       // The response already carries fresh progress. Refetching the list is
       // left to whoever displays it, so signing costs a single request.
       progress.value = result.progress
@@ -149,7 +151,7 @@ export function useExitPassSignatures (
       const status = statusOf(error_)
 
       if (status === 409) {
-        error.value = resolveApiMessage(error_, 'signer_role', 'Ese rol ya firmó este pase.')
+        error.value = resolveApiMessage(error_, 'signer_role', 'Ese rol ya firmó este documento.')
         await loadSignatures()
       } else if (status === 403) {
         error.value = resolveApiMessage(error_, 'signer_role', 'No puedes firmar con ese rol.')

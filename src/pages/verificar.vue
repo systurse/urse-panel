@@ -142,10 +142,10 @@
 </template>
 
 <script lang="ts" setup>
-  import type { PublicVerification } from '@/modules/exit-pass-signatures/port'
+  import type { PublicVerification } from '@/modules/signatures/port'
   import { computed, onMounted, ref } from 'vue'
   import { useRoute } from 'vue-router'
-  import { exitPassSignaturesAdapter } from '@/modules/exit-pass-signatures/adapter'
+  import { signaturesAdapter } from '@/modules/signatures/adapter'
 
   const route = useRoute()
   const code = String(route.params.code ?? '')
@@ -204,7 +204,7 @@
     }
 
     try {
-      result.value = await exitPassSignaturesAdapter.verify(code)
+      result.value = await signaturesAdapter.verify(code)
     } catch (error) {
       const status = (error as { response?: { status?: number } })?.response?.status
 

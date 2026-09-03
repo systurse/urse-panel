@@ -106,15 +106,16 @@
       </template>
 
       <p v-else-if="!progress.isComplete" class="signature-panel__note">
-        No tienes un rol pendiente de firma en este pase.
+        No tienes un rol pendiente de firma en este documento.
       </p>
     </template>
 
-    <ExitPassSignDialog
+    <SignDialog
       v-if="dialogRole"
-      :key="`${passId}-${dialogRole}`"
+      :key="`${documentId}-${dialogRole}`"
       v-model="signDialog"
-      :pass-id="passId"
+      :document-id="documentId"
+      :resource="resource"
       :role-label="roleLabel(dialogRole)"
       :signer-role="dialogRole"
       @signed="onSigned"
@@ -123,20 +124,21 @@
 </template>
 
 <script lang="ts" setup>
-  import type { ExitPassSignature, SignerRole } from '@/modules/exit-pass-signatures/port'
+  import type { DocumentSignature, SignableResource, SignerRole } from '@/modules/signatures/port'
   import { computed, onMounted, ref } from 'vue'
-  import { useExitPassSignatures } from '@/modules/exit-pass-signatures/useExitPassSignatures'
-  import ExitPassSignDialog from '@/modules/sps/components/ExitPassSignDialog.vue'
+  import { useSignatures } from '@/modules/signatures/useSignatures'
+  import SignDialog from '@/modules/sps/components/SignDialog.vue'
   import { useAuthStore } from '@/stores/auth'
 
   const props = defineProps<{
-    /** Whether the signed-in user is the employee the pass belongs to. */
+    documentId: number | string
+    /** Whether the signed-in user is the employee the document belongs to. */
     isOwner: boolean
-    passId: number | string
+    resource: SignableResource
   }>()
 
   const emit = defineEmits<{
-    loaded: [signatures: ExitPassSignature[]]
+    loaded: [signatures: DocumentSignature[]]
     signed: [role: SignerRole, isComplete: boolean]
   }>()
 
@@ -149,7 +151,7 @@
     loadSignatures,
     progress,
     signatures,
-  } = useExitPassSignatures(props.passId)
+  } = useSignatures(props.resource, props.documentId)
 
   const ROLE_LABELS: Record<SignerRole, string> = {
     administrative_director: 'Dirección de Asuntos Administrativos',
@@ -202,7 +204,7 @@
     return Number.isNaN(date.getTime()) ? value : date.toLocaleString('es-MX')
   }
 
-  function signedCaption (signature: ExitPassSignature) {
+  function signedCaption (signature: DocumentSignature) {
     return `Firmado por ${signature.signerName} · ${formatDateTime(signature.signedAt)}`
   }
 
