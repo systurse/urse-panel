@@ -99,6 +99,15 @@
               <p class="contact-name">
                 <v-icon icon="mdi-account-circle-outline" size="18" />
                 {{ deal.contact.full_name }}
+                <v-spacer />
+
+                <v-btn
+                  v-if="canChangeContact && !isClosed"
+                  prepend-icon="mdi-account-convert-outline"
+                  size="x-small"
+                  variant="text"
+                  @click="showChangeContact = true"
+                >Cambiar</v-btn>
               </p>
 
               <p class="contact-line">{{ deal.contact.email ?? 'Sin correo' }}</p>
@@ -125,6 +134,19 @@
                   @click="tab = 'mensaje'"
                 >Correo</v-btn>
               </div>
+            </div>
+
+            <div v-if="!deal.contact" class="contact-block contact-block--empty">
+              <p class="contact-line">Esta solicitud no tiene contacto atribuido.</p>
+
+              <v-btn
+                v-if="canChangeContact && !isClosed"
+                class="mt-2"
+                prepend-icon="mdi-account-plus-outline"
+                size="small"
+                variant="tonal"
+                @click="showChangeContact = true"
+              >Asignar contacto</v-btn>
             </div>
 
             <v-btn
@@ -486,6 +508,8 @@
 
     <CloseDealDialog v-model="showClose" :closing="saving" :error="error" @confirm="confirmClose" />
 
+    <ChangeContactDialog v-model="showChangeContact" :deal-id="dealId" @saved="load" />
+
     <v-dialog v-model="showDelete" max-width="420">
       <v-card rounded="xl">
         <v-card-title class="pt-5 px-6">Eliminar negociación</v-card-title>
@@ -507,6 +531,7 @@
 <script lang="ts" setup>
   import { computed, onMounted, reactive, ref, watch } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
+  import ChangeContactDialog from '@/modules/crm/components/ChangeContactDialog.vue'
   import CloseDealDialog from '@/modules/crm/components/CloseDealDialog.vue'
   import TimelineList from '@/modules/crm/components/TimelineList.vue'
   import * as crm from '@/modules/crm/service'
@@ -546,6 +571,7 @@
   const tab = ref<string>(typeof route.query.tab === 'string' ? route.query.tab : 'actividad')
   const showClose = ref(false)
   const showDelete = ref(false)
+  const showChangeContact = ref(false)
 
   const general = reactive({ description: '', due_date: '', type: null as string | null })
   const details = reactive({ channel: 'manual' as string, started_at: '', visible_to_all: true })
@@ -589,6 +615,9 @@
     || (authStore.hasPermission('crm.deals.close-own') && deal.value?.assignee?.id === authStore.user?.id),
   )
   const canDelete = computed(() => authStore.isAdmin || authStore.hasPermission('crm.deals.delete'))
+
+  // Re-atribuir la solicitud es de agentes y administradores
+  const canChangeContact = computed(() => authStore.isAdmin || authStore.hasPermission('crm.deals.update'))
 
   const orderLocked = computed(() => {
     const status = deal.value?.service_order?.status
@@ -862,6 +891,10 @@
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 12px;
   padding: 12px;
+}
+
+.contact-block--empty {
+  text-align: center;
 }
 
 .contact-name {
