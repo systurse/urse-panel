@@ -276,6 +276,7 @@
   import { useAreas } from '@/modules/areas/useAreas'
   import { employeesAdapter } from '@/modules/employees/adapter'
   import { useEmployees } from '@/modules/employees/useEmployees'
+  import { normalizeTimeToApi, normalizeTimeToInput } from '@/utils/time'
 
   const { employees, error, loading, createEmployee, updateEmployee, removeEmployee } = useEmployees()
   const { areas, loading: areasLoading } = useAreas()
@@ -359,8 +360,8 @@
       first_name: employee.first_name,
       last_name: employee.last_name ?? '',
       second_last_name: employee.second_last_name ?? '',
-      shift_end: employee.shift_end ?? '',
-      shift_start: employee.shift_start ?? '',
+      shift_end: normalizeTimeToInput(employee.shift_end),
+      shift_start: normalizeTimeToInput(employee.shift_start),
       work_schedule: employee.work_schedule,
     }
     formDialog.value = true
@@ -385,8 +386,8 @@
         first_name: formData.value.first_name,
         last_name: formData.value.last_name || null,
         second_last_name: formData.value.second_last_name || null,
-        shift_end: formData.value.shift_end || null,
-        shift_start: formData.value.shift_start || null,
+        shift_end: normalizeTimeToApi(formData.value.shift_end),
+        shift_start: normalizeTimeToApi(formData.value.shift_start),
         work_schedule: formData.value.work_schedule,
       }
 

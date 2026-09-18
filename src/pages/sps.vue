@@ -319,6 +319,7 @@
   import { employeesAdapter } from '@/modules/employees/adapter'
   import { httpClient } from '@/services/http'
   import { useAuthStore } from '@/stores/auth'
+  import { normalizeTimeToApi, normalizeTimeToInput } from '@/utils/time'
 
   const router = useRouter()
   const authStore = useAuthStore()
@@ -450,20 +451,9 @@
     return trimmed.length > 0 ? trimmed : null
   }
 
-  function normalizeTimeToApi (value: string) {
-    const trimmed = value.trim()
-    if (!trimmed) return null
-    return trimmed.length === 5 ? `${trimmed}:00` : trimmed
-  }
-
   function resolveApiMessage (error: unknown, fallback: string) {
     const axiosError = error as AxiosError<{ message?: string }>
     return axiosError?.response?.data?.message ?? axiosError?.message ?? fallback
-  }
-
-  function normalizeTimeToInput (value: string) {
-    if (!value) return ''
-    return value.slice(0, 5)
   }
 
   async function preloadEmployeeByUserId () {

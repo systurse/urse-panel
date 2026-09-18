@@ -377,6 +377,7 @@
   import { signaturesAdapter } from '@/modules/signatures/adapter'
   import SignDialog from '@/modules/sps/components/SignDialog.vue'
   import { http, httpClient } from '@/services/http'
+  import { normalizeTimeToApi, normalizeTimeToInput } from '@/utils/time'
 
   interface ExitPassItem {
     id: number | string
@@ -608,17 +609,6 @@
   function normalizeOptional (value: string) {
     const trimmed = value.trim()
     return trimmed.length > 0 ? trimmed : null
-  }
-
-  function normalizeTimeToApi (value: string) {
-    const trimmed = value.trim()
-    if (!trimmed) return null
-    return trimmed.length === 5 ? `${trimmed}:00` : trimmed
-  }
-
-  function normalizeTimeToInput (value: string) {
-    if (!value) return ''
-    return value.slice(0, 5)
   }
 
   function humanizeEnum (value: string) {
