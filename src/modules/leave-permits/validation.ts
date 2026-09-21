@@ -1,15 +1,14 @@
 /**
- * The three rules the backend answers with 422. Replicated here so the person
- * finds out before the round trip, not after. The API stays the authority: its
- * message is what gets shown when it still rejects.
+ * The date rules the backend answers with 422, checked here so the person finds
+ * out before the round trip. The API stays the authority: its message is what
+ * gets shown when it still rejects.
+ *
+ * The 48-hour notice rule is deliberately not among them — a permit may be
+ * captured for any date.
  */
-
-const MS_PER_HOUR = 60 * 60 * 1000
-const REQUIRED_NOTICE_HOURS = 48
 
 export const LEAVE_PERMIT_MESSAGES = {
   endsBeforeStarts: 'El último día del permiso no puede ser anterior al primero.',
-  notice: 'El permiso debe solicitarse con al menos 48 horas de anticipación.',
   weekend: 'El permiso no puede iniciar ni terminar en sábado o domingo.',
 } as const
 
@@ -41,17 +40,6 @@ export function isWeekend (value: string): boolean {
   return day === 0 || day === 6
 }
 
-/** Only checked when capturing: an older permit stays correctable. */
-export function hasEnoughNotice (startsOn: string, now: Date): boolean {
-  const start = parseLocalDate(startsOn)
-
-  if (!start) {
-    return true
-  }
-
-  return start.getTime() - now.getTime() >= REQUIRED_NOTICE_HOURS * MS_PER_HOUR
-}
-
 export function endsBeforeStarts (startsOn: string, endsOn: string): boolean {
   const start = parseLocalDate(startsOn)
   const end = parseLocalDate(endsOn)
@@ -75,15 +63,11 @@ export interface LeavePermitDateErrors {
 export function validateLeavePermitDates (
   startsOn: string,
   endsOn: string,
-  options: { checkNotice?: boolean, now?: Date } = {},
 ): LeavePermitDateErrors {
   const errors: LeavePermitDateErrors = {}
-  const now = options.now ?? new Date()
 
   if (startsOn && isWeekend(startsOn)) {
     errors.starts_on = LEAVE_PERMIT_MESSAGES.weekend
-  } else if (startsOn && options.checkNotice !== false && !hasEnoughNotice(startsOn, now)) {
-    errors.starts_on = LEAVE_PERMIT_MESSAGES.notice
   }
 
   if (endsOn && isWeekend(endsOn)) {

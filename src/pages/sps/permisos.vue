@@ -209,8 +209,8 @@
             icon="mdi-information-outline"
             variant="tonal"
           >
-            Debe solicitarse con al menos 48 horas de anticipación y no puede iniciar ni terminar
-            en sábado o domingo. Un periodo que abarque el fin de semana sí se acepta.
+            El permiso no puede iniciar ni terminar en sábado o domingo. Un periodo que abarque
+            el fin de semana sí se acepta.
           </v-alert>
 
           <v-form ref="formRef" validate-on="input lazy">
@@ -452,11 +452,8 @@
 
   const requiredRules = [(v: unknown) => (v !== null && v !== undefined && v !== '') || 'Requerido']
 
-  // The 48-hour rule only governs capture: an older permit stays correctable.
   const dateErrors = computed(() =>
-    validateLeavePermitDates(form.value.starts_on, form.value.ends_on, {
-      checkNotice: !isEditing.value,
-    }),
+    validateLeavePermitDates(form.value.starts_on, form.value.ends_on),
   )
 
   const hasDateErrors = computed(() => Object.keys(dateErrors.value).length > 0)
