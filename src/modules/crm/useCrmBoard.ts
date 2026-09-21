@@ -41,8 +41,13 @@ export function useCrmBoard () {
       (groups[deal.stage_id] ??= []).push(deal)
     }
 
+    // Los más recientes hasta arriba de cada columna
     for (const stageDeals of Object.values(groups)) {
-      stageDeals.sort((a, b) => a.position - b.position)
+      stageDeals.sort((a, b) => {
+        const recencyA = new Date(a.requested_at ?? a.created_at).getTime()
+        const recencyB = new Date(b.requested_at ?? b.created_at).getTime()
+        return recencyB - recencyA || b.id - a.id
+      })
     }
 
     return groups

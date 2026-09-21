@@ -110,6 +110,7 @@
 
 .kanban-column-header {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px;
@@ -126,10 +127,20 @@
 
 .kanban-column-body {
   display: flex;
+  flex: 1 1 auto;
+
+  /* Sin min-height:0 el cuerpo no puede encogerse al alto de la columna y
+     los flex-items (las tarjetas) se comprimen en lugar de activar scroll */
+  min-height: 0;
   flex-direction: column;
   gap: 8px;
   padding: 10px;
   overflow-y: auto;
+}
+
+/* Las tarjetas conservan siempre su tamaño natural */
+.kanban-column-body > * {
+  flex-shrink: 0;
 }
 
 .kanban-empty {
