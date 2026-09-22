@@ -77,22 +77,6 @@ function getUserRoles (user: ApiUser): string[] {
   return role && role !== 'Sin rol' ? [role] : []
 }
 
-function getUserActive (user: ApiUser) {
-  if (typeof user.active === 'boolean') {
-    return user.active
-  }
-
-  if (typeof user.is_active === 'boolean') {
-    return user.is_active
-  }
-
-  if (typeof user.status === 'string') {
-    return user.status.toLowerCase() === 'active'
-  }
-
-  return true
-}
-
 function getNullableString (value: unknown): string | null {
   return typeof value === 'string' && value.trim().length > 0 ? value : null
 }
@@ -124,7 +108,6 @@ function mapUser (user: ApiUser): User {
   const verifiedAt = getUserVerifiedAt(user)
 
   return {
-    active: getUserActive(user),
     createdAt: getNullableString(user.created_at),
     email,
     id: typeof user.id === 'number' || typeof user.id === 'string' ? user.id : email,

@@ -194,12 +194,6 @@
         </div>
       </template>
 
-      <template #item.active="{ item }">
-        <v-chip :color="item.active ? 'success' : 'grey'" size="small" variant="tonal">
-          {{ item.active ? 'Activo' : 'Inactivo' }}
-        </v-chip>
-      </template>
-
       <template #item.verified="{ item }">
         <v-chip
           :color="item.verified ? 'success' : 'warning'"
@@ -287,17 +281,6 @@
                   required
                   :rules="emailRules"
                   type="email"
-                  variant="outlined"
-                />
-              </v-col>
-
-              <v-col cols="12">
-                <v-select
-                  v-model="formData.active"
-                  item-title="text"
-                  item-value="value"
-                  :items="activeOptions"
-                  label="Estado"
                   variant="outlined"
                 />
               </v-col>
@@ -556,7 +539,6 @@
     { key: 'email', minWidth: '220px', sortable: true, title: 'Correo' },
     { key: 'roles', minWidth: '180px', sortable: false, title: 'Roles' },
     { key: 'permissions', minWidth: '220px', sortable: false, title: 'Permisos' },
-    { key: 'active', sortable: false, title: 'Estado', width: '120px' },
     { key: 'verified', sortable: true, title: 'Verificado', width: '140px' },
     { key: 'createdAt', sortable: true, title: 'Registro', width: '150px' },
     { align: 'end', key: 'actions', sortable: false, title: 'Acciones', width: '180px' },
@@ -646,17 +628,11 @@
   const formData = ref({
     name: '',
     email: '',
-    active: true,
     password: '',
     passwordConfirmation: '',
   })
 
   const showPassword = ref(false)
-
-  const activeOptions = [
-    { text: 'Activo', value: true },
-    { text: 'Inactivo', value: false },
-  ]
 
   const nameRules = [
     (v: string) => !!v || 'El nombre es requerido',
@@ -688,7 +664,6 @@
     formData.value = {
       name: '',
       email: '',
-      active: true,
       password: '',
       passwordConfirmation: '',
     }
@@ -702,7 +677,6 @@
     formData.value = {
       name: user.name,
       email: user.email,
-      active: user.active,
       password: '',
       passwordConfirmation: '',
     }
@@ -725,7 +699,6 @@
       const payload: UserPayload & { password_confirmation?: string } = {
         name: formData.value.name,
         email: formData.value.email,
-        active: formData.value.active,
       }
 
       if (formData.value.password) {

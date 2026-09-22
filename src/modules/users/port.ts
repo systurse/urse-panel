@@ -1,5 +1,4 @@
 export interface User {
-  active: boolean
   createdAt: string | null
   email: string
   id: number | string
@@ -14,7 +13,6 @@ export interface User {
 }
 
 export interface UserPayload {
-  active?: boolean
   email: string
   name: string
   password?: string
