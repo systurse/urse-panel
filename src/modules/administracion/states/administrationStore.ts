@@ -1,8 +1,17 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
+export interface AdministrationSection {
+  title: string
+  description: string
+  to: string
+  icon: string
+  /** Sección visible y accesible solo para el rol administrator. */
+  requiresAdministrator?: boolean
+}
+
 export const useAdministrationStore = defineStore('administracion', () => {
-  const sections = ref([
+  const sections = ref<AdministrationSection[]>([
     {
       title: 'Usuarios',
       description: 'Alta, edición y control del acceso de usuarios del panel.',
@@ -32,6 +41,13 @@ export const useAdministrationStore = defineStore('administracion', () => {
       description: 'Alta, edición y ficha de los empleados registrados en el sistema.',
       to: '/administracion/empleados',
       icon: 'mdi-account-hard-hat-outline',
+    },
+    {
+      title: 'Auditoría',
+      description: 'Historial de cambios en los registros: quién hizo qué, cuándo y desde dónde.',
+      to: '/administracion/auditoria',
+      icon: 'mdi-history',
+      requiresAdministrator: true,
     },
   ])
 

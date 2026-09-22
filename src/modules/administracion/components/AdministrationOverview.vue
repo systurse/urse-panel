@@ -28,14 +28,14 @@
       <v-card class="stat-card" rounded="xl">
         <v-card-text>
           <div class="stat-label">Secciones</div>
-          <div class="stat-value">{{ sections.length }}</div>
+          <div class="stat-value">{{ visibleSections.length }}</div>
         </v-card-text>
       </v-card>
     </div>
 
     <div class="sections-grid">
       <router-link
-        v-for="section in sections"
+        v-for="section in visibleSections"
         :key="section.to"
         class="section-link"
         :to="section.to"
@@ -65,6 +65,10 @@
 
   const permissionsCount = computed(() => permissions.value.length)
   const roleLabel = computed(() => formatRoleLabel(roles.value[0]))
+
+  const visibleSections = computed(() =>
+    sections.value.filter(section => !section.requiresAdministrator || authStore.hasRole('administrator')),
+  )
 </script>
 
 <style scoped>

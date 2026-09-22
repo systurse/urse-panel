@@ -102,9 +102,22 @@
           icon: 'mdi-email-outline',
           subtitle: 'Historial de correos enviados desde el sistema.',
         },
+        {
+          title: 'Auditoría',
+          to: '/administracion/auditoria',
+          icon: 'mdi-history',
+          subtitle: 'Historial de cambios en los registros del sistema.',
+          meta: { requiresAdministrator: true },
+        },
       ]
 
-      return items
+      return items.filter(item => {
+        if (!('meta' in item)) {
+          return true
+        }
+
+        return canAccessRouteMeta(item.meta as RouteMeta | undefined, authStore)
+      })
     }
 
     if (moduleBase.value === '/sps') {

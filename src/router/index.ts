@@ -11,6 +11,7 @@ import ModulesLayout from '@/layouts/ModulesLayout.vue'
 import SSMLayout from '@/layouts/SSM.vue'
 import AdminExitPasses from '@/pages/admin-exit-passes.vue'
 import AdminMail from '@/pages/admin-mail.vue'
+import AdministracionAuditoria from '@/pages/administracion-auditoria.vue'
 import Administration from '@/pages/administracion.vue'
 import Aprobaciones from '@/pages/aprobaciones.vue'
 import Areas from '@/pages/areas.vue'
@@ -131,6 +132,11 @@ const router = createRouter({
         {
           path: 'correos',
           component: AdminMail,
+        },
+        {
+          path: 'auditoria',
+          component: AdministracionAuditoria,
+          meta: { requiresAdministrator: true },
         },
         {
           path: 'configuracion',
