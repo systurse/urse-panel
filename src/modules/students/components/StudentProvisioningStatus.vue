@@ -44,7 +44,7 @@
               <v-icon
                 :icon="getStepIcon(step.status)"
                 size="24"
-                color="white"
+                color="#ffffff"
               />
             </div>
             <div class="step-details">

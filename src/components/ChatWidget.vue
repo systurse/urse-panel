@@ -24,7 +24,7 @@
         <!-- Header -->
         <div class="chat-header">
           <div class="chat-header-info">
-            <v-icon color="white" size="20">mdi-headset</v-icon>
+            <v-icon color="#ffffff" size="20">mdi-headset</v-icon>
             <div>
               <div class="chat-header-title">Soporte URSE</div>
               <div class="chat-header-sub">{{ statusLabel }}</div>

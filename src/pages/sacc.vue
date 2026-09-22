@@ -7,7 +7,7 @@
         <p>Sistema de Apartado del Centro de Cómputo</p>
       </div>
       <div class="header-icon" style="background-color: #FAB21A">
-        <v-icon color="white" icon="mdi-desktop-classic" size="32" />
+        <v-icon color="#ffffff" icon="mdi-desktop-classic" size="32" />
       </div>
     </div>
 

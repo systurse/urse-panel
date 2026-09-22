@@ -7,7 +7,7 @@
         <p>Historial de correos enviados desde el sistema</p>
       </div>
       <div class="header-icon" style="background-color: #2196f3">
-        <v-icon icon="mdi-email-outline" size="32" color="white" />
+        <v-icon icon="mdi-email-outline" size="32" color="#ffffff" />
       </div>
     </div>
 

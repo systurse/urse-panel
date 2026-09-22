@@ -33,7 +33,7 @@
           <!-- Imagen/Icono del módulo -->
           <div class="module-image-container">
             <div class="module-icon-wrapper" :style="{ backgroundColor: module.color }">
-              <v-icon color="white" :icon="module.icon" size="48" />
+              <v-icon color="#ffffff" :icon="module.icon" size="48" />
             </div>
           </div>
 

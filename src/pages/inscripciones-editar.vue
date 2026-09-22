@@ -7,7 +7,7 @@
         <p>Actualizar datos del estudiante registrado</p>
       </div>
       <div class="header-icon" style="background-color: #ff9800">
-        <v-icon icon="mdi-account-edit-outline" size="32" color="white" />
+        <v-icon icon="mdi-account-edit-outline" size="32" color="#ffffff" />
       </div>
     </div>
 

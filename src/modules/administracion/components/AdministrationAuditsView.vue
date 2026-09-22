@@ -8,7 +8,7 @@
       </div>
 
       <div class="header-icon">
-        <v-icon color="white" icon="mdi-history" size="32" />
+        <v-icon color="#ffffff" icon="mdi-history" size="32" />
       </div>
     </div>
 

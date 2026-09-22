@@ -7,7 +7,7 @@
       </div>
 
       <div class="header-icon" style="background-color: #1a1a1a">
-        <v-icon color="white" icon="mdi-toolbox-outline" size="32" />
+        <v-icon color="#ffffff" icon="mdi-toolbox-outline" size="32" />
       </div>
     </div>
 

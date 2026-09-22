@@ -20,7 +20,7 @@
         <p>Estudiante registrado exitosamente</p>
       </div>
       <div class="header-icon" style="background-color: #00a86b">
-        <v-icon icon="mdi-check-circle" size="32" color="white" />
+        <v-icon icon="mdi-check-circle" size="32" color="#ffffff" />
       </div>
     </div>
 

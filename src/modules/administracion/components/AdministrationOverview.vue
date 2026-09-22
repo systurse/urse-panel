@@ -6,7 +6,7 @@
         <p>Gestiona usuarios, roles y permisos del panel desde un módulo independiente.</p>
       </div>
       <div class="header-icon">
-        <v-icon color="white" icon="mdi-shield-crown-outline" size="32" />
+        <v-icon color="#ffffff" icon="mdi-shield-crown-outline" size="32" />
       </div>
     </div>
 
