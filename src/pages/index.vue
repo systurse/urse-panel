@@ -65,6 +65,7 @@
 <script lang="ts" setup>
   import { computed } from 'vue'
   import { useAuthStore } from '@/stores/auth'
+  import { isStudentOnly } from '@/utils/auth'
 
   interface ModuleCard {
     id: string
@@ -154,7 +155,7 @@
   const authStore = useAuthStore()
 
   const audience = computed<ModuleCard['audience']>(() =>
-    authStore.hasRole('student') ? 'student' : 'staff',
+    isStudentOnly(authStore.roles) ? 'student' : 'staff',
   )
 
   const visibleModules = computed(() =>
