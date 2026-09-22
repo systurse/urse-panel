@@ -59,7 +59,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      meta: { requiresAuth: true },
+      meta: { grantedToRoles: ['student'], requiresAuth: true },
       component: ModulesLayout,
       children: [
         {
@@ -344,7 +344,7 @@ router.beforeEach(to => {
 
   const authStore = useAuthStore()
   if (!canAccessRouteMeta(to.meta, authStore)) {
-    return { path: '/administracion' }
+    return { path: '/' }
   }
 })
 

@@ -18,9 +18,9 @@
     </section>
 
     <!-- Módulos Grid -->
-    <section class="modules-grid">
+    <section class="modules-grid" :style="{ '--module-columns': gridColumns }">
       <router-link
-        v-for="module in modules"
+        v-for="module in visibleModules"
         :key="module.id"
         class="module-card-link"
         :to="module.path"
@@ -63,7 +63,37 @@
 </template>
 
 <script lang="ts" setup>
-  const modules = [
+  import { computed } from 'vue'
+  import { useAuthStore } from '@/stores/auth'
+
+  interface ModuleCard {
+    id: string
+    title: string
+    fullName: string
+    description: string
+    path: string
+    icon: string
+    color: string
+    features: string[]
+    /** Students only get their own modules; the rest are for staff. */
+    audience: 'staff' | 'student'
+  }
+
+  /** Columns the grid never exceeds, however many modules are visible. */
+  const MAX_COLUMNS = 4
+
+  const modules: ModuleCard[] = [
+    {
+      id: 'credenciales',
+      title: 'Mis cuentas',
+      fullName: 'Credenciales de acceso del alumno',
+      description: 'Consulta los datos de acceso de tus cuentas institucionales',
+      path: '/credenciales',
+      icon: 'mdi-account-key-outline',
+      color: '#FAB21A',
+      features: ['Correo institucional', 'Blackboard', 'Wi-Fi y bibliotecas'],
+      audience: 'student',
+    },
     {
       id: 'sacc',
       title: 'SACC',
@@ -73,6 +103,7 @@
       icon: 'mdi-desktop-classic',
       color: '#FAB21A',
       features: ['Reservas en tiempo real', 'Control de equipos', 'Reportes de uso'],
+      audience: 'staff',
     },
     {
       id: 'ssm',
@@ -83,6 +114,7 @@
       icon: 'mdi-toolbox-outline',
       color: '#1a1a1a',
       features: ['Órdenes de trabajo', 'Programación', 'Seguimiento'],
+      audience: 'staff',
     },
     {
       id: 'sps',
@@ -93,6 +125,7 @@
       icon: 'mdi-badge-account-outline',
       color: '#c89215',
       features: ['Solicitud de permisos', 'Autorizaciones', 'Historial'],
+      audience: 'staff',
     },
     {
       id: 'inscripciones',
@@ -103,6 +136,7 @@
       icon: 'mdi-account-school-outline',
       color: '#00a86b',
       features: ['Alta de estudiantes', 'Provisioning M365', 'Seguimiento de cuentas'],
+      audience: 'staff',
     },
     {
       id: 'administracion',
@@ -113,8 +147,21 @@
       icon: 'mdi-shield-crown-outline',
       color: '#3d2c00',
       features: ['Usuarios', 'Roles', 'Permisos'],
+      audience: 'staff',
     },
   ]
+
+  const authStore = useAuthStore()
+
+  const audience = computed<ModuleCard['audience']>(() =>
+    authStore.hasRole('student') ? 'student' : 'staff',
+  )
+
+  const visibleModules = computed(() =>
+    modules.filter(module => module.audience === audience.value),
+  )
+
+  const gridColumns = computed(() => Math.min(MAX_COLUMNS, Math.max(1, visibleModules.value.length)))
 </script>
 
 <style scoped>
@@ -182,7 +229,9 @@
 .modules-grid {
   display: grid;
   gap: 28px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* Cards keep their width when few modules are visible instead of stretching. */
+  grid-template-columns: repeat(var(--module-columns, 4), minmax(0, 340px));
+  justify-content: center;
 }
 
 .module-card-link {

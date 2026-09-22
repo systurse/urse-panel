@@ -7,6 +7,13 @@ interface AccessEvaluator {
 }
 
 export function canAccessRouteMeta (meta: RouteMeta | undefined, evaluator: AccessEvaluator) {
+  // Students only reach the routes opened to them by name; every module is
+  // staff-only for now. Public routes never get this far, so the credentials
+  // page stays reachable.
+  if (evaluator.hasRole('student')) {
+    return Array.isArray(meta?.grantedToRoles) && meta.grantedToRoles.includes('student')
+  }
+
   if (!meta) {
     return true
   }
