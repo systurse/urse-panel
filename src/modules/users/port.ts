@@ -1,8 +1,3 @@
-export interface UserRoleRef {
-  id: number | string
-  name: string
-}
-
 export interface User {
   active: boolean
   createdAt: string | null
@@ -11,8 +6,9 @@ export interface User {
   initials: string
   microsoftId: string | null
   name: string
-  role: string
-  roles: UserRoleRef[]
+  /** Effective permission names: direct ones plus those inherited from roles. */
+  permissions: string[]
+  roles: string[]
   verified: boolean
   verifiedAt: string | null
 }

@@ -4,7 +4,6 @@ import type {
   User,
   UserFilters,
   UserPayload,
-  UserRoleRef,
   UsersPort,
   UsersQuery,
 } from '@/modules/users/port'
@@ -37,57 +36,45 @@ function getUserName (user: ApiUser) {
   return 'Sin nombre'
 }
 
-function getUserRole (user: ApiUser) {
-  const role = user.role
-
-  if (typeof role === 'string' && role.trim().length > 0) {
-    return role
+// `UserResource` sends roles and permissions as plain name strings, while the
+// nested resources of other endpoints send objects; both shapes reach this app,
+// so read the name out of either one.
+function getName (entry: unknown): string | null {
+  if (typeof entry === 'string') {
+    return entry.trim().length > 0 ? entry : null
   }
 
-  if (role && typeof role === 'object' && 'name' in role && typeof role.name === 'string') {
-    return role.name
-  }
-
-  if (Array.isArray(user.roles) && user.roles.length > 0) {
-    const [firstRole] = user.roles
-
-    if (typeof firstRole === 'string' && firstRole.trim().length > 0) {
-      return firstRole
-    }
-
-    if (firstRole && typeof firstRole === 'object' && 'name' in firstRole && typeof firstRole.name === 'string') {
-      return firstRole.name
-    }
-  }
-
-  return 'Sin rol'
-}
-
-function normalizeRoleRef (entry: unknown): UserRoleRef | null {
   if (entry && typeof entry === 'object') {
-    const record = entry as Record<string, unknown>
-    const id = record.id
-    const name = record.name
+    const { name } = entry as Record<string, unknown>
 
-    if ((typeof id === 'number' || typeof id === 'string') && typeof name === 'string') {
-      return { id, name }
+    if (typeof name === 'string' && name.trim().length > 0) {
+      return name
     }
   }
 
   return null
 }
 
-// Only object-shaped roles carry the `id` the roles endpoints need; a bare role
-// string has nothing to match against `/api/v1/users/{id}/roles/{roleId}`.
-function getUserRoles (user: ApiUser): UserRoleRef[] {
-  if (Array.isArray(user.roles)) {
-    return user.roles
-      .map(entry => normalizeRoleRef(entry))
-      .filter((role): role is UserRoleRef => role !== null)
+function getNames (value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return []
   }
 
-  const role = normalizeRoleRef(user.role)
-  return role ? [role] : []
+  return value
+    .map(entry => getName(entry))
+    .filter((name): name is string => name !== null)
+}
+
+function getUserRoles (user: ApiUser): string[] {
+  const roles = getNames(user.roles)
+
+  if (roles.length > 0) {
+    return roles
+  }
+
+  const role = getName(user.role)
+
+  return role && role !== 'Sin rol' ? [role] : []
 }
 
 function getUserActive (user: ApiUser) {
@@ -144,7 +131,7 @@ function mapUser (user: ApiUser): User {
     initials: getUserInitials(name),
     microsoftId: getNullableString(user.microsoft_id),
     name,
-    role: getUserRole(user),
+    permissions: getNames(user.permissions),
     roles: getUserRoles(user),
     verified: getUserVerified(user, verifiedAt),
     verifiedAt,

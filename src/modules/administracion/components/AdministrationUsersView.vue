@@ -113,6 +113,20 @@
         </div>
       </template>
 
+      <template #header.permissions="{ column }">
+        <div class="v-data-table-header__content">
+          <span>{{ column.title }}</span>
+
+          <TableColumnFilter
+            :items="permissionFilterItems"
+            label="Permiso"
+            :model-value="filters.permission ?? null"
+            type="select"
+            @update:model-value="value => applyFilter('permission', value)"
+          />
+        </div>
+      </template>
+
       <template #header.verified="{ column, getSortIcon }">
         <div class="v-data-table-header__content">
           <span>{{ column.title }}</span>
@@ -142,8 +156,8 @@
       <template #item.roles="{ item }">
         <div class="role-chips">
           <v-chip
-            v-for="(roleName, index) in displayRoles(item)"
-            :key="`${item.id}-${roleName}-${index}`"
+            v-for="roleName in item.roles"
+            :key="`${item.id}-role-${roleName}`"
             color="#6a1b31"
             size="small"
             variant="tonal"
@@ -151,7 +165,32 @@
             {{ roleName }}
           </v-chip>
 
-          <span v-if="displayRoles(item).length === 0" class="text-medium-emphasis">Sin rol</span>
+          <span v-if="item.roles.length === 0" class="text-medium-emphasis">Sin rol</span>
+        </div>
+      </template>
+
+      <template #item.permissions="{ item }">
+        <div class="permission-chips" :title="item.permissions.join(', ')">
+          <v-chip
+            v-for="permissionName in item.permissions.slice(0, PERMISSION_PREVIEW_COUNT)"
+            :key="`${item.id}-permission-${permissionName}`"
+            color="#1a1a1a"
+            size="x-small"
+            variant="tonal"
+          >
+            {{ permissionName }}
+          </v-chip>
+
+          <v-chip
+            v-if="item.permissions.length > PERMISSION_PREVIEW_COUNT"
+            color="#1a1a1a"
+            size="x-small"
+            variant="outlined"
+          >
+            +{{ item.permissions.length - PERMISSION_PREVIEW_COUNT }}
+          </v-chip>
+
+          <span v-if="item.permissions.length === 0" class="text-medium-emphasis">Sin permisos</span>
         </div>
       </template>
 
@@ -374,6 +413,24 @@
             </v-list-item>
           </template>
         </v-autocomplete>
+
+        <div v-if="inheritedPermissions.length > 0" class="inherited-permissions">
+          <div class="inherited-permissions__label">
+            Heredados de sus roles (se editan desde el rol)
+          </div>
+
+          <div class="permission-chips">
+            <v-chip
+              v-for="permissionName in inheritedPermissions"
+              :key="`inherited-${permissionName}`"
+              color="#1a1a1a"
+              size="x-small"
+              variant="outlined"
+            >
+              {{ permissionName }}
+            </v-chip>
+          </div>
+        </div>
       </v-card-text>
 
       <v-divider />
@@ -477,6 +534,9 @@
 
   const PER_PAGE_OPTIONS = [10, 25, 50, 100]
 
+  /** Permissions listed in a table cell before the rest collapse into a `+N` chip. */
+  const PERMISSION_PREVIEW_COUNT = 2
+
   const VERIFIED_FILTER_ITEMS = [
     { title: 'Verificado', value: true },
     { title: 'Sin verificar', value: false },
@@ -494,7 +554,8 @@
   const headers = [
     { key: 'name', minWidth: '220px', sortable: true, title: 'Usuario' },
     { key: 'email', minWidth: '220px', sortable: true, title: 'Correo' },
-    { key: 'roles', minWidth: '200px', sortable: false, title: 'Roles' },
+    { key: 'roles', minWidth: '180px', sortable: false, title: 'Roles' },
+    { key: 'permissions', minWidth: '220px', sortable: false, title: 'Permisos' },
     { key: 'active', sortable: false, title: 'Estado', width: '120px' },
     { key: 'verified', sortable: true, title: 'Verificado', width: '140px' },
     { key: 'createdAt', sortable: true, title: 'Registro', width: '150px' },
@@ -506,6 +567,10 @@
 
   const roleFilterItems = computed(() =>
     roles.value.map(role => ({ title: role.name, value: role.name })),
+  )
+
+  const permissionFilterItems = computed(() =>
+    permissions.value.map(permission => ({ title: permission.name, value: permission.name })),
   )
 
   let searchTimer: ReturnType<typeof setTimeout> | undefined
@@ -561,16 +626,6 @@
   onBeforeUnmount(() => {
     if (searchTimer) clearTimeout(searchTimer)
   })
-
-  // The API can describe roles either as objects or as a single `role` string;
-  // both shapes are surfaced so no assignment is hidden from the list.
-  function displayRoles (user: User): string[] {
-    if (user.roles.length > 0) {
-      return user.roles.map(role => role.name)
-    }
-
-    return user.role && user.role !== 'Sin rol' ? [user.role] : []
-  }
 
   function formatDate (value: string | null) {
     if (!value) return '—'
@@ -713,6 +768,22 @@
     }
   }
 
+  // `user.permissions` is the effective set, so whatever is not assigned
+  // directly reached the user through one of their roles.
+  const inheritedPermissions = computed(() => {
+    const user = selectedUser.value
+
+    if (!user) return []
+
+    const directNames = new Set(
+      initialPermissionIds.value
+        .map(id => permissions.value.find(permission => permission.id === id)?.name)
+        .filter((name): name is string => name !== undefined),
+    )
+
+    return user.permissions.filter(name => !directNames.has(name))
+  })
+
   function permissionItemSubtitle (item: Permission | { raw?: Permission } | null | undefined): string {
     if (item == null) return ''
     if ('raw' in item && item.raw) {
@@ -721,27 +792,28 @@
     return 'module' in item ? item.module : ''
   }
 
-  function normalizePermissionId (value: unknown): number | string | null {
+  function normalizeId (value: unknown): number | string | null {
     if (typeof value === 'number' || typeof value === 'string') {
       return value
     }
     return null
   }
 
-  function extractPermissionId (entry: unknown): number | string | null {
+  function extractId (entry: unknown): number | string | null {
     if (typeof entry === 'number' || typeof entry === 'string') {
       return entry
     }
 
     if (entry && typeof entry === 'object') {
       const record = entry as Record<string, unknown>
-      return normalizePermissionId(record.id ?? record.permission_id ?? record.permissionId)
+      return normalizeId(record.id ?? record.permission_id ?? record.role_id)
     }
 
     return null
   }
 
-  function parsePermissionCollection (response: unknown): Array<number | string> {
+  /** Reads the assigned ids out of `{ data: [...] }` or a bare array. */
+  function parseIdCollection (response: unknown): Array<number | string> {
     const source = Array.isArray(response)
       ? response
       : (response && typeof response === 'object' && 'data' in response
@@ -753,7 +825,7 @@
     }
 
     return source
-      .map(item => extractPermissionId(item))
+      .map(item => extractId(item))
       .filter((id): id is number | string => id !== null)
   }
 
@@ -766,7 +838,7 @@
     try {
       await loadPermissions()
       const response = await httpClient.get<unknown>(`/api/v1/users/${user.id}/permissions`)
-      const assignedIds = parsePermissionCollection(response)
+      const assignedIds = parseIdCollection(response)
 
       initialPermissionIds.value = assignedIds
       selectedPermissionIds.value = [...assignedIds]
@@ -810,6 +882,9 @@
       )
 
       closePermissionsDialog()
+      // The page query is unchanged, so the reload has to be forced past the
+      // composable's duplicate-request guard.
+      await loadUsers({ force: true })
     } catch (error_) {
       error.value = error_ instanceof Error ? error_.message : 'No fue posible guardar los permisos del usuario'
     } finally {
@@ -830,7 +905,10 @@
 
     try {
       await loadRoles()
-      const assignedIds = user.roles.map(role => role.id)
+      // `/api/v1/users` lists roles as bare names, so the ids the assignment
+      // endpoints need are read from the user's own roles collection.
+      const response = await httpClient.get<unknown>(`/api/v1/users/${user.id}/roles`)
+      const assignedIds = parseIdCollection(response)
 
       initialRoleIds.value = assignedIds
       selectedRoleIds.value = [...assignedIds]
@@ -964,6 +1042,24 @@
   flex-wrap: wrap;
   gap: 4px;
   padding: 8px 0;
+}
+
+.permission-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 0;
+}
+
+.inherited-permissions {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgb(0 0 0 / 0.08);
+}
+
+.inherited-permissions__label {
+  font-size: 0.75rem;
+  color: #5e5e5e;
 }
 
 .user-actions {

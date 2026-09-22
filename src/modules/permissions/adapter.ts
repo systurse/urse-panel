@@ -22,14 +22,18 @@ function getPermissionName (permission: ApiPermission) {
   return 'Sin nombre'
 }
 
-function getPermissionModule (permission: ApiPermission) {
+// Spatie only stores `name`, so the module is read from the `module.action`
+// convention the seeder follows (e.g. `users.create`) when the API sends none.
+function getPermissionModule (permission: ApiPermission, name: string) {
   const module = permission.module ?? permission.module_name ?? permission.resource
 
   if (typeof module === 'string' && module.trim().length > 0) {
     return module
   }
 
-  return 'General'
+  const [prefix] = name.split('.')
+
+  return prefix && prefix !== name ? prefix : 'General'
 }
 
 function getPermissionDescription (permission: ApiPermission) {
@@ -43,11 +47,13 @@ function getPermissionDescription (permission: ApiPermission) {
 }
 
 function mapPermission (permission: ApiPermission): Permission {
+  const name = getPermissionName(permission)
+
   return {
     description: getPermissionDescription(permission),
     id: typeof permission.id === 'number' || typeof permission.id === 'string' ? permission.id : '',
-    module: getPermissionModule(permission),
-    name: getPermissionName(permission),
+    module: getPermissionModule(permission, name),
+    name,
   }
 }
 
