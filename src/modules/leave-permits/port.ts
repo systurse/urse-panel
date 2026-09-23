@@ -47,6 +47,15 @@ export interface LeavePermit {
   statuses: LeavePermitStatusEntry[]
 }
 
+/**
+ * A supervisor may only ever send `refused`: `authorized` is born from the last
+ * signature, and the API answers 403 to anything else from them.
+ */
+export interface LeavePermitStatusPayload {
+  notes?: string | null
+  status: LeavePermitStatus
+}
+
 export interface LeavePermitPayload {
   employee_id: number | string
   ends_on: string
@@ -85,6 +94,7 @@ export interface PaginatedLeavePermits {
 
 export interface LeavePermitsPort {
   create: (payload: LeavePermitPayload) => Promise<LeavePermit>
+  createStatus: (permitId: number | string, payload: LeavePermitStatusPayload) => Promise<LeavePermitStatusEntry>
   /** Resolves to the PDF bytes; the request carries the token, a plain link would not. */
   downloadPdf: (permitId: number | string) => Promise<Blob>
   getById: (permitId: number | string) => Promise<LeavePermit>

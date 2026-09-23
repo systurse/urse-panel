@@ -138,6 +138,26 @@ export function useLeavePermits (port: LeavePermitsPort = leavePermitsAdapter) {
     }
   }
 
+  /**
+   * A supervisor resolves a permit only downwards: the API answers 403 to any
+   * status but `refused` from them, since authorization is born from the last
+   * signature rather than set by hand.
+   */
+  async function refusePermit (permitId: number | string, notes: string) {
+    saving.value = true
+    error.value = null
+
+    try {
+      await port.createStatus(permitId, { notes, status: 'refused' })
+      await loadPermits()
+    } catch (error_) {
+      error.value = resolveApiMessage(error_, 'notes', 'No fue posible rechazar el permiso.')
+      throw error_
+    } finally {
+      saving.value = false
+    }
+  }
+
   async function removePermit (permitId: number | string) {
     saving.value = true
     error.value = null
@@ -178,6 +198,7 @@ export function useLeavePermits (port: LeavePermitsPort = leavePermitsAdapter) {
     page,
     permits,
     perPage,
+    refusePermit,
     removePermit,
     saving,
     setFilters,

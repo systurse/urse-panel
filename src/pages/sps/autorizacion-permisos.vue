@@ -7,7 +7,7 @@
           <h2 class="card-title">Autorización de permisos</h2>
 
           <p class="card-subtitle">
-            Permisos F011A de tus empleados: consulta el formato y fírmalo como jefe inmediato.
+            Permisos F011A de tus empleados: firma como jefe inmediato o rechaza con motivo.
           </p>
         </div>
 
@@ -257,7 +257,30 @@
             @signed="onPermitSigned"
           />
 
-          <p class="detail-note mt-4">
+          <div v-if="canRefuseSelected" class="review-block mt-4">
+            <v-divider class="mb-4" />
+
+            <div class="text-subtitle-2 font-weight-bold mb-2">
+              Resolución
+            </div>
+
+            <p class="text-body-2 text-medium-emphasis mb-3">
+              El permiso queda autorizado cuando se completan las firmas requeridas. Desde aquí
+              solo puede rechazarse.
+            </p>
+
+            <v-textarea
+              v-model="rejectNotes"
+              density="comfortable"
+              hint="Obligatorio al rechazar el permiso."
+              label="Notas (rechazo)"
+              persistent-hint
+              rows="3"
+              variant="outlined"
+            />
+          </div>
+
+          <p v-else class="detail-note mt-4">
             El permiso queda autorizado cuando se completan las firmas requeridas; no se resuelve
             desde aquí con un botón aparte.
           </p>
@@ -289,13 +312,24 @@
           </v-btn>
 
           <v-spacer />
+
+          <v-btn
+            v-if="canRefuseSelected"
+            color="error"
+            :loading="saving"
+            prepend-icon="mdi-close-circle-outline"
+            variant="tonal"
+            @click="refuseSelected"
+          >
+            Rechazar
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <v-snackbar
       v-model="snackbar"
-      color="success"
+      :color="snackbarColor"
       location="top"
       :timeout="3500"
     >
@@ -324,6 +358,8 @@
     loadPermits,
     meta,
     permits,
+    refusePermit,
+    saving,
     setFilters,
     setPage,
   } = useLeavePermits()
@@ -343,9 +379,11 @@
 
   const detailDialog = ref(false)
   const selectedPermit = ref<LeavePermit | null>(null)
+  const rejectNotes = ref('')
 
   const snackbar = ref(false)
   const snackbarText = ref('')
+  const snackbarColor = ref<'error' | 'success'>('success')
 
   const searchInput = ref('')
   let searchTimer: ReturnType<typeof setTimeout> | undefined
@@ -358,6 +396,15 @@
   function isOwnPermit (permit: LeavePermit) {
     return isSameId(permit.employeeId, ownEmployeeId.value)
   }
+
+  // The API takes `refused` from the area's supervisor and from an administrator,
+  // and answers 403 to the requester's own permit. A permit already resolved has
+  // nothing left to refuse.
+  const canRefuseSelected = computed(() => {
+    const permit = selectedPermit.value
+    if (!permit) return false
+    return permit.latestStatus === 'pending' && !isOwnPermit(permit)
+  })
 
   // The progress object is what the list carries; when the endpoint omits it
   // the count is all there is to report, so the chip says that much rather than
@@ -449,21 +496,52 @@
     }
   }
 
+  function showSnackbar (text: string, color: 'error' | 'success') {
+    snackbarText.value = text
+    snackbarColor.value = color
+    snackbar.value = true
+  }
+
   function openDetail (permit: LeavePermit) {
     selectedPermit.value = permit
+    rejectNotes.value = ''
     detailDialog.value = true
   }
 
   function closeDetail () {
     detailDialog.value = false
     selectedPermit.value = null
+    rejectNotes.value = ''
+  }
+
+  async function refuseSelected () {
+    const permit = selectedPermit.value
+    if (!permit) return
+
+    const notes = rejectNotes.value.trim()
+
+    // The rejection is what the employee reads to know what to correct, so it
+    // is asked for here rather than left to the API to reject as empty.
+    if (!notes) {
+      showSnackbar('Escribe el motivo del rechazo en las notas.', 'error')
+      return
+    }
+
+    try {
+      await refusePermit(permit.id, notes)
+      showSnackbar('Permiso rechazado.', 'success')
+      closeDetail()
+    } catch {
+      // `error` already carries the reason the API gave and is shown above the
+      // list; the dialog stays open so the notes are not lost.
+      showSnackbar('No fue posible rechazar el permiso.', 'error')
+    }
   }
 
   // The last required signature flips the permit to `authorized` on its own, so
   // the row behind the dialog is stale until the list is refetched.
   async function onPermitSigned () {
-    snackbarText.value = 'Firma registrada.'
-    snackbar.value = true
+    showSnackbar('Firma registrada.', 'success')
 
     await loadPermits()
 
@@ -608,6 +686,12 @@
 .detail-note {
   color: #5e5e5e;
   font-size: 0.85rem;
+}
+
+.review-block {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgb(250 178 26 / 0.06);
 }
 
 @media (max-width: 900px) {

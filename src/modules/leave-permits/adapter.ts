@@ -9,6 +9,7 @@ import type {
   LeavePermitsPort,
   LeavePermitsQuery,
   LeavePermitStatusEntry,
+  LeavePermitStatusPayload,
   PaginatedLeavePermits,
 } from '@/modules/leave-permits/port'
 import type { HttpClient } from '@/services/http'
@@ -180,6 +181,16 @@ export class HttpLeavePermitsAdapter implements LeavePermitsPort {
   async create (payload: LeavePermitPayload): Promise<LeavePermit> {
     const response = await this.client.post<unknown, LeavePermitPayload>('/api/v1/leave-permits', payload)
     return mapPermit(unwrapData(response))
+  }
+
+  async createStatus (permitId: number | string, payload: LeavePermitStatusPayload): Promise<LeavePermitStatusEntry> {
+    const response = await this.client.post<unknown, LeavePermitStatusPayload>(
+      `/api/v1/leave-permits/${permitId}/statuses`,
+      payload,
+    )
+    // The entry is echoed back on 201; a body that does not parse still means
+    // the status landed, so the requested one is reported rather than nothing.
+    return mapStatusEntry(unwrapData(response)) ?? { createdAt: '', notes: payload.notes ?? '', status: payload.status }
   }
 
   // Goes through the raw axios instance: the interceptor adds the token, which

@@ -187,7 +187,7 @@
           title: 'Autorización de permisos',
           to: '/sps/administracion/permisos',
           icon: 'mdi-file-sign',
-          subtitle: 'Permisos F011A de tus empleados: consulta y firma como jefe inmediato.',
+          subtitle: 'Permisos F011A de tus empleados: firma como jefe inmediato o rechaza.',
           meta: {
             grantedToRoles: ['supervisor'],
             requiresAnyPermission: ['sps.pass-signature.sign-as-supervisor'],
