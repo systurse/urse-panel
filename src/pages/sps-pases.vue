@@ -144,7 +144,7 @@
             </v-btn>
 
             <v-btn
-              v-if="exitPass.currentStatus === 'authorized'"
+              v-if="canPrintPass(exitPass.currentStatus)"
               color="success"
               :loading="isActionLoading(exitPass.id, 'pdf')"
               prepend-icon="mdi-printer-outline"
@@ -626,6 +626,7 @@
     if (status === 'revision') return 'En revisión'
     if (status === 'authorized') return 'Autorizado'
     if (status === 'refused') return 'Rechazado'
+    if (status === 'returned') return 'Regresó'
     return humanizeEnum(status)
   }
 
@@ -634,7 +635,17 @@
     if (status === 'revision') return 'info'
     if (status === 'authorized') return 'success'
     if (status === 'refused') return 'error'
+    if (status === 'returned') return 'primary'
     return 'default'
+  }
+
+  // The printed pass is what the employee walks out with, so it stays available
+  // for every status the pass reaches after being authorized. Only the stages
+  // before the authorization and a refusal have nothing worth printing.
+  const NON_PRINTABLE_STATUSES = new Set(['pending', 'revision', 'refused'])
+
+  function canPrintPass (status: string) {
+    return Boolean(status) && !NON_PRINTABLE_STATUSES.has(status)
   }
 
   function isActionLoading (id: number | string, type: ActionType) {
