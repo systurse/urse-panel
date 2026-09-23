@@ -144,7 +144,6 @@
 
             <v-btn
               color="#c89215"
-              :loading="busyPermitId === permit.id"
               prepend-icon="mdi-draw-pen"
               size="small"
               variant="text"
@@ -153,14 +152,12 @@
               Firmar
             </v-btn>
 
-            <!-- A signed permit is frozen: the API answers 422 to an edit and
-                 409 to a delete. The list resource carries no signature data,
-                 so the progress is read when the action is used instead of
-                 offering something the API will refuse. -->
+            <!-- A signed permit is frozen, and the row already says so: the
+                 signature progress travels with the list, so the action
+                 explains itself instead of letting the API refuse it. -->
             <v-btn
               v-if="canUpdate"
               color="#c89215"
-              :loading="busyPermitId === permit.id"
               prepend-icon="mdi-pencil-outline"
               size="small"
               variant="text"
@@ -172,7 +169,6 @@
             <v-btn
               v-if="canDelete"
               color="error"
-              :loading="busyPermitId === permit.id"
               prepend-icon="mdi-delete-outline"
               size="small"
               variant="text"
@@ -378,7 +374,6 @@
   import { employeesAdapter } from '@/modules/employees/adapter'
   import { useLeavePermits } from '@/modules/leave-permits/useLeavePermits'
   import { validateLeavePermitDates } from '@/modules/leave-permits/validation'
-  import { signaturesAdapter } from '@/modules/signatures/adapter'
   import SignDialog from '@/modules/sps/components/SignDialog.vue'
   import { useAuthStore } from '@/stores/auth'
   import { isSameId } from '@/utils/identity'
@@ -561,29 +556,11 @@
   const signDialog = ref(false)
   const signingPermit = ref<LeavePermit | null>(null)
   const signingRole = ref<SignerRole | null>(null)
-  const busyPermitId = ref<number | string | null>(null)
-
-  /**
-   * The list resource carries no signature data, so it is read on demand. The
-   * API stays the authority; this only decides what to open.
-   */
-  async function readPendingRoles (permit: LeavePermit): Promise<SignerRole[] | null> {
-    busyPermitId.value = permit.id
-
-    try {
-      const { progress } = await signaturesAdapter.list('leave-permits', permit.id)
-      return progress.pendingRoles
-    } catch {
-      return null
-    } finally {
-      busyPermitId.value = null
-    }
-  }
 
   // Mirrors the panel's rule: the owner signs as employee, a supervisor of the
   // area signs as immediate supervisor, and nobody holds two roles on one
   // document.
-  function resolveSignableRole (permit: LeavePermit, pending: SignerRole[]): SignerRole | null {
+  function resolveSignableRole (permit: LeavePermit, pending: string[]): SignerRole | null {
     const isOwner = isSameId(permit.employeeId, ownEmployeeId.value)
 
     if (isOwner && pending.includes('employee') && authStore.hasPermission('sps.pass-signature.sign')) {
@@ -602,21 +579,16 @@
     return null
   }
 
-  async function startSigning (permit: LeavePermit) {
-    const pending = await readPendingRoles(permit)
-
-    if (pending === null) {
-      error.value = 'No fue posible consultar las firmas de este permiso.'
-      return
-    }
-
-    if (pending.length === 0) {
+  // The list resource reports the signature progress, so what is worth opening
+  // is decided from the row already on screen. The API stays the authority.
+  function startSigning (permit: LeavePermit) {
+    if (permit.signatureProgress.isComplete) {
       error.value = 'Este permiso ya tiene todas las firmas requeridas.'
-      await loadPermits()
+      void loadPermits()
       return
     }
 
-    const role = resolveSignableRole(permit, pending)
+    const role = resolveSignableRole(permit, permit.signatureProgress.pendingRoles)
 
     if (!role) {
       error.value = 'No tienes un rol pendiente de firma en este permiso.'
@@ -636,15 +608,9 @@
     await loadPermits()
   }
 
-  /** A signed permit is frozen, and the list cannot tell on its own. */
-  async function isFrozen (permit: LeavePermit) {
-    const pending = await readPendingRoles(permit)
-
-    if (pending === null) return false
-
-    const signedCount = 2 - pending.length
-
-    if (signedCount > 0) {
+  /** A signed permit is frozen: the API answers 422 to an edit and 409 to a delete. */
+  function isFrozen (permit: LeavePermit) {
+    if (permit.signedRoleCount > 0) {
       error.value = 'Este permiso ya tiene firmas, por lo que no puede editarse ni eliminarse.'
       return true
     }
@@ -666,8 +632,8 @@
     formDialog.value = true
   }
 
-  async function openEditDialog (permit: LeavePermit) {
-    if (await isFrozen(permit)) return
+  function openEditDialog (permit: LeavePermit) {
+    if (isFrozen(permit)) return
 
     isEditing.value = true
     selectedPermit.value = permit
@@ -705,8 +671,8 @@
     }
   }
 
-  async function openDeleteDialog (permit: LeavePermit) {
-    if (await isFrozen(permit)) return
+  function openDeleteDialog (permit: LeavePermit) {
+    if (isFrozen(permit)) return
 
     selectedPermit.value = permit
     deleteDialog.value = true
