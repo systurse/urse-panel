@@ -51,6 +51,18 @@
 
   const moduleBase = computed(() => `/${route.path.split('/', 2)[1]}`)
 
+  interface MenuEntry {
+    title: string
+    to: string
+    icon: string
+    subtitle: string
+    meta?: RouteMeta
+  }
+
+  function filterByAccess (items: MenuEntry[]) {
+    return items.filter(item => canAccessRouteMeta(item.meta, authStore))
+  }
+
   const navigationItems = computed(() => {
     if (moduleBase.value === '/administracion') {
       const items = [
@@ -121,7 +133,8 @@
     }
 
     if (moduleBase.value === '/sps') {
-      const items = [
+      // What any employee does with their own paperwork.
+      const ownItems: MenuEntry[] = [
         {
           title: 'Inicio',
           to: '/',
@@ -138,8 +151,12 @@
           title: 'Pases registrados',
           to: '/sps/pases',
           icon: 'mdi-file-document-multiple-outline',
-          subtitle: 'Consulta el historial de pases de salida capturados.',
+          subtitle: 'Consulta el historial de tus pases de salida.',
         },
+      ]
+
+      // What a supervisor does with everybody else's: authorize, sign, report.
+      const supervisionItems: MenuEntry[] = [
         {
           title: 'Permisos F011A',
           to: '/sps/permisos',
@@ -161,21 +178,25 @@
           },
         },
         {
-          title: 'Pases de salida',
+          title: 'Autorización de pases',
           to: '/sps/administracion/pases-salida',
           icon: 'mdi-clipboard-check-multiple-outline',
           subtitle: 'Consulta y resuelve pases de salida (firmar o rechazar).',
-          meta: { requiresAnyPermission: ['sps.pass-signature.sign-as-supervisor'] },
+          meta: {
+            grantedToRoles: ['supervisor'],
+            requiresAnyPermission: ['sps.pass-signature.sign-as-supervisor'],
+          },
         },
       ]
 
-      return items.filter(item => {
-        if (!('meta' in item)) {
-          return true
-        }
+      const visibleSupervision = filterByAccess(supervisionItems)
 
-        return canAccessRouteMeta(item.meta as RouteMeta | undefined, authStore)
-      })
+      // The divider only earns its place when there is a second half to divide
+      // off; an employee with no supervision entries would otherwise be left
+      // with a rule hanging under the last item.
+      return visibleSupervision.length > 0
+        ? [...filterByAccess(ownItems), { title: 'separator', divider: true }, ...visibleSupervision]
+        : filterByAccess(ownItems)
     }
 
     if (moduleBase.value === '/inscripciones') {
