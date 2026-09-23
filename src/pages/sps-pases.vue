@@ -6,16 +6,16 @@
         <h2 class="card-title">Pases registrados</h2>
 
         <p class="card-subtitle">
-          Historial de pases de salida registrados en el sistema.
+          Historial de tus pases de salida registrados en el sistema.
         </p>
       </div>
 
       <v-btn
         color="#c89215"
-        :loading="loading"
+        :loading="loading || loadingOwnEmployee"
         prepend-icon="mdi-refresh"
         variant="flat"
-        @click="loadExitPasses"
+        @click="refresh"
       >
         Actualizar
       </v-btn>
@@ -32,19 +32,24 @@
       {{ errorMessage }}
     </v-alert>
 
-    <div v-if="loading" class="state-box">
+    <div v-if="loading || loadingOwnEmployee" class="state-box">
       <v-progress-circular color="#c89215" indeterminate />
       <span>Cargando pases...</span>
     </div>
 
-    <div v-else-if="exitPasses.length === 0" class="state-box state-box--empty">
+    <div v-else-if="ownEmployeeId === null" class="state-box state-box--empty">
+      <v-icon color="#c89215" icon="mdi-account-off-outline" size="32" />
+      <span>Tu usuario no está vinculado a un empleado, así que no hay pases que mostrar.</span>
+    </div>
+
+    <div v-else-if="visiblePasses.length === 0" class="state-box state-box--empty">
       <v-icon color="#c89215" icon="mdi-file-document-outline" size="32" />
-      <span>No hay pases registrados.</span>
+      <span>No tienes pases registrados.</span>
     </div>
 
     <div v-else class="passes-list">
       <v-card
-        v-for="exitPass in exitPasses"
+        v-for="exitPass in visiblePasses"
         :key="String(exitPass.id)"
         class="pass-row"
         rounded="lg"
@@ -373,10 +378,13 @@
 
 <script lang="ts" setup>
   import type { AxiosError } from 'axios'
-  import { onMounted, ref } from 'vue'
+  import { computed, onMounted, ref } from 'vue'
+  import { employeesAdapter } from '@/modules/employees/adapter'
   import { signaturesAdapter } from '@/modules/signatures/adapter'
   import SignDialog from '@/modules/sps/components/SignDialog.vue'
   import { http, httpClient } from '@/services/http'
+  import { useAuthStore } from '@/stores/auth'
+  import { isSameId } from '@/utils/identity'
   import { normalizeTimeToApi, normalizeTimeToInput } from '@/utils/time'
 
   interface ExitPassItem {
@@ -412,10 +420,23 @@
     type: ActionType | null
   }
 
+  const authStore = useAuthStore()
+
   const loading = ref(false)
   const errorMessage = ref<string | null>(null)
   const exitPasses = ref<ExitPassItem[]>([])
   const actionLoading = ref<ActionLoadingState>({ id: null, type: null })
+
+  const ownEmployeeId = ref<number | string | null>(null)
+  const loadingOwnEmployee = ref(false)
+
+  // This screen is the employee's own history; supervisors read everyone's from
+  // /sps/administracion/pases-salida. The collection endpoint still answers with
+  // every pass, so ownership is enforced here until the API scopes it.
+  const visiblePasses = computed(() => {
+    if (ownEmployeeId.value === null) return []
+    return exitPasses.value.filter(pass => isSameId(pass.employeeId, ownEmployeeId.value))
+  })
 
   const editDialog = ref(false)
   const editFormRef = ref()
@@ -816,8 +837,35 @@
     }
   }
 
+  // A failed lookup leaves no way to tell the user's passes apart from the rest,
+  // and showing everyone's is worse than showing none.
+  async function loadOwnEmployee () {
+    const userId = authStore.user?.id
+
+    if (!userId) {
+      ownEmployeeId.value = null
+      return
+    }
+
+    loadingOwnEmployee.value = true
+
+    try {
+      const employee = await employeesAdapter.getByUserId(userId)
+      ownEmployeeId.value = employee?.id ?? null
+    } catch (error) {
+      ownEmployeeId.value = null
+      errorMessage.value = resolveMessage(error, 'No fue posible identificar al empleado de tu usuario.')
+    } finally {
+      loadingOwnEmployee.value = false
+    }
+  }
+
+  async function refresh () {
+    await Promise.all([loadOwnEmployee(), loadExitPasses()])
+  }
+
   onMounted(() => {
-    void loadExitPasses()
+    void refresh()
   })
 </script>
 
