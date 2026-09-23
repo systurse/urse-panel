@@ -4,6 +4,7 @@ import type {
   LeavePermitKind,
   LeavePermitPayload,
   LeavePermitShift,
+  LeavePermitSignatureProgress,
   LeavePermitsPagination,
   LeavePermitsPort,
   LeavePermitsQuery,
@@ -79,6 +80,20 @@ function mapStatusEntry (raw: unknown): LeavePermitStatusEntry | null {
   return status ? { createdAt: readString(item, 'created_at'), notes: readString(item, 'notes'), status } : null
 }
 
+function readRoles (value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((role): role is string => typeof role === 'string') : []
+}
+
+function mapSignatureProgress (item: ApiRecord): LeavePermitSignatureProgress {
+  const progress = asRecord(item.signature_progress)
+
+  return {
+    isComplete: progress.is_complete === true,
+    pendingRoles: readRoles(progress.pending_roles),
+    signedRoles: readRoles(progress.signed_roles),
+  }
+}
+
 // The resource may report signatures either as a progress object or as a list;
 // either way a permit with any signature is frozen.
 function countSignedRoles (item: ApiRecord): number {
@@ -111,6 +126,7 @@ function mapPermit (raw: unknown): LeavePermit {
     latestStatus: (readString(item, 'latest_status', 'status') || statuses.at(-1)?.status || 'pending').toLowerCase(),
     requestDate: readString(item, 'request_date'),
     shift: SHIFTS.has(shift) ? shift as LeavePermitShift : 'complete',
+    signatureProgress: mapSignatureProgress(item),
     signedRoleCount: countSignedRoles(item),
     startsOn: readString(item, 'starts_on'),
     statuses,

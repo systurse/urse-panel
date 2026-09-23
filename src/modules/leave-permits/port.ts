@@ -17,6 +17,17 @@ export interface LeavePermitStatusEntry {
   status: string
 }
 
+/**
+ * Signature state as the list resource reports it. Roles are kept as plain
+ * strings so this module does not depend on the signature module; both arrays
+ * come back empty when the endpoint omits the progress object.
+ */
+export interface LeavePermitSignatureProgress {
+  isComplete: boolean
+  pendingRoles: string[]
+  signedRoles: string[]
+}
+
 export interface LeavePermit {
   createdAt: string | null
   /** Derived from the range by the backend; never computed here. */
@@ -28,6 +39,7 @@ export interface LeavePermit {
   kind: LeavePermitKind
   latestStatus: string
   requestDate: string
+  signatureProgress: LeavePermitSignatureProgress
   /** Number of roles that already signed; a signed permit is frozen. */
   signedRoleCount: number
   shift: LeavePermitShift

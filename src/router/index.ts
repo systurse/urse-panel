@@ -36,6 +36,7 @@ import Settings from '@/pages/settings.vue'
 import Soporte from '@/pages/soporte.vue'
 import SPSPasses from '@/pages/sps-pases.vue'
 import SPS from '@/pages/sps.vue'
+import SPSPermitAuthorization from '@/pages/sps/autorizacion-permisos.vue'
 import SPSPassReturnCode from '@/pages/sps/pase-codigo-regreso.vue'
 import SPSPassReturnConfirm from '@/pages/sps/pase-confirmar-regreso.vue'
 import SPSPassDetail from '@/pages/sps/pase-detalle.vue'
@@ -229,18 +230,10 @@ const router = createRouter({
         {
           path: 'permisos',
           component: LeavePermits,
-          meta: {
-            grantedToRoles: ['supervisor'],
-            requiresAnyPermission: ['sps.permit.index'],
-          },
         },
         {
           path: 'permisos/:id',
           component: LeavePermitDetail,
-          meta: {
-            grantedToRoles: ['supervisor'],
-            requiresAnyPermission: ['sps.permit.show'],
-          },
         },
         {
           path: 'reportes',
@@ -257,6 +250,14 @@ const router = createRouter({
         {
           path: 'administracion/pases-salida',
           component: AdminExitPasses,
+          meta: {
+            grantedToRoles: ['supervisor'],
+            requiresAnyPermission: ['sps.pass-signature.sign-as-supervisor'],
+          },
+        },
+        {
+          path: 'administracion/permisos',
+          component: SPSPermitAuthorization,
           meta: {
             grantedToRoles: ['supervisor'],
             requiresAnyPermission: ['sps.pass-signature.sign-as-supervisor'],

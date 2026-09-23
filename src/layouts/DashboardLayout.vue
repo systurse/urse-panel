@@ -153,20 +153,16 @@
           icon: 'mdi-file-document-multiple-outline',
           subtitle: 'Consulta el historial de tus pases de salida.',
         },
-      ]
-
-      // What a supervisor does with everybody else's: authorize, sign, report.
-      const supervisionItems: MenuEntry[] = [
         {
           title: 'Permisos F011A',
           to: '/sps/permisos',
           icon: 'mdi-file-document-edit-outline',
-          subtitle: 'Permiso económico y no económico: captura, firma y autorización.',
-          meta: {
-            grantedToRoles: ['supervisor'],
-            requiresAnyPermission: ['sps.permit.index'],
-          },
+          subtitle: 'Permiso económico y no económico: captura, firma y descarga del formato.',
         },
+      ]
+
+      // What a supervisor does with everybody else's: authorize, sign, report.
+      const supervisionItems: MenuEntry[] = [
         {
           title: 'Reporte de pases',
           to: '/sps/reportes',
@@ -182,6 +178,16 @@
           to: '/sps/administracion/pases-salida',
           icon: 'mdi-clipboard-check-multiple-outline',
           subtitle: 'Consulta y resuelve pases de salida (firmar o rechazar).',
+          meta: {
+            grantedToRoles: ['supervisor'],
+            requiresAnyPermission: ['sps.pass-signature.sign-as-supervisor'],
+          },
+        },
+        {
+          title: 'Autorización de permisos',
+          to: '/sps/administracion/permisos',
+          icon: 'mdi-file-sign',
+          subtitle: 'Permisos F011A de tus empleados: consulta y firma como jefe inmediato.',
           meta: {
             grantedToRoles: ['supervisor'],
             requiresAnyPermission: ['sps.pass-signature.sign-as-supervisor'],
