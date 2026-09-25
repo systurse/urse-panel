@@ -2,20 +2,6 @@
   <div class="tasks-page">
     <div class="tasks-toolbar">
       <div class="tasks-toolbar-left">
-        <v-select
-          clearable
-          density="compact"
-          hide-details
-          item-title="name"
-          item-value="id"
-          :items="projects"
-          label="Proyecto"
-          :model-value="activeProjectId"
-          style="min-width: 240px"
-          variant="outlined"
-          @update:model-value="selectProject(($event as number | null) ?? null)"
-        />
-
         <v-switch
           v-model="onlyMine"
           color="#1a1a1a"
@@ -27,7 +13,7 @@
       </div>
 
       <div class="tasks-toolbar-right">
-        <v-btn v-if="canCreate" prepend-icon="mdi-folder-plus-outline" variant="outlined" @click="showNewProject = true">
+        <v-btn v-if="canCreateProject" prepend-icon="mdi-folder-plus-outline" variant="outlined" @click="showNewProject = true">
           Nuevo proyecto
         </v-btn>
 
@@ -44,6 +30,48 @@
     </div>
 
     <v-alert v-if="error" rounded="xl" type="error" variant="tonal">{{ error }}</v-alert>
+
+    <section class="projects-rail">
+      <button
+        class="project-card project-card-all"
+        :class="{ 'project-card-active': activeProjectId === null }"
+        type="button"
+        @click="selectProject(null)"
+      >
+        <v-icon icon="mdi-view-dashboard-outline" size="18" />
+        <span class="project-name">Todas las tareas</span>
+      </button>
+
+      <article
+        v-for="project in projects"
+        :key="project.id"
+        class="project-card"
+        :class="{ 'project-card-active': activeProjectId === project.id }"
+        @click="selectProject(project.id)"
+      >
+        <div class="project-card-head">
+          <v-icon icon="mdi-folder-outline" size="18" />
+          <span class="project-name">{{ project.name }}</span>
+          <v-chip size="x-small" variant="tonal">{{ project.tasks_count ?? 0 }}</v-chip>
+        </div>
+
+        <p v-if="project.description" class="project-description">{{ project.description }}</p>
+
+        <v-btn
+          v-if="canDeleteProject"
+          density="comfortable"
+          icon="mdi-trash-can-outline"
+          size="x-small"
+          title="Eliminar proyecto"
+          variant="text"
+          @click.stop="askRemoveProject(project)"
+        />
+      </article>
+
+      <p v-if="projects.length === 0" class="projects-empty">
+        Aún no hay proyectos. Crea uno para agrupar las tareas del equipo.
+      </p>
+    </section>
 
     <div class="tasks-board">
       <div
@@ -136,6 +164,24 @@
       </v-card>
     </v-dialog>
 
+    <!-- Eliminar proyecto -->
+    <v-dialog v-model="showRemoveProject" max-width="460" @after-leave="projectToRemove = null">
+      <v-card rounded="xl">
+        <v-card-title class="pt-5 px-6">Eliminar proyecto</v-card-title>
+
+        <v-card-text class="px-6">
+          Se eliminará «{{ projectToRemove?.name }}» junto con sus
+          {{ projectToRemove?.tasks_count ?? 0 }} tarea(s). Esta acción no se puede deshacer.
+        </v-card-text>
+
+        <v-card-actions class="px-6 pb-5">
+          <v-spacer />
+          <v-btn variant="text" @click="showRemoveProject = false">Cancelar</v-btn>
+          <v-btn color="error" variant="flat" @click="confirmRemoveProject">Eliminar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <TaskDetailDialog
       v-model="showDetail"
       :assignables="assignables"
@@ -187,7 +233,7 @@
 </template>
 
 <script lang="ts" setup>
-  import type { Task, TaskStatus } from '@/modules/crm/types'
+  import type { Project, Task, TaskStatus } from '@/modules/crm/types'
   import { computed, reactive, ref } from 'vue'
   import TaskDetailDialog from '@/modules/crm/components/TaskDetailDialog.vue'
   import { TASK_COLUMNS, useTasksBoard } from '@/modules/crm/useTasksBoard'
@@ -205,6 +251,7 @@
     moveTask,
     onlyMine,
     projects,
+    removeProject,
     removeTask,
     selectProject,
     tasks,
@@ -213,6 +260,8 @@
 
   const showNewProject = ref(false)
   const showNewTask = ref(false)
+  const showRemoveProject = ref(false)
+  const projectToRemove = ref<Project | null>(null)
 
   const projectForm = reactive({ name: '', description: '' })
   const taskForm = reactive({
@@ -225,6 +274,8 @@
 
   const canCreate = computed(() => authStore.isAdmin || authStore.hasPermission('crm.tasks.create'))
   const canDelete = computed(() => authStore.isAdmin || authStore.hasPermission('crm.tasks.delete'))
+  const canCreateProject = computed(() => authStore.isAdmin || authStore.hasPermission('crm.projects.create'))
+  const canDeleteProject = computed(() => authStore.isAdmin || authStore.hasPermission('crm.projects.delete'))
   const canReassign = computed(() => authStore.isAdmin || authStore.hasPermission('crm.tasks.update'))
 
   const showDetail = ref(false)
@@ -263,10 +314,37 @@
   }
 
   async function submitProject () {
-    await createProject({ name: projectForm.name, description: projectForm.description || null })
+    try {
+      await createProject({ name: projectForm.name, description: projectForm.description || null })
+    } catch (error_: any) {
+      error.value = error_?.response?.data?.message ?? 'No fue posible crear el proyecto'
+      return
+    }
+
     showNewProject.value = false
     projectForm.name = ''
     projectForm.description = ''
+  }
+
+  function askRemoveProject (project: Project) {
+    projectToRemove.value = project
+    showRemoveProject.value = true
+  }
+
+  async function confirmRemoveProject () {
+    const project = projectToRemove.value
+
+    if (!project) {
+      return
+    }
+
+    try {
+      await removeProject(project.id)
+    } catch (error_: any) {
+      error.value = error_?.response?.data?.message ?? 'No fue posible eliminar el proyecto'
+    }
+
+    showRemoveProject.value = false
   }
 
   async function submitTask () {
@@ -302,6 +380,82 @@
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.projects-rail {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.project-card {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 190px;
+  max-width: 260px;
+  padding: 12px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.project-card:hover {
+  border-color: rgba(0, 0, 0, 0.35);
+}
+
+.project-card-active {
+  border-color: #1a1a1a;
+  box-shadow: inset 0 0 0 1px #1a1a1a;
+}
+
+.project-card-all {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.project-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 24px;
+}
+
+.project-name {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-description {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(0, 0, 0, 0.6);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.project-card .v-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+
+.projects-empty {
+  align-self: center;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
 }
 
 .tasks-board {

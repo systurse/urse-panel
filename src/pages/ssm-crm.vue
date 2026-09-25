@@ -73,6 +73,13 @@
       </div>
 
       <div class="crm-toolbar-right">
+        <v-btn
+          :icon="soundEnabled ? 'mdi-bell-ring-outline' : 'mdi-bell-off-outline'"
+          :title="soundEnabled ? 'Silenciar el aviso de leads nuevos' : 'Activar el aviso sonoro de leads nuevos'"
+          variant="text"
+          @click="toggleSound"
+        />
+
         <v-btn-toggle v-model="view" density="comfortable" mandatory variant="outlined">
           <v-btn icon="mdi-view-column-outline" title="Kanban" value="kanban" />
           <v-btn icon="mdi-format-list-bulleted" title="Lista" value="list" />
@@ -173,7 +180,9 @@
     moveDeal,
     pipelines,
     selectPipeline,
+    soundEnabled,
     stages,
+    toggleSound,
   } = useCrmBoard()
 
   const view = ref<'kanban' | 'list' | 'calendar'>('kanban')

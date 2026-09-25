@@ -46,6 +46,10 @@ export function useTasksBoard () {
     }
   }
 
+  async function loadProjects () {
+    projects.value = await crm.listProjects()
+  }
+
   async function load () {
     loading.value = true
     error.value = null
@@ -88,13 +92,13 @@ export function useTasksBoard () {
 
   async function createTask (payload: Parameters<typeof crm.createTask>[0]) {
     const task = await crm.createTask(payload)
-    await loadTasks()
+    await Promise.all([loadTasks(), loadProjects()])
     return task
   }
 
   async function removeTask (taskId: number) {
     await crm.deleteTask(taskId)
-    await loadTasks()
+    await Promise.all([loadTasks(), loadProjects()])
   }
 
   async function removeProject (projectId: number) {
@@ -114,6 +118,7 @@ export function useTasksBoard () {
     error,
     load,
     loading,
+    loadProjects,
     loadTasks,
     moveTask,
     onlyMine,

@@ -1,6 +1,7 @@
 import type { CrmUser, Deal, DealFilters, Pipeline, Stage } from '@/modules/crm/types'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import * as crm from '@/modules/crm/service'
+import { useNotificationSound } from '@/modules/crm/useNotificationSound'
 import { getEcho } from '@/services/websocket'
 
 export interface LeadAlert {
@@ -23,6 +24,7 @@ export function useCrmBoard () {
   const error = ref<string | null>(null)
   const leadAlert = ref<LeadAlert | null>(null)
   const filters = ref<DealFilters>({ status: 'open' })
+  const { playNotification, soundEnabled, toggleSound } = useNotificationSound()
 
   const activePipeline = computed(() =>
     pipelines.value.find(pipeline => pipeline.id === activePipelineId.value) ?? null,
@@ -147,6 +149,7 @@ export function useCrmBoard () {
       echo.private('crm.board')
         .listen('.lead.created', (event: LeadAlert & { pipeline_id: number }) => {
           leadAlert.value = event
+          playNotification()
           scheduleRefresh()
         })
         .listen('.deal.moved', () => scheduleRefresh())
@@ -191,6 +194,8 @@ export function useCrmBoard () {
     moveDeal,
     pipelines,
     selectPipeline,
+    soundEnabled,
     stages,
+    toggleSound,
   }
 }
