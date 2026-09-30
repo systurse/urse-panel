@@ -129,6 +129,17 @@
       audience: 'staff',
     },
     {
+      id: 'impresiones',
+      title: 'Impresiones',
+      fullName: 'Buzón de impresión del Centro de Cómputo',
+      description: 'Consulta y gestiona los archivos subidos desde el código QR para imprimir',
+      path: '/impresiones',
+      icon: 'mdi-printer-outline',
+      color: '#8a5a00',
+      features: ['Subida por QR', 'Vista por campus', 'Marcar como impreso'],
+      audience: 'staff',
+    },
+    {
       id: 'inscripciones',
       title: 'Inscripciones',
       fullName: 'Registro de Nuevos Estudiantes',

@@ -19,6 +19,9 @@ import AuthCallback from '@/pages/auth-callback.vue'
 import ChatSoporte from '@/pages/chat-soporte.vue'
 import Credenciales from '@/pages/credenciales.vue'
 import Employees from '@/pages/employees.vue'
+import ImpresionesOperadores from '@/pages/impresiones-operadores.vue'
+import Impresiones from '@/pages/impresiones.vue'
+import Imprimir from '@/pages/imprimir.vue'
 import Index from '@/pages/index.vue'
 import InscripcionesConfirmacion from '@/pages/inscripciones-confirmacion.vue'
 import InscripcionesEditar from '@/pages/inscripciones-editar.vue'
@@ -266,6 +269,23 @@ const router = createRouter({
       ],
     },
     {
+      path: '/impresiones',
+      meta: { requiresAuth: true },
+      component: DashboardLayout,
+      children: [
+        {
+          path: '',
+          component: Impresiones,
+          meta: { requiresAnyPermission: ['printing.panel.view'] },
+        },
+        {
+          path: 'operadores',
+          component: ImpresionesOperadores,
+          meta: { requiresAnyPermission: ['printing.operators.manage'] },
+        },
+      ],
+    },
+    {
       path: '/inscripciones',
       component: DashboardLayout,
       children: [
@@ -319,6 +339,13 @@ const router = createRouter({
     {
       path: '/soporte',
       component: Soporte,
+      meta: { public: true },
+    },
+    {
+      // Target of the QR printed for the computer lab: opened without a
+      // session, usually from a student's phone, to drop files off to print.
+      path: '/imprimir',
+      component: Imprimir,
       meta: { public: true },
     },
     {

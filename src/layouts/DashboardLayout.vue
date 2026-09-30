@@ -205,6 +205,33 @@
         : filterByAccess(ownItems)
     }
 
+    if (moduleBase.value === '/impresiones') {
+      const items: MenuEntry[] = [
+        {
+          title: 'Inicio',
+          to: '/',
+          icon: 'mdi-home-outline',
+          subtitle: 'Vista general del panel de control.',
+        },
+        {
+          title: 'Archivos',
+          to: '/impresiones',
+          icon: 'mdi-printer-outline',
+          subtitle: 'Archivos subidos desde el código QR, listos para imprimir.',
+          meta: { requiresAnyPermission: ['printing.panel.view'] },
+        },
+        {
+          title: 'Operadores',
+          to: '/impresiones/operadores',
+          icon: 'mdi-account-cog-outline',
+          subtitle: 'Asigna los campus que ve cada operador del panel.',
+          meta: { requiresAnyPermission: ['printing.operators.manage'] },
+        },
+      ]
+
+      return filterByAccess(items)
+    }
+
     if (moduleBase.value === '/inscripciones') {
       return [
         {
