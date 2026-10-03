@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import { printingAdapter } from '@/modules/printing/adapter'
 
 interface ApiErrorShape {
-  message?: string
   response?: {
     data?: {
       errors?: Record<string, string[] | string>
@@ -13,6 +12,12 @@ interface ApiErrorShape {
   }
 }
 
+// Only what the backend sent in its JSON body is shown as-is (the API answers
+// in Spanish per its contract, e.g. `El formato de "virus.exe" no está
+// permitido.`); a bare axios/network failure (no response, a timeout, CORS)
+// has no Spanish message of its own, so it falls back to `fallback` instead of
+// leaking `error.message`, which axios always writes in English (e.g.
+// "Network Error").
 function resolveApiMessage (error: unknown, fallback: string): string {
   const apiError = error as ApiErrorShape
   const errors = apiError?.response?.data?.errors
@@ -33,7 +38,7 @@ function resolveApiMessage (error: unknown, fallback: string): string {
     return 'Se alcanzó el límite de subidas. Intenta más tarde.'
   }
 
-  return apiError?.response?.data?.message ?? apiError?.message ?? fallback
+  return apiError?.response?.data?.message ?? fallback
 }
 
 export function usePrintingUpload (port: PrintingPort = printingAdapter) {

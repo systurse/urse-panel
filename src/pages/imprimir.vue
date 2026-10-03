@@ -17,11 +17,9 @@
             <h1 class="upload-state__title">Archivo recibido</h1>
 
             <p class="upload-state__text">
-              Anota o muestra este código en el Centro de Cómputo para recoger tu impresión.
-              Vence en {{ result.expiresInMinutes }} minutos.
+              Tu archivo ya está en el Centro de Cómputo, listo para imprimirse. Vence en
+              {{ result.expiresInMinutes }} minutos si no se recoge.
             </p>
-
-            <div class="upload-code">{{ result.batchCode }}</div>
 
             <div class="upload-files">
               <div v-for="file in result.files" :key="file.originalName" class="upload-files__item">
@@ -62,22 +60,58 @@
             {{ error }}
           </v-alert>
 
-          <v-file-input
-            v-model="selectedFiles"
-            accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
-            chips
-            counter
-            :disabled="uploading"
-            label="Archivos"
-            multiple
-            prepend-icon="mdi-paperclip"
-            show-size
-            variant="outlined"
-          />
+          <!-- A plain HTML5 drop target: it also accepts the iOS/iPadOS gesture
+               of dragging a file out of Photos/Files into Safari, which hands
+               the same `dataTransfer.files` a desktop drop does. -->
+          <div
+            class="dropzone"
+            :class="{ 'dropzone--active': isDragging, 'dropzone--disabled': uploading }"
+            tabindex="0"
+            @click="openFilePicker"
+            @dragenter.prevent="onDragEnter"
+            @dragleave.prevent="onDragLeave"
+            @dragover.prevent
+            @drop.prevent="onDrop"
+            @keydown.enter="openFilePicker"
+            @keydown.space.prevent="openFilePicker"
+          >
+            <v-icon color="#c89215" icon="mdi-tray-arrow-up" size="40" />
+
+            <p class="dropzone__text">
+              Arrastra tus archivos aquí o toca para seleccionarlos
+            </p>
+
+            <input
+              ref="fileInputRef"
+              accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+              class="dropzone__input"
+              :disabled="uploading"
+              multiple
+              tabindex="-1"
+              type="file"
+              @change="onInputChange"
+            >
+          </div>
+
+          <div v-if="selectedFiles.length > 0" class="upload-files mt-4">
+            <div v-for="(file, index) in selectedFiles" :key="`${file.name}-${index}`" class="upload-files__item">
+              <v-icon icon="mdi-file-outline" size="18" />
+              <span class="upload-files__name">{{ file.name }}</span>
+              <span class="upload-files__size">{{ formatSize(file.size) }}</span>
+
+              <v-btn
+                density="comfortable"
+                icon="mdi-close"
+                size="x-small"
+                variant="text"
+                @click="removeSelectedFile(index)"
+              />
+            </div>
+          </div>
 
           <v-btn
             block
-            class="mt-2"
+            class="mt-4"
             color="#c89215"
             :disabled="selectedFiles.length === 0"
             :loading="uploading"
@@ -101,10 +135,55 @@
   const { error, reset, result, upload, uploading } = usePrintingUpload()
   const selectedFiles = ref<File[]>([])
 
+  const fileInputRef = ref<HTMLInputElement>()
+  const isDragging = ref(false)
+  // dragenter/dragleave fire for every nested element the pointer crosses, so a
+  // plain boolean flickers off whenever it passes over the icon or the text.
+  let dragDepth = 0
+
   function formatSize (bytes: number) {
     if (bytes < 1024) return `${bytes} B`
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  function addFiles (fileList: FileList | null) {
+    if (!fileList || fileList.length === 0) return
+    selectedFiles.value = [...selectedFiles.value, ...Array.from(fileList)]
+  }
+
+  function openFilePicker () {
+    if (uploading.value) return
+    fileInputRef.value?.click()
+  }
+
+  function onInputChange (event: Event) {
+    const input = event.target as HTMLInputElement
+    addFiles(input.files)
+    // Clears the native picker so selecting the same file twice fires `change` again.
+    input.value = ''
+  }
+
+  function onDragEnter () {
+    if (uploading.value) return
+    dragDepth += 1
+    isDragging.value = true
+  }
+
+  function onDragLeave () {
+    dragDepth = Math.max(0, dragDepth - 1)
+    if (dragDepth === 0) isDragging.value = false
+  }
+
+  function onDrop (event: DragEvent) {
+    dragDepth = 0
+    isDragging.value = false
+    if (uploading.value) return
+    addFiles(event.dataTransfer?.files ?? null)
+  }
+
+  function removeSelectedFile (index: number) {
+    selectedFiles.value = selectedFiles.value.filter((_, i) => i !== index)
   }
 
   async function submit () {
@@ -179,6 +258,57 @@
   font-size: 0.9rem;
 }
 
+.dropzone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 160px;
+  padding: 24px 16px;
+  border: 2px dashed rgb(200 146 21 / 0.45);
+  border-radius: 16px;
+  background: rgb(200 146 21 / 0.05);
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.dropzone:focus-visible {
+  outline: 2px solid #c89215;
+  outline-offset: 2px;
+}
+
+.dropzone--active {
+  border-color: #c89215;
+  background: rgb(200 146 21 / 0.14);
+}
+
+.dropzone--disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.dropzone__text {
+  margin: 0;
+  max-width: 28ch;
+  color: #5e5e5e;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.dropzone__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  /* The div handles the click (and triggers this input via ref); without this
+     the input would sit on top and fire its own native picker a second time. */
+  pointer-events: none;
+}
+
 .upload-state {
   display: flex;
   flex-direction: column;
@@ -200,30 +330,17 @@
   color: #5e5e5e;
 }
 
-.upload-code {
-  margin-top: 12px;
-  padding: 14px 24px;
-  border-radius: 12px;
-  background: rgb(200 146 21 / 0.12);
-  color: #8a5a00;
-  font-family: 'Roboto Mono', 'SF Mono', Consolas, monospace;
-  font-size: 1.8rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-}
-
 .upload-files {
   display: grid;
   gap: 6px;
   width: 100%;
-  margin-top: 16px;
 }
 
 .upload-files__item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 10px;
+  padding: 6px 6px 6px 10px;
   border-radius: 8px;
   background: #f7f7f7;
   font-size: 0.85rem;

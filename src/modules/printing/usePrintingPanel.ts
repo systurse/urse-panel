@@ -7,16 +7,20 @@ const TICK_INTERVAL_MS = 1000
 const PER_PAGE = 50
 
 interface ApiErrorShape {
-  message?: string
   response?: {
     data?: { message?: string }
     status?: number
   }
 }
 
+// Only a message the backend sent in its JSON body is shown as-is (the API
+// answers in Spanish per its contract); a bare axios/network failure (no
+// response, a timeout, CORS) has no Spanish message of its own, so it falls
+// back to `fallback` instead of leaking `error.message`, which axios always
+// writes in English (e.g. "Network Error").
 function resolveApiMessage (error: unknown, fallback: string): string {
   const apiError = error as ApiErrorShape
-  return apiError?.response?.data?.message ?? apiError?.message ?? fallback
+  return apiError?.response?.data?.message ?? fallback
 }
 
 function emptyMeta (perPage: number): PrintingFilesPagination {

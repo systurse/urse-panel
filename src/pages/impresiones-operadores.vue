@@ -90,13 +90,15 @@
   import { usersAdapter } from '@/modules/users/adapter'
 
   interface ApiErrorShape {
-    message?: string
     response?: { data?: { message?: string }, status?: number }
   }
 
+  // Only a message the backend sent in its JSON body is shown as-is; a bare
+  // axios/network failure falls back to `fallback` instead of leaking
+  // `error.message`, which axios always writes in English.
   function resolveApiMessage (error_: unknown, fallback: string): string {
     const apiError = error_ as ApiErrorShape
-    return apiError?.response?.data?.message ?? apiError?.message ?? fallback
+    return apiError?.response?.data?.message ?? fallback
   }
 
   const error = ref<string | null>(null)
