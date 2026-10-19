@@ -4,6 +4,8 @@ import type {
   CrmUser,
   Deal,
   DealActivity,
+  DealChat,
+  DealChatMessage,
   DealFilters,
   DealPayload,
   Pipeline,
@@ -17,7 +19,7 @@ import type {
   TaskStatus,
   WidgetConfig,
 } from '@/modules/crm/types'
-import { http, httpClient, publicHttpClient } from '@/services/http'
+import { http, httpClient, publicHttp, publicHttpClient } from '@/services/http'
 
 interface ApiItem<T> { data: T }
 interface ApiCollection<T> { data: T[], meta?: { total?: number, last_page?: number } }
@@ -126,6 +128,11 @@ export async function closeDeal (id: number, result: 'won' | 'lost', generateSer
   return response.data
 }
 
+export async function reopenDeal (id: number) {
+  const response = await httpClient.post<ApiItem<Deal>>(`${BASE}/deals/${id}/reopen`)
+  return response.data
+}
+
 export async function listAssignables () {
   const response = await httpClient.get<ApiCollection<CrmUser>>(`${BASE}/assignables`)
   return response.data
@@ -164,6 +171,41 @@ export async function sendDealMessage (dealId: number, payload: { subject: strin
 export async function downloadAttachment (url: string): Promise<Blob> {
   const response = await http.get(url, { responseType: 'blob' })
   return response.data as Blob
+}
+
+// ---------------------------------------------------------------- deal chat
+function chatMessageForm (payload: { body?: string | null, attachments?: File[] }) {
+  const form = new FormData()
+
+  if (payload.body) {
+    form.append('body', payload.body)
+  }
+
+  for (const file of payload.attachments ?? []) {
+    form.append('attachments[]', file)
+  }
+
+  return form
+}
+
+export async function getDealChat (dealId: number) {
+  const response = await httpClient.get<ApiItem<DealChat>>(`${BASE}/deals/${dealId}/chat`)
+  return response.data
+}
+
+export async function sendDealChatMessage (dealId: number, payload: { body?: string | null, attachments?: File[] }) {
+  const response = await httpClient.post<ApiItem<DealChatMessage>>(`${BASE}/deals/${dealId}/chat/messages`, chatMessageForm(payload), {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return response.data
+}
+
+export function dealChatHeartbeat (dealId: number) {
+  return httpClient.post<void>(`${BASE}/deals/${dealId}/chat/heartbeat`)
+}
+
+export function dealChatAttachmentUrl (attachmentId: number) {
+  return `${BASE}/chat-attachments/${attachmentId}/download`
 }
 
 // ------------------------------------------------------------ service order
@@ -293,7 +335,7 @@ export async function createTaskComment (taskId: number, payload: { body: string
 
 // ------------------------------------------------------------ public widget
 export function submitPublicLead (payload: PublicLeadPayload) {
-  return publicHttpClient.post<{ message: string, folio: number }>(`${PUBLIC_BASE}/leads`, payload)
+  return publicHttpClient.post<{ message: string, folio: number, chat_token: string }>(`${PUBLIC_BASE}/leads`, payload)
 }
 
 export function matchPublicContact (params: { first_name?: string, last_name?: string, email?: string }) {
@@ -302,4 +344,30 @@ export function matchPublicContact (params: { first_name?: string, last_name?: s
 
 export function getWidgetConfig () {
   return publicHttpClient.get<WidgetConfig>(`${PUBLIC_BASE}/widget-config`)
+}
+
+// ------------------------------------------------- public deal chat (token)
+export async function getPublicDealChat (token: string) {
+  const response = await publicHttpClient.get<ApiItem<DealChat>>(`${PUBLIC_BASE}/chats/${token}`)
+  return response.data
+}
+
+export async function sendPublicDealChatMessage (token: string, payload: { body?: string | null, attachments?: File[] }) {
+  const response = await publicHttpClient.post<ApiItem<DealChatMessage>>(`${PUBLIC_BASE}/chats/${token}/messages`, chatMessageForm(payload), {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return response.data
+}
+
+export function publicDealChatHeartbeat (token: string) {
+  return publicHttpClient.post<void>(`${PUBLIC_BASE}/chats/${token}/heartbeat`)
+}
+
+export function publicDealChatAttachmentUrl (token: string, attachmentId: number) {
+  return `${PUBLIC_BASE}/chats/${token}/attachments/${attachmentId}`
+}
+
+export async function downloadPublicAttachment (url: string): Promise<Blob> {
+  const response = await publicHttp.get(url, { responseType: 'blob' })
+  return response.data as Blob
 }

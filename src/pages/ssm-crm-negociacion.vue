@@ -19,6 +19,15 @@
         >Cerrar</v-btn>
 
         <v-btn
+          v-if="deal.status !== 'open' && canClose"
+          color="#1a1a1a"
+          :loading="saving"
+          prepend-icon="mdi-restore"
+          variant="outlined"
+          @click="confirmReopen"
+        >Reabrir</v-btn>
+
+        <v-btn
           v-if="canDelete"
           class="ml-2"
           color="error"
@@ -373,6 +382,7 @@
         <v-card class="right-card" rounded="xl">
           <v-tabs v-model="tab" color="#1a1a1a" density="comfortable">
             <v-tab value="actividad">Actividad</v-tab>
+            <v-tab value="chat">Chat</v-tab>
             <v-tab value="comentarios">Comentarios</v-tab>
             <v-tab value="mensaje">Mensaje</v-tab>
             <v-tab value="tarea">Tarea</v-tab>
@@ -400,6 +410,15 @@
 
               <v-divider class="my-4" />
               <TimelineList empty-text="Sin actividades registradas." :items="timelineFor(['reminder', 'system'])" />
+            </template>
+
+            <!-- Chat de seguimiento con el solicitante: vive con la negociación -->
+            <template v-else-if="tab === 'chat'">
+              <DealChatPanel
+                :key="deal.status"
+                :can-write="canChat"
+                :target="{ mode: 'staff', dealId }"
+              />
             </template>
 
             <!-- Comentarios con adjuntos -->
@@ -533,6 +552,7 @@
   import { useRoute, useRouter } from 'vue-router'
   import ChangeContactDialog from '@/modules/crm/components/ChangeContactDialog.vue'
   import CloseDealDialog from '@/modules/crm/components/CloseDealDialog.vue'
+  import DealChatPanel from '@/modules/crm/components/DealChatPanel.vue'
   import TimelineList from '@/modules/crm/components/TimelineList.vue'
   import * as crm from '@/modules/crm/service'
   import { PROBLEM_AREA_OPTIONS, SERVICE_TYPE_OPTIONS, YES_NO_OPTIONS } from '@/modules/crm/types'
@@ -557,6 +577,7 @@
     load,
     loading,
     moveToStage,
+    reopen,
     requestOrderApproval: requestOrderApprovalAction,
     saveServiceOrder,
     saving,
@@ -615,6 +636,14 @@
     || (authStore.hasPermission('crm.deals.close-own') && deal.value?.assignee?.id === authStore.user?.id),
   )
   const canDelete = computed(() => authStore.isAdmin || authStore.hasPermission('crm.deals.delete'))
+  // Escribir en el chat sigue el mismo criterio que gestionar la negociación
+  const canChat = computed(() =>
+    authStore.isAdmin
+    || (authStore.hasPermission('crm.messages.send') && (
+      authStore.hasPermission('crm.deals.update')
+      || (authStore.hasPermission('crm.deals.update-own') && deal.value?.assignee?.id === authStore.user?.id)
+    )),
+  )
 
   // Re-atribuir la solicitud es de agentes y administradores
   const canChangeContact = computed(() => authStore.isAdmin || authStore.hasPermission('crm.deals.update'))
@@ -809,6 +838,10 @@
     if (closed) {
       showClose.value = false
     }
+  }
+
+  async function confirmReopen () {
+    await reopen()
   }
 
   async function confirmDelete () {

@@ -49,16 +49,43 @@
           {{ formatDate(deal.service_order.signed_at) }}. La liga de verificación te llegó por correo.
         </v-alert>
       </v-card-text>
+
+      <v-card-actions v-if="deal.chat_token">
+        <v-spacer />
+
+        <v-btn
+          color="#1a1a1a"
+          :prepend-icon="deal.status === 'open' ? 'mdi-chat-outline' : 'mdi-archive-outline'"
+          variant="tonal"
+          @click="chatDeal = deal"
+        >{{ deal.status === 'open' ? 'Seguimiento' : 'Ver conversación' }}</v-btn>
+      </v-card-actions>
     </v-card>
+
+    <v-dialog max-width="640" :model-value="chatDeal !== null" @update:model-value="chatDeal = null">
+      <v-card v-if="chatDeal?.chat_token" rounded="xl">
+        <v-card-title class="d-flex align-center">
+          <span class="dialog-title">#{{ chatDeal.id }} — {{ chatDeal.title }}</span>
+          <v-spacer />
+          <v-btn icon="mdi-close" size="small" variant="text" @click="chatDeal = null" />
+        </v-card-title>
+
+        <v-card-text>
+          <DealChatPanel height="60vh" :target="{ mode: 'contact', token: chatDeal.chat_token }" />
+        </v-card-text>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script lang="ts" setup>
   import type { Deal } from '@/modules/crm/types'
   import { onMounted, ref } from 'vue'
+  import DealChatPanel from '@/modules/crm/components/DealChatPanel.vue'
   import { listMyRequests } from '@/modules/crm/service'
 
   const deals = ref<Deal[]>([])
+  const chatDeal = ref<Deal | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -119,6 +146,13 @@
 .request-chips {
   display: flex;
   gap: 6px;
+}
+
+.dialog-title {
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .request-body {

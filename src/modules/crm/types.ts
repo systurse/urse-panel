@@ -173,6 +173,40 @@ export interface Deal {
   service_order?: ServiceOrder | null
   activities?: DealActivity[]
   tasks?: Task[]
+  /** Solo en "Mis solicitudes": liga secreta del chat de seguimiento. */
+  chat_token?: string
+}
+
+export type ChatSenderType = 'contact' | 'staff' | 'system'
+
+export interface DealChatAttachment {
+  id: number
+  original_name: string
+  mime_type: string
+  size: number
+}
+
+export interface DealChatMessage {
+  id: number
+  sender_type: ChatSenderType
+  sender_name: string
+  body: string | null
+  created_at: string
+  attachments: DealChatAttachment[]
+}
+
+/** Chat de seguimiento: abierto mientras la negociación esté abierta. */
+export interface DealChat {
+  folio: number
+  title: string
+  status: DealStatus
+  status_label: string
+  stage: string | null
+  closed_at: string | null
+  is_open: boolean
+  contact_online: boolean
+  staff_online: boolean
+  messages: DealChatMessage[]
 }
 
 export interface StageReport {

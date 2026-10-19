@@ -46,7 +46,24 @@
                 que registraste.
               </p>
 
-              <v-btn variant="outlined" @click="reset">Levantar otra solicitud</v-btn>
+              <p v-if="chatToken" class="chat-hint">
+                También puedes dar seguimiento por chat. Guarda esta liga: es personal y te llegará por
+                correo cuando te respondan.
+              </p>
+
+              <div class="success-actions">
+                <v-btn
+                  v-if="chatToken"
+                  color="#1a1a1a"
+                  :href="`/soporte/seguimiento/${chatToken}`"
+                  prepend-icon="mdi-chat-outline"
+                  rel="noopener"
+                  target="_blank"
+                  variant="flat"
+                >Abrir chat de seguimiento</v-btn>
+
+                <v-btn variant="outlined" @click="reset">Levantar otra solicitud</v-btn>
+              </div>
             </div>
           </template>
 
@@ -161,6 +178,7 @@
   const sending = ref(false)
   const submitted = ref(false)
   const folio = ref<number | null>(null)
+  const chatToken = ref<string | null>(null)
   const error = ref<string | null>(null)
   const known = ref(false)
 
@@ -233,6 +251,7 @@
       })
 
       folio.value = response.folio
+      chatToken.value = response.chat_token
       submitted.value = true
     } catch (error_: any) {
       const data = error_?.response?.data
@@ -246,6 +265,7 @@
   function reset () {
     submitted.value = false
     folio.value = null
+    chatToken.value = null
     known.value = false
     Object.assign(form, {
       first_name: '',
@@ -349,6 +369,19 @@
   gap: 12px;
   text-align: center;
   padding: 24px 0;
+}
+
+.chat-hint {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+  max-width: 420px;
+}
+
+.success-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
 }
 
 .recaptcha-note {

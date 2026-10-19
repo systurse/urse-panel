@@ -120,3 +120,38 @@ export function leaveSupportChats () {
   const echo = getEcho()
   echo.leave('private-support.chats')
 }
+
+export interface DealChatMessageEvent {
+  deal_id: number
+  is_open: boolean
+  message: {
+    id: number
+    sender_type: 'contact' | 'staff' | 'system'
+    sender_name: string
+    body: string | null
+    created_at: string
+    attachments: Array<{ id: number, original_name: string, mime_type: string, size: number }>
+  }
+}
+
+/** Solicitante: canal público, el token secreto de la liga hace de llave. */
+export function listenToPublicDealChat (token: string, callback: (event: DealChatMessageEvent) => void) {
+  const echo = getEcho()
+  return echo.channel(`crm.deal-chat.${token}`).listen('.deal-chat.message', callback)
+}
+
+export function leavePublicDealChat (token: string) {
+  const echo = getEcho()
+  echo.leave(`crm.deal-chat.${token}`)
+}
+
+/** Personal: canal privado autorizado por la visibilidad de la negociación. */
+export function listenToStaffDealChat (dealId: number, callback: (event: DealChatMessageEvent) => void) {
+  const echo = getEcho()
+  return echo.private(`crm.deals.${dealId}.chat`).listen('.deal-chat.message', callback)
+}
+
+export function leaveStaffDealChat (dealId: number) {
+  const echo = getEcho()
+  echo.leave(`private-crm.deals.${dealId}.chat`)
+}

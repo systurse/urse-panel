@@ -36,6 +36,7 @@ import Permissions from '@/pages/permissions.vue'
 import Roles from '@/pages/roles.vue'
 import SACC from '@/pages/sacc.vue'
 import Settings from '@/pages/settings.vue'
+import SoporteSeguimiento from '@/pages/soporte-seguimiento.vue'
 import Soporte from '@/pages/soporte.vue'
 import SPSPasses from '@/pages/sps-pases.vue'
 import SPS from '@/pages/sps.vue'
@@ -339,6 +340,13 @@ const router = createRouter({
     {
       path: '/soporte',
       component: Soporte,
+      meta: { public: true },
+    },
+    {
+      // Chat de seguimiento del solicitante: la liga secreta llega por
+      // correo o al registrar la solicitud, se abre sin sesión.
+      path: '/soporte/seguimiento/:token',
+      component: SoporteSeguimiento,
       meta: { public: true },
     },
     {

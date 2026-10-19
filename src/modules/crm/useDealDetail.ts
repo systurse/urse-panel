@@ -85,6 +85,14 @@ export function useDealDetail (dealId: number) {
     return closed
   }
 
+  async function reopen () {
+    const reopened = await run(() => crm.reopenDeal(dealId), 'Negociación reabierta.', 'No fue posible reabrir la negociación')
+    if (reopened) {
+      await load()
+    }
+    return reopened
+  }
+
   async function saveServiceOrder (payload: ServiceOrderPayload) {
     const order = await run(() => crm.upsertServiceOrder(dealId, payload), 'Orden de servicio guardada.', 'No fue posible guardar la orden')
     if (order && deal.value) {
@@ -164,6 +172,7 @@ export function useDealDetail (dealId: number) {
     load,
     loading,
     moveToStage,
+    reopen,
     requestOrderApproval,
     saveServiceOrder,
     saving,
