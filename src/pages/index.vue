@@ -151,6 +151,17 @@
       audience: 'staff',
     },
     {
+      id: 'directorio',
+      title: 'Directorio',
+      fullName: 'Directorio de extensiones telefónicas',
+      description: 'Encuentra la extensión, el puesto y el correo de cada área de ambos campus',
+      path: '/directorio',
+      icon: 'mdi-card-account-phone-outline',
+      color: '#5c4300',
+      features: ['Buscador instantáneo', 'URSE Rosario y Alemán', 'Correo y extensión a un clic'],
+      audience: 'staff',
+    },
+    {
       id: 'administracion',
       title: 'Administración',
       fullName: 'Gestión administrativa del panel',

@@ -18,6 +18,7 @@ import Areas from '@/pages/areas.vue'
 import AuthCallback from '@/pages/auth-callback.vue'
 import ChatSoporte from '@/pages/chat-soporte.vue'
 import Credenciales from '@/pages/credenciales.vue'
+import Directorio from '@/pages/directorio.vue'
 import Employees from '@/pages/employees.vue'
 import ImpresionesOperadores from '@/pages/impresiones-operadores.vue'
 import Impresiones from '@/pages/impresiones.vue'
@@ -266,6 +267,18 @@ const router = createRouter({
             grantedToRoles: ['supervisor'],
             requiresAnyPermission: ['sps.pass-signature.sign-as-supervisor'],
           },
+        },
+      ],
+    },
+    {
+      // Every signed-in staff member can look up an extension: no permission needed.
+      path: '/directorio',
+      meta: { requiresAuth: true },
+      component: DashboardLayout,
+      children: [
+        {
+          path: '',
+          component: Directorio,
         },
       ],
     },

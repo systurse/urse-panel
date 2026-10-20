@@ -205,6 +205,23 @@
         : filterByAccess(ownItems)
     }
 
+    if (moduleBase.value === '/directorio') {
+      return [
+        {
+          title: 'Inicio',
+          to: '/',
+          icon: 'mdi-home-outline',
+          subtitle: 'Vista general del panel de control.',
+        },
+        {
+          title: 'Directorio',
+          to: '/directorio',
+          icon: 'mdi-card-account-phone-outline',
+          subtitle: 'Extensiones telefónicas de las áreas de URSE Rosario y URSE Alemán.',
+        },
+      ]
+    }
+
     if (moduleBase.value === '/impresiones') {
       const items: MenuEntry[] = [
         {
