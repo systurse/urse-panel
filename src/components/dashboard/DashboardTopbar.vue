@@ -1,6 +1,6 @@
 <template>
   <v-app-bar app class="topbar-shell" elevation="0" height="112">
-    <div class="topbar-inner">
+    <div class="topbar-inner" :class="{ 'topbar-inner--no-search': !showSearch }">
       <div>
         <div class="eyebrow">Centro de control</div>
         <h1 class="topbar-title">{{ title }}</h1>
@@ -9,6 +9,7 @@
 
       <div class="topbar-actions">
         <v-text-field
+          v-if="showSearch"
           class="topbar-search"
           density="comfortable"
           hide-details
@@ -26,6 +27,7 @@
                 <span class="profile-name">{{ userName }}</span>
                 <span class="profile-role">{{ userRole }}</span>
               </div>
+
               <v-avatar color="#000000" size="38">
                 <span class="profile-initials">{{ userInitials }}</span>
               </v-avatar>
@@ -50,10 +52,14 @@
   import { useAuthStore } from '@/stores/auth'
   import { formatRoleLabel } from '@/utils/auth'
 
-  defineProps<{
+  withDefaults(defineProps<{
     title: string
     subtitle: string
-  }>()
+    /** Off for modules that bring their own search box, so there are not two. */
+    showSearch?: boolean
+  }>(), {
+    showSearch: true,
+  })
 
   const emit = defineEmits<{
     logout: []
@@ -62,7 +68,7 @@
   const authStore = useAuthStore()
   const { roles, user } = storeToRefs(authStore)
 
-  const userName = computed(() => user.value?.name || user.value?.email?.split('@')[0] || 'Usuario')
+  const userName = computed(() => user.value?.name || user.value?.email?.split('@', 1)[0] || 'Usuario')
   const userEmail = computed(() => user.value?.email || 'Sin correo')
   const userRole = computed(() => formatRoleLabel(roles.value[0]))
   const userInitials = computed(() => {
@@ -221,6 +227,16 @@
 
   .profile-meta {
     display: none;
+  }
+
+  /* The column layout only exists to give the search box a full-width row. */
+  .topbar-inner--no-search {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .topbar-inner--no-search .topbar-actions {
+    width: auto;
   }
 }
 </style>

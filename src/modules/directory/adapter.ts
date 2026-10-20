@@ -2,6 +2,7 @@ import type {
   DirectoryArea,
   DirectoryCampus,
   DirectoryEntry,
+  DirectoryEntryPayload,
   DirectoryPagination,
   DirectoryPort,
   DirectoryQuery,
@@ -82,6 +83,7 @@ function mapEntry (raw: unknown): DirectoryEntry {
     name: readNullableString(item, 'name'),
     email: readNullableString(item, 'email'),
     secondaryEmail: readNullableString(item, 'secondary_email'),
+    sortOrder: readNullableNumber(item, 'sort_order'),
     campus: campus
       ? { id: readNumber(campus, 'id'), code: readString(campus, 'code'), name: readString(campus, 'name') }
       : null,
@@ -104,6 +106,31 @@ function mapPagination (response: unknown, itemCount: number, page: number, perP
     perPage: resolvedPerPage,
     total,
   }
+}
+
+const PAYLOAD_KEYS: Record<keyof DirectoryEntryPayload, string> = {
+  campusId: 'campus_id',
+  areaId: 'area_id',
+  extension: 'extension',
+  position: 'position',
+  name: 'name',
+  email: 'email',
+  secondaryEmail: 'secondary_email',
+  sortOrder: 'sort_order',
+}
+
+// Keys left out of the payload stay out of the body, which is what makes a
+// PATCH partial; an explicit null is sent as-is to clear the field.
+function toApiPayload (payload: DirectoryEntryPayload): ApiRecord {
+  const body: ApiRecord = {}
+
+  for (const [key, apiKey] of Object.entries(PAYLOAD_KEYS) as [keyof DirectoryEntryPayload, string][]) {
+    if (payload[key] !== undefined) {
+      body[apiKey] = payload[key]
+    }
+  }
+
+  return body
 }
 
 export class HttpDirectoryAdapter implements DirectoryPort {
@@ -136,6 +163,20 @@ export class HttpDirectoryAdapter implements DirectoryPort {
     const items = unwrapList(response).map(entry => mapEntry(entry))
 
     return { items, meta: mapPagination(response, items.length, page, perPage) }
+  }
+
+  async createEntry (payload: DirectoryEntryPayload): Promise<DirectoryEntry> {
+    const response = await httpClient.post<unknown>(BASE, toApiPayload(payload))
+    return mapEntry(unwrapData(response))
+  }
+
+  async updateEntry (entryId: number, payload: DirectoryEntryPayload): Promise<DirectoryEntry> {
+    const response = await httpClient.patch<unknown>(`${BASE}/${entryId}`, toApiPayload(payload))
+    return mapEntry(unwrapData(response))
+  }
+
+  async deleteEntry (entryId: number): Promise<void> {
+    await httpClient.delete<void>(`${BASE}/${entryId}`)
   }
 }
 

@@ -9,6 +9,7 @@
 
     <div class="dashboard-main" :style="mainStyles">
       <DashboardTopbar
+        :show-search="showTopbarSearch"
         :subtitle="currentSection.subtitle"
         :title="currentSection.title"
         @logout="handleLogout"
@@ -31,6 +32,7 @@
   import DashboardContent from '@/components/dashboard/DashboardContent.vue'
   import DashboardSidebar from '@/components/dashboard/DashboardSidebar.vue'
   import DashboardTopbar from '@/components/dashboard/DashboardTopbar.vue'
+  import { DIRECTORY_ADMIN_META } from '@/modules/directory/access'
   import { useAuthStore } from '@/stores/auth'
   import { canAccessRouteMeta } from '@/utils/routeAccess'
 
@@ -50,6 +52,10 @@
   })
 
   const moduleBase = computed(() => `/${route.path.split('/', 2)[1]}`)
+
+  // The directory has its own search, front and centre; a second box up here
+  // only competes with it.
+  const showTopbarSearch = computed(() => moduleBase.value !== '/directorio')
 
   interface MenuEntry {
     title: string
@@ -206,7 +212,7 @@
     }
 
     if (moduleBase.value === '/directorio') {
-      return [
+      const items: MenuEntry[] = [
         {
           title: 'Inicio',
           to: '/',
@@ -219,7 +225,16 @@
           icon: 'mdi-card-account-phone-outline',
           subtitle: 'Extensiones telefónicas de las áreas de URSE Rosario y URSE Alemán.',
         },
+        {
+          title: 'Administrar',
+          to: '/directorio/administrar',
+          icon: 'mdi-phone-settings-outline',
+          subtitle: 'Alta y edición de las extensiones del directorio.',
+          meta: DIRECTORY_ADMIN_META,
+        },
       ]
+
+      return filterByAccess(items)
     }
 
     if (moduleBase.value === '/impresiones') {

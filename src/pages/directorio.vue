@@ -5,9 +5,16 @@
 
       <div class="directory-hero__head">
         <div>
-          <div class="directory-hero__kicker">
-            <v-icon icon="mdi-phone-classic" size="16" />
-            Directorio institucional
+          <div class="directory-hero__kicker-row">
+            <div class="directory-hero__kicker">
+              <v-icon icon="mdi-phone-classic" size="16" />
+              Directorio institucional
+            </div>
+
+            <router-link v-if="canManage" class="directory-hero__manage" to="/directorio/administrar">
+              <v-icon icon="mdi-phone-settings-outline" size="16" />
+              Administrar
+            </router-link>
           </div>
 
           <h2 class="directory-hero__title">Extensiones telefónicas</h2>
@@ -44,7 +51,7 @@
           aria-label="Buscar en el directorio"
           class="directory-search__input"
           :maxlength="SEARCH_MAX_LENGTH"
-          placeholder="Busca por nombre, extensión, área, puesto o correo…"
+          :placeholder="searchPlaceholder"
           type="search"
         >
 
@@ -79,8 +86,8 @@
             type="button"
             @click="selectedCampusId = null"
           >
-            <v-icon icon="mdi-domain" size="18" />
-            Todos
+            <v-icon class="campus-switch__icon" icon="mdi-domain" size="18" />
+            <span class="campus-switch__label">Todos</span>
             <span class="campus-switch__count">{{ totalEntries }}</span>
           </button>
 
@@ -94,8 +101,12 @@
             type="button"
             @click="selectedCampusId = campus.id"
           >
-            <v-icon icon="mdi-map-marker-outline" size="18" />
-            {{ campus.name }}
+            <v-icon class="campus-switch__icon" icon="mdi-map-marker-outline" size="18" />
+
+            <span class="campus-switch__label">
+              <span class="campus-switch__prefix">{{ campusPrefix(campus.name) }}</span>{{ campusShortName(campus.name) }}
+            </span>
+
             <span class="campus-switch__count">{{ campus.entriesCount }}</span>
           </button>
         </div>
@@ -191,7 +202,12 @@
         </header>
 
         <div class="entry-grid">
-          <article v-for="entry in group.entries" :key="entry.id" class="entry-card">
+          <article
+            v-for="entry in group.entries"
+            :key="entry.id"
+            class="entry-card"
+            :class="{ 'entry-card--editable': canUpdate }"
+          >
             <button
               class="entry-card__extension"
               :disabled="!entry.extension"
@@ -252,6 +268,17 @@
                 Sin correo
               </div>
             </div>
+
+            <button
+              v-if="canUpdate"
+              aria-label="Editar extensión"
+              class="entry-card__edit"
+              title="Editar"
+              type="button"
+              @click="openEdit(entry)"
+            >
+              <v-icon icon="mdi-pencil-outline" size="16" />
+            </button>
           </article>
         </div>
       </section>
@@ -270,6 +297,14 @@
       </div>
     </div>
 
+    <DirectoryEntryDialog
+      v-if="canUpdate"
+      v-model="editDialog"
+      :campuses="campuses"
+      :entry="editingEntry"
+      @saved="onSaved"
+    />
+
     <v-snackbar
       v-model="snackbar.show"
       color="#1a1a1a"
@@ -286,7 +321,12 @@
 <script lang="ts" setup>
   import type { DirectoryEntry } from '@/modules/directory/port'
   import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+  import { useDisplay } from 'vuetify'
+  import { DIRECTORY_ADMIN_META, DIRECTORY_UPDATE_META } from '@/modules/directory/access'
+  import DirectoryEntryDialog from '@/modules/directory/components/DirectoryEntryDialog.vue'
   import { normalizeText, SEARCH_MAX_LENGTH, toDisplayCase, useDirectory } from '@/modules/directory/useDirectory'
+  import { useAuthStore } from '@/stores/auth'
+  import { canAccessRouteMeta } from '@/utils/routeAccess'
 
   const {
     campuses,
@@ -311,7 +351,43 @@
   } = useDirectory()
 
   const searchInput = ref<HTMLInputElement | null>(null)
+
+  const { xs } = useDisplay()
+  const searchPlaceholder = computed(() => xs.value
+    ? 'Buscar en el directorio…'
+    : 'Busca por nombre, extensión, área, puesto o correo…')
+
+  // On a phone the three campus tabs share one row, so "URSE " is dropped
+  // there (CSS hides the prefix) and only "Rosario" / "Alemán" remain.
+  const CAMPUS_PREFIX = /^URSE\s+/i
+
+  function campusPrefix (name: string) {
+    return CAMPUS_PREFIX.exec(name)?.[0] ?? ''
+  }
+
+  function campusShortName (name: string) {
+    return name.replace(CAMPUS_PREFIX, '')
+  }
   const snackbar = reactive({ show: false, text: '' })
+
+  // Only editors see the shortcuts; everybody else gets the read-only directory.
+  const authStore = useAuthStore()
+  const canManage = computed(() => canAccessRouteMeta(DIRECTORY_ADMIN_META, authStore))
+  const canUpdate = computed(() => canAccessRouteMeta(DIRECTORY_UPDATE_META, authStore))
+
+  const editDialog = ref(false)
+  const editingEntry = ref<DirectoryEntry | null>(null)
+
+  function openEdit (entry: DirectoryEntry) {
+    editingEntry.value = entry
+    editDialog.value = true
+  }
+
+  function onSaved () {
+    snackbar.text = 'Cambios guardados'
+    snackbar.show = true
+    loadEntries()
+  }
 
   const areaItems = computed(() => areas.value.map(area => ({
     title: area.name,
@@ -455,6 +531,32 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
+}
+
+.directory-hero__kicker-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.directory-hero__manage {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1px solid rgb(255 255 255 / 0.2);
+  border-radius: 999px;
+  color: rgb(255 255 255 / 0.85);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.directory-hero__manage:hover {
+  border-color: #FAB21A;
+  color: #FAB21A;
 }
 
 .directory-hero__kicker {
@@ -743,6 +845,34 @@
   border-radius: 18px;
 }
 
+.entry-card__edit {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  color: #8a8a8a;
+  opacity: 0;
+  transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.entry-card--editable .entry-card__body {
+  padding-right: 22px;
+}
+
+.entry-card:hover .entry-card__edit,
+.entry-card__edit:focus-visible {
+  opacity: 1;
+}
+
+.entry-card__edit:hover {
+  background: #f1ece4;
+  color: #1a1a1a;
+}
+
 .entry-card {
   position: relative;
   display: flex;
@@ -924,7 +1054,8 @@ mark {
 }
 
 @media (hover: none) {
-  .entry-card__copy {
+  .entry-card__copy,
+  .entry-card__edit {
     opacity: 1;
   }
 }
@@ -976,6 +1107,99 @@ mark {
 
   .area-section__head::after {
     display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .directory-hero {
+    gap: 18px;
+    padding: 20px 14px;
+    border-radius: 20px;
+  }
+
+  .directory-hero__title {
+    font-size: 1.5rem;
+  }
+
+  .directory-hero__subtitle {
+    font-size: 0.9rem;
+  }
+
+  .directory-stats {
+    gap: 8px;
+  }
+
+  .directory-stat {
+    padding: 8px 4px;
+    border-radius: 12px;
+  }
+
+  .directory-stat__value {
+    font-size: 1.25rem;
+  }
+
+  .directory-stat__label {
+    font-size: 0.6rem;
+    letter-spacing: 0.02em;
+  }
+
+  /* One row of three equal tabs instead of three stacked pills. */
+  .campus-switch {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    gap: 6px;
+  }
+
+  .campus-switch__option {
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    min-width: 0;
+    padding: 8px 4px;
+    border-radius: 14px;
+    font-size: 0.85rem;
+  }
+
+  .campus-switch__icon,
+  .campus-switch__prefix {
+    display: none;
+  }
+
+  .campus-switch__label {
+    overflow: hidden;
+    max-width: 100%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .area-section__title {
+    font-size: 1rem;
+  }
+
+  .entry-grid {
+    gap: 10px;
+  }
+
+  .entry-card {
+    gap: 12px;
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .entry-card:hover {
+    transform: none;
+  }
+
+  .entry-card__extension {
+    min-width: 58px;
+    padding: 8px 6px;
+    border-radius: 12px;
+    font-size: 1.05rem;
+  }
+
+  .entry-card__name {
+    font-size: 0.95rem;
   }
 }
 </style>

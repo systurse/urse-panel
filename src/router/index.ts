@@ -9,6 +9,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import ModulesLayout from '@/layouts/ModulesLayout.vue'
 import SSMLayout from '@/layouts/SSM.vue'
+import { DIRECTORY_ADMIN_META } from '@/modules/directory/access'
 import AdminExitPasses from '@/pages/admin-exit-passes.vue'
 import AdminMail from '@/pages/admin-mail.vue'
 import AdministracionAuditoria from '@/pages/administracion-auditoria.vue'
@@ -18,6 +19,7 @@ import Areas from '@/pages/areas.vue'
 import AuthCallback from '@/pages/auth-callback.vue'
 import ChatSoporte from '@/pages/chat-soporte.vue'
 import Credenciales from '@/pages/credenciales.vue'
+import DirectorioAdministrar from '@/pages/directorio-administrar.vue'
 import Directorio from '@/pages/directorio.vue'
 import Employees from '@/pages/employees.vue'
 import ImpresionesOperadores from '@/pages/impresiones-operadores.vue'
@@ -271,7 +273,8 @@ const router = createRouter({
       ],
     },
     {
-      // Every signed-in staff member can look up an extension: no permission needed.
+      // Every signed-in staff member can look up an extension: no permission
+      // needed. Managing the lines is for directory editors only.
       path: '/directorio',
       meta: { requiresAuth: true },
       component: DashboardLayout,
@@ -279,6 +282,11 @@ const router = createRouter({
         {
           path: '',
           component: Directorio,
+        },
+        {
+          path: 'administrar',
+          component: DirectorioAdministrar,
+          meta: DIRECTORY_ADMIN_META,
         },
       ],
     },
