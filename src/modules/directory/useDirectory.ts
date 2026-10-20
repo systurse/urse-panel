@@ -228,6 +228,43 @@ export function useDirectory (port: DirectoryPort = directoryAdapter) {
   const hasFilters = computed(() => search.value.trim().length > 0 || selectedCampusId.value !== null || selectedAreaId.value !== null)
   const hasMore = computed(() => meta.value.currentPage < meta.value.lastPage)
 
+  const exporting = ref(false)
+  const exportError = ref<string | null>(null)
+
+  // Named here rather than from Content-Disposition, which the API's CORS
+  // setup does not expose. Local date, like the server's, not UTC: past 6 p.m.
+  // in Mexico the UTC date is already tomorrow.
+  function exportFileName () {
+    const now = new Date()
+    const pad = (value: number) => String(value).padStart(2, '0')
+    return `Directorio_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.xlsx`
+  }
+
+  /** Downloads the Excel of the campus being viewed, or of both under "Todos". */
+  async function exportExcel () {
+    if (exporting.value) {
+      return
+    }
+
+    exporting.value = true
+    exportError.value = null
+
+    try {
+      const blob = await port.exportExcel(selectedCampusId.value)
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = exportFileName()
+      link.click()
+      // Revoking right after click() can cancel the download in some browsers.
+      setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } catch (error_) {
+      exportError.value = resolveApiMessage(error_, 'No fue posible descargar el Excel.')
+    } finally {
+      exporting.value = false
+    }
+  }
+
   function resetFilters () {
     search.value = ''
     selectedAreaId.value = null
@@ -262,5 +299,8 @@ export function useDirectory (port: DirectoryPort = directoryAdapter) {
     loadEntries,
     loadMore,
     resetFilters,
+    exporting,
+    exportError,
+    exportExcel,
   }
 }

@@ -15,6 +15,24 @@
               <v-icon icon="mdi-phone-settings-outline" size="16" />
               Administrar
             </router-link>
+
+            <button
+              class="directory-hero__manage directory-hero__export"
+              :disabled="exporting"
+              :title="`Descargar en Excel: ${exportScope}`"
+              type="button"
+              @click="exportExcel"
+            >
+              <v-progress-circular
+                v-if="exporting"
+                indeterminate
+                size="14"
+                width="2"
+              />
+
+              <v-icon v-else icon="mdi-microsoft-excel" size="16" />
+              Descargar Excel
+            </button>
           </div>
 
           <h2 class="directory-hero__title">Extensiones telefónicas</h2>
@@ -128,6 +146,17 @@
         />
       </div>
     </section>
+
+    <v-alert
+      v-if="exportError"
+      closable
+      color="error"
+      rounded="lg"
+      variant="tonal"
+      @click:close="exportError = null"
+    >
+      {{ exportError }}
+    </v-alert>
 
     <v-alert
       v-if="error"
@@ -348,6 +377,9 @@
     loadEntries,
     loadMore,
     resetFilters,
+    exporting,
+    exportError,
+    exportExcel,
   } = useDirectory()
 
   const searchInput = ref<HTMLInputElement | null>(null)
@@ -372,6 +404,11 @@
 
   // Only editors see the shortcuts; everybody else gets the read-only directory.
   const authStore = useAuthStore()
+  // The download follows the campus tab: one sheet, or both under "Todos".
+  const exportScope = computed(() =>
+    campuses.value.find(campus => campus.id === selectedCampusId.value)?.name ?? 'ambos campus',
+  )
+
   const canManage = computed(() => canAccessRouteMeta(DIRECTORY_ADMIN_META, authStore))
   const canUpdate = computed(() => canAccessRouteMeta(DIRECTORY_UPDATE_META, authStore))
 
@@ -557,6 +594,17 @@
 .directory-hero__manage:hover {
   border-color: #FAB21A;
   color: #FAB21A;
+}
+
+.directory-hero__export {
+  border-color: rgb(250 178 26 / 0.45);
+  background: rgb(250 178 26 / 0.12);
+  color: #FAB21A;
+}
+
+.directory-hero__export:disabled {
+  cursor: progress;
+  opacity: 0.7;
 }
 
 .directory-hero__kicker {

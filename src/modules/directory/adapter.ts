@@ -8,7 +8,7 @@ import type {
   DirectoryQuery,
   PaginatedDirectoryEntries,
 } from '@/modules/directory/port'
-import { httpClient } from '@/services/http'
+import { http, httpClient } from '@/services/http'
 
 type ApiRecord = Record<string, unknown>
 
@@ -177,6 +177,16 @@ export class HttpDirectoryAdapter implements DirectoryPort {
 
   async deleteEntry (entryId: number): Promise<void> {
     await httpClient.delete<void>(`${BASE}/${entryId}`)
+  }
+
+  // Through the raw axios instance: `httpClient` unwraps JSON bodies, and the
+  // interceptor still adds the Bearer token a plain <a href> would not carry.
+  async exportExcel (campusId?: number | null): Promise<Blob> {
+    const response = await http.get(`${BASE}/export`, {
+      params: { campus_id: campusId ?? undefined },
+      responseType: 'blob',
+    })
+    return response.data as Blob
   }
 }
 

@@ -75,4 +75,7 @@ export interface DirectoryPort {
 
   /** Needs `directory.delete`; there is no undo. */
   deleteEntry: (entryId: number) => Promise<void>
+
+  /** The .xlsx with one sheet per campus; scoped to one when `campusId` is given. */
+  exportExcel: (campusId?: number | null) => Promise<Blob>
 }

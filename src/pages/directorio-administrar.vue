@@ -8,15 +8,28 @@
           <p class="card-subtitle">Da de alta y corrige las extensiones de URSE Rosario y URSE Alemán.</p>
         </div>
 
-        <v-btn
-          v-if="canCreate"
-          color="#FAB21A"
-          prepend-icon="mdi-phone-plus-outline"
-          variant="flat"
-          @click="openCreate"
-        >
-          Agregar extensión
-        </v-btn>
+        <div class="card-head__actions">
+          <v-btn
+            color="#1d6f42"
+            :loading="exporting"
+            prepend-icon="mdi-microsoft-excel"
+            :title="`Descargar en Excel: ${exportScope}`"
+            variant="outlined"
+            @click="exportExcel"
+          >
+            Descargar Excel
+          </v-btn>
+
+          <v-btn
+            v-if="canCreate"
+            color="#FAB21A"
+            prepend-icon="mdi-phone-plus-outline"
+            variant="flat"
+            @click="openCreate"
+          >
+            Agregar extensión
+          </v-btn>
+        </div>
       </div>
 
       <div class="toolbar">
@@ -62,6 +75,18 @@
           variant="outlined"
         />
       </div>
+
+      <v-alert
+        v-if="exportError"
+        class="mt-4"
+        closable
+        color="error"
+        density="comfortable"
+        variant="tonal"
+        @click:close="exportError = null"
+      >
+        {{ exportError }}
+      </v-alert>
 
       <v-alert
         v-if="error"
@@ -318,7 +343,15 @@
     hasMore,
     loadEntries,
     loadMore,
+    exporting,
+    exportError,
+    exportExcel,
   } = useDirectory()
+
+  // Same scope as the campus filter: one sheet, or both when it is cleared.
+  const exportScope = computed(() =>
+    campuses.value.find(campus => campus.id === selectedCampusId.value)?.name ?? 'ambos campus',
+  )
 
   // The route lets in whoever holds either permission; each button still
   // checks its own, as the API answers 403 to the one that is missing.
@@ -431,6 +464,12 @@
   padding: 28px;
   border: 1px solid rgb(0 0 0 / 0.06);
   background: #ffffff;
+}
+
+.card-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .card-head {
@@ -622,6 +661,10 @@
   .card-head {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .card-head__actions {
+    flex-direction: column-reverse;
   }
 
   .card-title {
