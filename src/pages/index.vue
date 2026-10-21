@@ -63,9 +63,12 @@
 </template>
 
 <script lang="ts" setup>
+  import type { RouteMeta } from 'vue-router'
   import { computed } from 'vue'
+  import { AGENDA_META } from '@/modules/agenda/access'
   import { useAuthStore } from '@/stores/auth'
   import { isStudentOnly } from '@/utils/auth'
+  import { canAccessRouteMeta } from '@/utils/routeAccess'
 
   interface ModuleCard {
     id: string
@@ -78,6 +81,8 @@
     features: string[]
     /** Students only get their own modules; the rest are for staff. */
     audience: 'staff' | 'student'
+    /** Modules for a few roles only show up for whoever can open them. */
+    meta?: RouteMeta
   }
 
   /** Columns the grid never exceeds, however many modules are visible. */
@@ -162,6 +167,18 @@
       audience: 'staff',
     },
     {
+      id: 'agenda',
+      title: 'Agenda',
+      fullName: 'Agenda institucional de actividades',
+      description: 'Informa entre las áreas el uso de los espacios y las actividades',
+      path: '/agenda',
+      icon: 'mdi-calendar-month-outline',
+      color: '#8a5a00',
+      features: ['Día, semana, mes y año', 'Espacios sin empalmes', 'Invitaciones y Outlook'],
+      audience: 'staff',
+      meta: AGENDA_META,
+    },
+    {
       id: 'administracion',
       title: 'Administración',
       fullName: 'Gestión administrativa del panel',
@@ -181,7 +198,7 @@
   )
 
   const visibleModules = computed(() =>
-    modules.filter(module => module.audience === audience.value),
+    modules.filter(module => module.audience === audience.value && (!module.meta || canAccessRouteMeta(module.meta, authStore))),
   )
 
   const gridColumns = computed(() => Math.min(MAX_COLUMNS, Math.max(1, visibleModules.value.length)))

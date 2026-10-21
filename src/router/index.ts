@@ -9,11 +9,15 @@ import { createRouter, createWebHistory } from 'vue-router'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import ModulesLayout from '@/layouts/ModulesLayout.vue'
 import SSMLayout from '@/layouts/SSM.vue'
+import { AGENDA_DIRECTORS_META, AGENDA_META, AGENDA_SPACES_META } from '@/modules/agenda/access'
 import { DIRECTORY_ADMIN_META } from '@/modules/directory/access'
 import AdminExitPasses from '@/pages/admin-exit-passes.vue'
 import AdminMail from '@/pages/admin-mail.vue'
 import AdministracionAuditoria from '@/pages/administracion-auditoria.vue'
 import Administration from '@/pages/administracion.vue'
+import AgendaDirectores from '@/pages/agenda-directores.vue'
+import AgendaEspacios from '@/pages/agenda-espacios.vue'
+import Agenda from '@/pages/agenda.vue'
 import Aprobaciones from '@/pages/aprobaciones.vue'
 import Areas from '@/pages/areas.vue'
 import AuthCallback from '@/pages/auth-callback.vue'
@@ -287,6 +291,29 @@ const router = createRouter({
           path: 'administrar',
           component: DirectorioAdministrar,
           meta: DIRECTORY_ADMIN_META,
+        },
+      ],
+    },
+    {
+      // Directors and Academic Affairs only. Each area manages its own
+      // events; the coordinator also manages spaces and directors.
+      path: '/agenda',
+      meta: { requiresAuth: true, ...AGENDA_META },
+      component: DashboardLayout,
+      children: [
+        {
+          path: '',
+          component: Agenda,
+        },
+        {
+          path: 'espacios',
+          component: AgendaEspacios,
+          meta: AGENDA_SPACES_META,
+        },
+        {
+          path: 'directores',
+          component: AgendaDirectores,
+          meta: AGENDA_DIRECTORS_META,
         },
       ],
     },

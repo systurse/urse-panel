@@ -15,5 +15,7 @@ declare module 'vue-router' {
     requiresAllPermissions?: string[]
     requiresAnyPermission?: string[]
     requiresAdministrator?: boolean
+    /** Roles that open the route on their own, without the permissions below. */
+    grantedToRoles?: string[]
   }
 }

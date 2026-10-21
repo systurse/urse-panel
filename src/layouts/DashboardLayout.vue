@@ -32,6 +32,7 @@
   import DashboardContent from '@/components/dashboard/DashboardContent.vue'
   import DashboardSidebar from '@/components/dashboard/DashboardSidebar.vue'
   import DashboardTopbar from '@/components/dashboard/DashboardTopbar.vue'
+  import { AGENDA_DIRECTORS_META, AGENDA_SPACES_META } from '@/modules/agenda/access'
   import { DIRECTORY_ADMIN_META } from '@/modules/directory/access'
   import { useAuthStore } from '@/stores/auth'
   import { canAccessRouteMeta } from '@/utils/routeAccess'
@@ -231,6 +232,39 @@
           icon: 'mdi-phone-settings-outline',
           subtitle: 'Alta y edición de las extensiones del directorio.',
           meta: DIRECTORY_ADMIN_META,
+        },
+      ]
+
+      return filterByAccess(items)
+    }
+
+    if (moduleBase.value === '/agenda') {
+      const items: MenuEntry[] = [
+        {
+          title: 'Inicio',
+          to: '/',
+          icon: 'mdi-home-outline',
+          subtitle: 'Vista general del panel de control.',
+        },
+        {
+          title: 'Agenda',
+          to: '/agenda',
+          icon: 'mdi-calendar-month-outline',
+          subtitle: 'Actividades y uso de espacios de todas las áreas.',
+        },
+        {
+          title: 'Espacios',
+          to: '/agenda/espacios',
+          icon: 'mdi-domain',
+          subtitle: 'Catálogo de lugares que se pueden reservar.',
+          meta: AGENDA_SPACES_META,
+        },
+        {
+          title: 'Directores',
+          to: '/agenda/directores',
+          icon: 'mdi-account-tie-outline',
+          subtitle: 'Quién publica en la agenda y a nombre de qué área.',
+          meta: AGENDA_DIRECTORS_META,
         },
       ]
 

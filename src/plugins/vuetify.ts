@@ -5,6 +5,7 @@
  */
 
 import { createVuetify } from 'vuetify'
+import { en, es } from 'vuetify/locale'
 // MUST import styles first - order is critical for CSS layers
 import 'vuetify/styles'
 import '@mdi/font/css/materialdesignicons.css'
@@ -55,6 +56,12 @@ const urseColors = {
 }
 
 export default createVuetify({
+  // The panel is in Spanish: Vuetify's own texts (calendar, tables, pickers) too.
+  locale: {
+    locale: 'es',
+    fallback: 'en',
+    messages: { es, en },
+  },
   theme: {
     defaultTheme: 'light',
     themes: {
