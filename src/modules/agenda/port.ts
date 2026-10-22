@@ -105,6 +105,8 @@ export interface AgendaContext {
   canCreate: boolean
   canManageAll: boolean
   canManageSpaces: boolean
+  /** Directors too: they can add a missing space while creating an event. */
+  canCreateSpaces: boolean
   canManageDirectors: boolean
   canExport: boolean
   outlookSyncEnabled: boolean

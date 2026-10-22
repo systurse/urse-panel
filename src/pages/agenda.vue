@@ -301,6 +301,7 @@
       :event="editingEvent"
       :spaces="spaces"
       @saved="onSaved"
+      @space-created="onSpaceCreated"
     />
 
     <v-overlay
@@ -319,7 +320,7 @@
 </template>
 
 <script lang="ts" setup>
-  import type { AgendaEvent, AgendaExportFormat, AgendaOccurrence } from '@/modules/agenda/port'
+  import type { AgendaEvent, AgendaExportFormat, AgendaOccurrence, AgendaSpace } from '@/modules/agenda/port'
   import { computed, onMounted, reactive, ref, watch } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { useDisplay } from 'vuetify'
@@ -544,6 +545,11 @@
       focus.value = startOfDay(new Date(event.startsAt))
     }
     load()
+  }
+
+  function onSpaceCreated (space: AgendaSpace) {
+    spaces.value = [...spaces.value, space]
+    notify(`Espacio «${space.name}» agregado al catálogo.`)
   }
 
   function onDeleted () {

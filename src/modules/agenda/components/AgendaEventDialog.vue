@@ -199,6 +199,7 @@
             <v-col v-if="form.placeMode === 'space'" cols="12">
               <v-autocomplete
                 v-model="form.spaceId"
+                v-model:search="spaceSearch"
                 :error-messages="fieldErrors.space_id"
                 hide-details="auto"
                 hint="Si el espacio ya está ocupado en ese horario, no se podrá guardar."
@@ -206,12 +207,39 @@
                 item-value="id"
                 :items="spaceOptions"
                 label="Espacio *"
-                no-data-text="No hay espacios en el catálogo"
                 persistent-hint
                 prepend-inner-icon="mdi-domain"
                 :rules="[requiredSelection('Elige un espacio o cambia a «Otro lugar».')]"
                 variant="outlined"
-              />
+              >
+                <template #no-data>
+                  <v-list-item
+                    v-if="context?.canCreateSpaces"
+                    prepend-icon="mdi-domain-plus"
+                    :subtitle="spaceSearch ? 'No está en el catálogo' : undefined"
+                    :title="spaceSearch ? `Agregar «${spaceSearch.trim()}» como espacio nuevo` : 'Agregar un espacio nuevo'"
+                    @click="openSpaceDialog"
+                  />
+
+                  <v-list-item
+                    v-else
+                    subtitle="Usa «Otro lugar» o pide a Asuntos Académicos que lo agregue."
+                    title="No está en el catálogo"
+                  />
+                </template>
+              </v-autocomplete>
+
+              <v-btn
+                v-if="context?.canCreateSpaces"
+                class="event-dialog__add-space"
+                color="#8a5a00"
+                prepend-icon="mdi-plus"
+                size="small"
+                variant="text"
+                @click="openSpaceDialog"
+              >
+                ¿No está en la lista? Agregar espacio
+              </v-btn>
             </v-col>
 
             <v-col v-else cols="12">
@@ -425,6 +453,13 @@
         </v-btn>
       </v-card-actions>
     </v-card>
+
+    <AgendaSpaceDialog
+      v-model="spaceDialogOpen"
+      :initial-name="spaceDialogName"
+      :port="port"
+      @created="onSpaceCreated"
+    />
   </v-dialog>
 </template>
 
@@ -434,6 +469,7 @@
   import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
   import { useDisplay } from 'vuetify'
   import { agendaAdapter } from '@/modules/agenda/adapter'
+  import AgendaSpaceDialog from '@/modules/agenda/components/AgendaSpaceDialog.vue'
   import { addDays, formatDuration, parseLocal, reminderLabel, toDateKey, toTimeKey } from '@/modules/agenda/dates'
 
   const props = withDefaults(defineProps<{
@@ -451,7 +487,8 @@
   })
 
   const emit = defineEmits<{
-    saved: [event: AgendaEvent, created: boolean]
+    'saved': [event: AgendaEvent, created: boolean]
+    'space-created': [space: AgendaSpace]
   }>()
 
   // A phone gets the whole screen: the form is long and the keyboard eats half of it.
@@ -515,6 +552,12 @@
   let userSearchTimer: ReturnType<typeof setTimeout> | undefined
   let userRequestId = 0
 
+  const spaceSearch = ref('')
+  const spaceDialogOpen = ref(false)
+  const spaceDialogName = ref('')
+  /** Spaces added from here, shown right away while the parent refreshes its list. */
+  const addedSpaces = ref<AgendaSpace[]>([])
+
   const isEditing = computed(() => props.event !== null)
 
   const areaOptions = computed(() => props.areas.map(area => ({ id: Number(area.id), name: area.name })))
@@ -524,7 +567,7 @@
   )
 
   // Inactive spaces only show up when the event already uses one.
-  const spaceOptions = computed(() => props.spaces
+  const spaceOptions = computed(() => [...props.spaces, ...addedSpaces.value.filter(added => !props.spaces.some(space => space.id === added.id))]
     .filter(space => space.isActive || space.id === props.event?.spaceId)
     .map(space => ({ id: space.id, label: space.campus ? `${space.name} · ${space.campus.name}` : space.name })))
 
@@ -621,9 +664,17 @@
     }
   }
 
+  /** "Nueva actividad" without a clicked slot proposes the next half hour, not 17:25. */
+  function nextHalfHour (): Date {
+    const date = new Date()
+    date.setSeconds(0, 0)
+    date.setMinutes(date.getMinutes() < 30 ? 30 : 60)
+    return date
+  }
+
   function formFromEvent (event: AgendaEvent | null): FormState {
     if (!event) {
-      const start = props.defaultStart ?? new Date()
+      const start = props.defaultStart ?? nextHalfHour()
       // From the month view the click carries no time: start at 09:00.
       const hasTime = start.getHours() !== 0 || start.getMinutes() !== 0
       const startTime = hasTime ? toTimeKey(start) : '09:00'
@@ -739,6 +790,21 @@
         usersLoading.value = false
       }
     }
+  }
+
+  // The current text of the search is not a value of its own: if it matches
+  // a selected space it is just that space's label.
+  function openSpaceDialog () {
+    const selected = spaceOptions.value.find(option => option.id === form.spaceId)
+    spaceDialogName.value = spaceSearch.value && spaceSearch.value !== selected?.label ? spaceSearch.value : ''
+    spaceDialogOpen.value = true
+  }
+
+  function onSpaceCreated (space: AgendaSpace) {
+    addedSpaces.value = [...addedSpaces.value, space]
+    form.placeMode = 'space'
+    form.spaceId = space.id
+    emit('space-created', space)
   }
 
   function setDuration (minutes: number) {
@@ -998,6 +1064,12 @@
 .event-dialog__chips-label {
   color: #8a8a8a;
   font-size: 0.8rem;
+}
+
+.event-dialog__add-space {
+  margin-top: 4px;
+  padding-inline: 4px !important;
+  text-transform: none;
 }
 
 .event-dialog__toggle {

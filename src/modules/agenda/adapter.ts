@@ -215,6 +215,7 @@ function mapContext (raw: unknown): AgendaContext {
     canCreate: readBoolean(item, 'can_create'),
     canManageAll: readBoolean(item, 'can_manage_all'),
     canManageSpaces: readBoolean(item, 'can_manage_spaces'),
+    canCreateSpaces: readBoolean(item, 'can_create_spaces'),
     canManageDirectors: readBoolean(item, 'can_manage_directors'),
     canExport: readBoolean(item, 'can_export'),
     outlookSyncEnabled: readBoolean(item, 'outlook_sync_enabled'),
