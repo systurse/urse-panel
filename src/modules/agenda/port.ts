@@ -150,9 +150,64 @@ export interface AgendaSpacePayload {
 
 export interface AgendaDirectorPayload {
   userId?: number
+  /** Someone who has never signed in: their Microsoft 365 account (a user is created for them). */
+  microsoftUser?: { id: string, name: string, email: string }
   areaId?: number
   type?: AgendaDirectorType
   isCoordinator?: boolean
+}
+
+/** A Microsoft 365 staff account (students and disabled accounts are left out by the API). */
+export interface AgendaMicrosoftAccount {
+  microsoftId: string
+  name: string
+  email: string
+  jobTitle: string | null
+  department: string | null
+  /** Set when the account already has a user in the platform. */
+  userId: number | null
+  isDirector: boolean
+}
+
+export type AgendaImportStatus = 'registered' | 'found' | 'ambiguous' | 'not_found' | 'graph_unavailable'
+
+/** One director found in the phone directory, with the account proposed for them. */
+export interface AgendaImportRow {
+  directoryEntryId: number
+  directoryName: string
+  personName: string
+  position: string
+  directoryEmail: string | null
+  campus: string | null
+  area: { id: number, name: string }
+  type: AgendaDirectorType | null
+  typeLabel: string | null
+  status: AgendaImportStatus
+  account: AgendaMicrosoftAccount | null
+  alternatives: AgendaMicrosoftAccount[]
+  registeredDirector: { id: number, user: { id: number, name: string, email: string }, area: { id: number, name: string } } | null
+  warnings: string[]
+}
+
+export interface AgendaImportPreview {
+  /** Why Microsoft 365 could not be searched; the rows then need the e-mail typed in. */
+  graphError: string | null
+  rows: AgendaImportRow[]
+}
+
+export interface AgendaImportSelection {
+  directoryEntryId: number
+  areaId: number
+  type: AgendaDirectorType
+  email: string
+  name: string
+  microsoftId: string | null
+}
+
+export interface AgendaImportResult {
+  created: number
+  updated: number
+  errors: { index: number, name: string, message: string }[]
 }
 
 export type AgendaExportFormat = 'pdf' | 'xlsx'
@@ -189,4 +244,10 @@ export interface AgendaPort {
   createDirector: (payload: AgendaDirectorPayload) => Promise<AgendaDirector>
   updateDirector: (directorId: number, payload: AgendaDirectorPayload) => Promise<AgendaDirector>
   deleteDirector: (directorId: number) => Promise<void>
+
+  /** Directors found in the phone directory, each with the Microsoft 365 account proposed for them. */
+  previewDirectorImport: () => Promise<AgendaImportPreview>
+  /** Registers the confirmed rows; a failing row does not stop the others. */
+  importDirectors: (rows: AgendaImportSelection[]) => Promise<AgendaImportResult>
+  searchMicrosoftUsers: (search: string) => Promise<AgendaMicrosoftAccount[]>
 }

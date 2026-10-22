@@ -10,7 +10,13 @@ import type {
   AgendaEventPayload,
   AgendaExportFormat,
   AgendaFilters,
+  AgendaImportPreview,
+  AgendaImportResult,
+  AgendaImportRow,
+  AgendaImportSelection,
+  AgendaImportStatus,
   AgendaInvitee,
+  AgendaMicrosoftAccount,
   AgendaOccurrence,
   AgendaPort,
   AgendaRecurrence,
@@ -219,6 +225,68 @@ function mapContext (raw: unknown): AgendaContext {
   }
 }
 
+function mapMicrosoftAccount (raw: unknown): AgendaMicrosoftAccount {
+  const item = asRecord(raw)
+
+  return {
+    microsoftId: readString(item, 'microsoft_id'),
+    name: readString(item, 'name'),
+    email: readString(item, 'email'),
+    jobTitle: readNullableString(item, 'job_title'),
+    department: readNullableString(item, 'department'),
+    userId: readNullableNumber(item, 'user_id'),
+    isDirector: readBoolean(item, 'is_director'),
+  }
+}
+
+const IMPORT_STATUSES = new Set<AgendaImportStatus>(['registered', 'found', 'ambiguous', 'not_found', 'graph_unavailable'])
+
+function mapImportRow (raw: unknown): AgendaImportRow {
+  const item = asRecord(raw)
+  const area = asRecord(item.area)
+  const registered = item.registered_director ? asRecord(item.registered_director) : null
+  const status = readString(item, 'status') as AgendaImportStatus
+  const type = readString(item, 'type') as AgendaDirectorType
+
+  return {
+    directoryEntryId: readNumber(item, 'directory_entry_id'),
+    directoryName: readString(item, 'directory_name'),
+    personName: readString(item, 'person_name'),
+    position: readString(item, 'position'),
+    directoryEmail: readNullableString(item, 'directory_email'),
+    campus: readNullableString(item, 'campus'),
+    area: { id: readNumber(area, 'id'), name: readString(area, 'name') },
+    type: DIRECTOR_TYPES.has(type) ? type : null,
+    typeLabel: readNullableString(item, 'type_label'),
+    status: IMPORT_STATUSES.has(status) ? status : 'not_found',
+    account: item.account ? mapMicrosoftAccount(item.account) : null,
+    alternatives: Array.isArray(item.alternatives) ? item.alternatives.map(account => mapMicrosoftAccount(account)) : [],
+    registeredDirector: registered
+      ? {
+          id: readNumber(registered, 'id'),
+          user: { id: readNumber(asRecord(registered.user), 'id'), name: readString(asRecord(registered.user), 'name'), email: readString(asRecord(registered.user), 'email') },
+          area: { id: readNumber(asRecord(registered.area), 'id'), name: readString(asRecord(registered.area), 'name') },
+        }
+      : null,
+    warnings: Array.isArray(item.warnings) ? item.warnings.filter((warning): warning is string => typeof warning === 'string') : [],
+  }
+}
+
+function mapImportResult (raw: unknown): AgendaImportResult {
+  const item = asRecord(raw)
+
+  return {
+    created: readNumber(item, 'created'),
+    updated: readNumber(item, 'updated'),
+    errors: Array.isArray(item.errors)
+      ? item.errors.map(error => {
+          const record = asRecord(error)
+          return { index: readNumber(record, 'index'), name: readString(record, 'name'), message: readString(record, 'message') }
+        })
+      : [],
+  }
+}
+
 /** Keys left out stay out of the body (partial PATCH); an explicit null is sent to clear. */
 function toApiPayload<T extends object> (payload: T, keys: Record<keyof T, string>): ApiRecord {
   const body: ApiRecord = {}
@@ -259,6 +327,7 @@ const SPACE_KEYS: Record<keyof AgendaSpacePayload, string> = {
 
 const DIRECTOR_KEYS: Record<keyof AgendaDirectorPayload, string> = {
   userId: 'user_id',
+  microsoftUser: 'microsoft_user',
   areaId: 'area_id',
   type: 'type',
   isCoordinator: 'is_coordinator',
@@ -375,6 +444,34 @@ export class HttpAgendaAdapter implements AgendaPort {
 
   async deleteDirector (directorId: number): Promise<void> {
     await httpClient.delete<void>(`${BASE}/directors/${directorId}`)
+  }
+
+  async previewDirectorImport (): Promise<AgendaImportPreview> {
+    const data = asRecord(unwrapData(await httpClient.get<unknown>(`${BASE}/directors/import-preview`)))
+
+    return {
+      graphError: readNullableString(data, 'graph_error'),
+      rows: Array.isArray(data.rows) ? data.rows.map(row => mapImportRow(row)) : [],
+    }
+  }
+
+  async importDirectors (rows: AgendaImportSelection[]): Promise<AgendaImportResult> {
+    const response = await httpClient.post<unknown>(`${BASE}/directors/import`, {
+      rows: rows.map(row => ({
+        directory_entry_id: row.directoryEntryId,
+        area_id: row.areaId,
+        type: row.type,
+        email: row.email,
+        name: row.name,
+        microsoft_id: row.microsoftId,
+      })),
+    })
+    return mapImportResult(unwrapData(response))
+  }
+
+  async searchMicrosoftUsers (search: string): Promise<AgendaMicrosoftAccount[]> {
+    const response = await httpClient.get<unknown>(`${BASE}/microsoft-users`, { params: { search: search.trim() } })
+    return unwrapList(response).map(item => mapMicrosoftAccount(item))
   }
 }
 

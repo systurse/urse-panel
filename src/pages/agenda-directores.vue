@@ -12,9 +12,20 @@
           </p>
         </div>
 
-        <v-btn color="#FAB21A" prepend-icon="mdi-account-plus-outline" variant="flat" @click="openForm(null)">
-          Registrar director
-        </v-btn>
+        <div class="card-head__actions">
+          <v-btn
+            color="#5c4300"
+            prepend-icon="mdi-card-account-phone-outline"
+            variant="outlined"
+            @click="importOpen = true"
+          >
+            Importar desde el directorio
+          </v-btn>
+
+          <v-btn color="#FAB21A" prepend-icon="mdi-account-plus-outline" variant="flat" @click="openForm(null)">
+            Registrar director
+          </v-btn>
+        </div>
       </div>
 
       <div class="toolbar">
@@ -146,8 +157,31 @@
           >{{ formError }}</v-alert>
 
           <v-form ref="formRef" @submit.prevent="save">
-            <v-autocomplete
+            <v-btn-toggle
               v-if="!editing"
+              v-model="form.source"
+              class="director-source mb-3"
+              color="#c89215"
+              density="compact"
+              divided
+              mandatory
+              variant="outlined"
+            >
+              <v-btn size="small" value="platform">Ya usa la plataforma</v-btn>
+              <v-btn size="small" value="microsoft">Aún no ha iniciado sesión</v-btn>
+            </v-btn-toggle>
+
+            <AgendaMicrosoftAccountPicker
+              v-if="!editing && form.source === 'microsoft'"
+              v-model="form.microsoftAccount"
+              class="mb-3"
+              :error-messages="fieldErrors.user_id ?? fieldErrors.email"
+              hint="Se le crea el usuario ahora; cuando entre con Microsoft ya tendrá la agenda."
+              :rules="[(value: AgendaMicrosoftAccount | null) => Boolean(value) || 'Busca y elige su cuenta de Microsoft 365.']"
+            />
+
+            <v-autocomplete
+              v-else-if="!editing"
               v-model="form.user"
               v-model:search="userSearch"
               class="mb-3"
@@ -242,6 +276,8 @@
       </v-card>
     </v-dialog>
 
+    <AgendaDirectorImportDialog v-model="importOpen" @imported="onImported" />
+
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" location="bottom right" timeout="3500">
       {{ snackbar.text }}
     </v-snackbar>
@@ -249,11 +285,13 @@
 </template>
 
 <script lang="ts" setup>
-  import type { AgendaDirector, AgendaDirectorType, AgendaUserSummary } from '@/modules/agenda/port'
+  import type { AgendaDirector, AgendaDirectorType, AgendaImportResult, AgendaMicrosoftAccount, AgendaUserSummary } from '@/modules/agenda/port'
   import type { Area } from '@/modules/areas/port'
   import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
   import { useDisplay } from 'vuetify'
   import { agendaAdapter } from '@/modules/agenda/adapter'
+  import AgendaDirectorImportDialog from '@/modules/agenda/components/AgendaDirectorImportDialog.vue'
+  import AgendaMicrosoftAccountPicker from '@/modules/agenda/components/AgendaMicrosoftAccountPicker.vue'
   import { resolveApiMessage } from '@/modules/agenda/useAgendaCalendar'
   import { areasAdapter } from '@/modules/areas/adapter'
   import { normalizeText } from '@/modules/directory/useDirectory'
@@ -279,8 +317,11 @@
   const formOpen = ref(false)
   const formRef = ref<{ validate: () => Promise<{ valid: boolean }> } | null>(null)
   const editing = ref<AgendaDirector | null>(null)
+  const importOpen = ref(false)
   const form = reactive({
+    source: 'platform' as 'platform' | 'microsoft',
     user: null as AgendaUserSummary | null,
+    microsoftAccount: null as AgendaMicrosoftAccount | null,
     type: 'school_director' as AgendaDirectorType,
     areaId: null as number | null,
     isCoordinator: false,
@@ -367,7 +408,9 @@
   function openForm (director: AgendaDirector | null) {
     editing.value = director
     Object.assign(form, {
+      source: 'platform',
       user: director?.user ?? null,
+      microsoftAccount: null,
       type: director?.type ?? 'school_director',
       areaId: director?.areaId ?? null,
       isCoordinator: director?.isCoordinator ?? false,
@@ -386,7 +429,17 @@
 
     saving.value = true
     try {
-      await (editing.value ? agendaAdapter.updateDirector(editing.value.id, { type: form.type, areaId: form.areaId ?? undefined, isCoordinator: form.isCoordinator }) : agendaAdapter.createDirector({ userId: form.user?.id, type: form.type, areaId: form.areaId ?? undefined, isCoordinator: form.isCoordinator }))
+      const common = { type: form.type, areaId: form.areaId ?? undefined, isCoordinator: form.isCoordinator }
+      const account = form.microsoftAccount
+
+      if (editing.value) {
+        await agendaAdapter.updateDirector(editing.value.id, common)
+      } else if (form.source === 'microsoft' && account) {
+        await agendaAdapter.createDirector({ ...common, microsoftUser: { id: account.microsoftId, name: account.name, email: account.email } })
+      } else {
+        await agendaAdapter.createDirector({ ...common, userId: form.user?.id })
+      }
+
       formOpen.value = false
       notify(editing.value ? 'Director actualizado.' : 'Director registrado.')
       await load()
@@ -396,6 +449,13 @@
       formError.value = response?.data?.message ?? 'No fue posible guardar al director.'
     } finally {
       saving.value = false
+    }
+  }
+
+  function onImported (result: AgendaImportResult) {
+    if (result.created + result.updated > 0) {
+      notify(`Directores importados: ${result.created} nuevos, ${result.updated} actualizados.`)
+      load()
     }
   }
 
@@ -449,8 +509,19 @@
   gap: 16px;
 }
 
-.card-head > div {
+.card-head > div:first-child {
   max-width: 720px;
+}
+
+.card-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.director-source {
+  flex-wrap: wrap;
+  height: auto !important;
 }
 
 .section-kicker {
