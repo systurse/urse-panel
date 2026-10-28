@@ -5,5 +5,7 @@
 </template>
 
 <script lang="ts" setup>
-  //
+  import { useAccessSync } from '@/modules/core/hooks/useAccessSync'
+
+  useAccessSync()
 </script>

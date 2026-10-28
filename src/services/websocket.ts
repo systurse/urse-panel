@@ -155,3 +155,17 @@ export function leaveStaffDealChat (dealId: number) {
   const echo = getEcho()
   echo.leave(`private-crm.deals.${dealId}.chat`)
 }
+
+/**
+ * Personal: el API avisa que cambiaron los roles o permisos del usuario. El
+ * aviso no trae los permisos; quien escucha los vuelve a pedir.
+ */
+export function listenToAccessChanges (userId: number, callback: () => void) {
+  const echo = getEcho()
+  return echo.private(`App.Models.User.${userId}`).listen('.access.changed', callback)
+}
+
+export function leaveAccessChanges (userId: number) {
+  // Tras resetEcho() (cierre de sesión) ya no hay conexión que abrir para salir.
+  echoInstance?.leave(`private-App.Models.User.${userId}`)
+}

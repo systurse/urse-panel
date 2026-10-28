@@ -37,7 +37,14 @@
           <v-list min-width="220">
             <v-list-item :subtitle="userEmail" :title="userName" />
             <v-divider />
-            <v-list-item prepend-icon="mdi-shield-crown-outline" title="Administración" to="/administracion" />
+
+            <v-list-item
+              v-if="authStore.isAdmin"
+              prepend-icon="mdi-shield-crown-outline"
+              title="Administración"
+              to="/administracion"
+            />
+
             <v-list-item prepend-icon="mdi-logout" title="Cerrar sesión" @click="emit('logout')" />
           </v-list>
         </v-menu>

@@ -22,6 +22,7 @@ import {
   setAuthToken,
   setAuthUser,
 } from '@/services/storage'
+import { resetEcho } from '@/services/websocket'
 
 interface AuthState {
   user: AuthUser | null
@@ -77,6 +78,8 @@ export const useAuthStore = defineStore('auth', {
     async setSession (token: string, preloadedSession?: Partial<SessionData> | null) {
       this.token = token
       setAuthToken(token)
+      // Echo guarda el token con el que se creó: lo recreamos con el nuevo.
+      resetEcho()
 
       const sessionData = preloadedSession?.user
         && Array.isArray(preloadedSession.permissions)
@@ -88,6 +91,12 @@ export const useAuthStore = defineStore('auth', {
           }
         : this.normalizeSessionData(await fetchAuthenticatedUser())
 
+      this.applySessionData(sessionData)
+
+      return sessionData
+    },
+
+    applySessionData (sessionData: SessionData) {
       this.user = sessionData.user
       this.roles = sessionData.roles
       this.permissions = sessionData.permissions
@@ -100,8 +109,6 @@ export const useAuthStore = defineStore('auth', {
       }
 
       setAuthPermissions(sessionData.permissions)
-
-      return sessionData
     },
 
     clearSession () {
@@ -113,6 +120,7 @@ export const useAuthStore = defineStore('auth', {
       clearAuthUser()
       clearAuthRoles()
       clearAuthPermissions()
+      resetEcho()
     },
 
     async login (email: string, password: string) {
@@ -173,22 +181,26 @@ export const useAuthStore = defineStore('auth', {
     async fetchUser () {
       try {
         const sessionData = this.normalizeSessionData(await fetchAuthenticatedUser())
-        this.user = sessionData.user
-        this.roles = sessionData.roles
-        this.permissions = sessionData.permissions
-        setAuthUser(sessionData.user)
-
-        if (sessionData.roles) {
-          setAuthRoles(sessionData.roles)
-        } else {
-          clearAuthRoles()
-        }
-
-        setAuthPermissions(sessionData.permissions)
+        this.applySessionData(sessionData)
         return sessionData.user
       } catch (error_) {
         this.error = resolveErrorMessage(error_, 'No se pudo obtener el usuario autenticado')
         throw error_
+      }
+    },
+
+    // Relee roles y permisos en segundo plano, sin tocar `error` (que se
+    // muestra en el login). Un 401 lo resuelve el interceptor de http.
+    async refreshAccess () {
+      if (!this.token) {
+        return false
+      }
+
+      try {
+        this.applySessionData(this.normalizeSessionData(await fetchAuthenticatedUser()))
+        return true
+      } catch {
+        return false
       }
     },
 

@@ -104,7 +104,7 @@
 
               <v-form ref="formRef" v-model="formValid" @submit.prevent="handleLogin">
                 <div class="text-body-2 font-weight-medium mb-1 text-medium-emphasis">
-                  Correo institucional
+                  Correo
                 </div>
                 <v-text-field
                   v-model="form.email"
@@ -165,24 +165,24 @@
 
         </v-card-text>
 
-        <!-- Footer con acceso "secreto" a correo -->
+        <!-- Footer: el acceso por correo queda tras un desplegable discreto -->
         <v-card-text class="text-center pt-3 pb-6">
-          <v-btn
-            class="text-caption toggle-email-btn"
-            :disabled="authStore.loading"
-            size="small"
-            variant="text"
-            @click="toggleEmailForm"
-          >
-            <v-icon class="mr-1" size="14">
-              {{ showEmailForm ? 'mdi-chevron-up' : 'mdi-email-lock-outline' }}
-            </v-icon>
-            {{ showEmailForm ? 'Ocultar acceso por correo' : 'Continuar con correo' }}
-          </v-btn>
-
-          <div class="text-caption text-medium-emphasis mt-2">
+          <div class="text-caption text-medium-emphasis">
             Acceso restringido al personal autorizado por la URSE
           </div>
+
+          <button
+            :aria-expanded="showEmailForm"
+            class="toggle-email-btn mt-2"
+            :disabled="authStore.loading"
+            type="button"
+            @click="toggleEmailForm"
+          >
+            Otras opciones
+            <v-icon size="12">
+              {{ showEmailForm ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
+            </v-icon>
+          </button>
         </v-card-text>
 
       </v-card>
@@ -348,17 +348,27 @@
   height: 22px;
 }
 
-/* Botón "Continuar con correo" */
+/* Desplegable "Otras opciones": poco visible a propósito */
 .toggle-email-btn {
-  color: rgba(0, 0, 0, 0.55) !important;
-  letter-spacing: 0.3px;
-  opacity: 0.85;
-  transition: opacity 0.2s ease, color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: none;
+  border: 0;
+  padding: 2px 4px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  color: rgba(0, 0, 0, 0.38);
+  transition: color 0.2s ease;
 }
 
-.toggle-email-btn:hover {
-  opacity: 1;
-  color: #FAB21A !important;
+.toggle-email-btn:hover,
+.toggle-email-btn:focus-visible {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.toggle-email-btn:disabled {
+  cursor: default;
 }
 
 /* Animación del formulario de correo */

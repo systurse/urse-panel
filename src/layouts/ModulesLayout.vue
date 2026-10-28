@@ -27,7 +27,13 @@
               </div>
             </template>
             <v-list>
-              <v-list-item prepend-icon="mdi-shield-crown-outline" title="Administración" to="/administracion" />
+              <v-list-item
+                v-if="authStore.isAdmin"
+                prepend-icon="mdi-shield-crown-outline"
+                title="Administración"
+                to="/administracion"
+              />
+
               <v-list-item title="Mi Perfil" />
               <v-list-item title="Configuración" />
               <v-divider />

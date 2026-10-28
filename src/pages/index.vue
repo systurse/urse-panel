@@ -188,6 +188,7 @@
       color: '#3d2c00',
       features: ['Usuarios', 'Roles', 'Permisos'],
       audience: 'staff',
+      meta: { requiresAdministrator: true },
     },
   ]
 

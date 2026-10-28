@@ -108,8 +108,9 @@ const router = createRouter({
       ],
     },
     {
+      // Exclusive to the administrator: every child inherits the requirement.
       path: '/administracion',
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, requiresAdministrator: true },
       component: DashboardLayout,
       children: [
         {
@@ -139,10 +140,6 @@ const router = createRouter({
         {
           path: 'pases-salida',
           component: AdminExitPasses,
-          meta: {
-            grantedToRoles: ['supervisor'],
-            requiresAnyPermission: ['sps.pass-signature.sign-as-supervisor'],
-          },
         },
         {
           path: 'correos',
@@ -151,7 +148,6 @@ const router = createRouter({
         {
           path: 'auditoria',
           component: AdministracionAuditoria,
-          meta: { requiresAdministrator: true },
         },
         {
           path: 'configuracion',
