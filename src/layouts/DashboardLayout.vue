@@ -128,6 +128,13 @@
           subtitle: 'Historial de cambios en los registros del sistema.',
           meta: { requiresAdministrator: true },
         },
+        {
+          title: 'Configuración',
+          to: '/administracion/configuracion',
+          icon: 'mdi-cog-outline',
+          subtitle: 'Parámetros del sistema, como el horario de atención del soporte.',
+          meta: { requiresAdministrator: true },
+        },
       ]
 
       return items.filter(item => {

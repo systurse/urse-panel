@@ -11,9 +11,12 @@ import type {
   Pipeline,
   Project,
   PublicLeadPayload,
+  PublicLeadResponse,
   ServiceOrder,
   ServiceOrderPayload,
   Stage,
+  SupportDay,
+  SupportHours,
   Task,
   TaskComment,
   TaskStatus,
@@ -313,6 +316,15 @@ export function updateNotificationPreferences (payload: { notify_new_leads: bool
   return httpClient.put<{ notify_new_leads: boolean }>('/api/v1/me/notification-preferences', payload)
 }
 
+// ------------------------------------------- support hours (administrator)
+export function getSupportHours () {
+  return httpClient.get<SupportHours>(`${BASE}/support-hours`)
+}
+
+export function updateSupportHours (days: SupportDay[]) {
+  return httpClient.put<SupportHours>(`${BASE}/support-hours`, { days })
+}
+
 // -------------------------------------------------------- task comments
 export async function listTaskComments (taskId: number) {
   const response = await httpClient.get<ApiCollection<TaskComment>>(`${BASE}/tasks/${taskId}/comments`)
@@ -335,7 +347,7 @@ export async function createTaskComment (taskId: number, payload: { body: string
 
 // ------------------------------------------------------------ public widget
 export function submitPublicLead (payload: PublicLeadPayload) {
-  return publicHttpClient.post<{ message: string, folio: number, chat_token: string }>(`${PUBLIC_BASE}/leads`, payload)
+  return publicHttpClient.post<PublicLeadResponse>(`${PUBLIC_BASE}/leads`, payload)
 }
 
 export function matchPublicContact (params: { first_name?: string, last_name?: string, email?: string }) {

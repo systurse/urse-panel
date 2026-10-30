@@ -38,10 +38,19 @@
         <v-card-text class="pa-6">
           <template v-if="submitted">
             <div class="success-block">
-              <v-icon color="success" icon="mdi-check-circle-outline" size="56" />
-              <h2>¡Solicitud registrada!</h2>
+              <v-icon
+                :color="outOfHours ? '#FAB21A' : 'success'"
+                :icon="outOfHours ? 'mdi-clock-check-outline' : 'mdi-check-circle-outline'"
+                size="56"
+              />
 
-              <p>
+              <h2>{{ outOfHours ? 'Solicitud recibida' : '¡Solicitud registrada!' }}</h2>
+
+              <p v-if="outOfHours">
+                Tu folio es <strong>#{{ folio }}</strong>. {{ acknowledgement }}
+              </p>
+
+              <p v-else>
                 Tu folio es <strong>#{{ folio }}</strong>. Un agente te contactará en breve al correo
                 que registraste.
               </p>
@@ -75,6 +84,19 @@
               type="error"
               variant="tonal"
             >{{ error }}</v-alert>
+
+            <v-alert
+              v-if="supportHours && !supportHours.is_open"
+              class="mb-4"
+              density="compact"
+              icon="mdi-clock-alert-outline"
+              rounded="lg"
+              type="warning"
+              variant="tonal"
+            >
+              Estamos fuera del horario de atención ({{ supportHours.summary }}). Puedes enviar tu solicitud:
+              la recibiremos y la atenderemos en cuanto inicie el siguiente horario.
+            </v-alert>
 
             <v-alert
               v-if="known"
@@ -135,6 +157,10 @@
                 variant="flat"
               >Enviar</v-btn>
 
+              <p v-if="supportHours?.is_open" class="recaptcha-note">
+                Horario de atención: {{ supportHours.summary }}.
+              </p>
+
               <p class="recaptcha-note">Este sitio está protegido por reCAPTCHA.</p>
             </v-form>
           </template>
@@ -179,6 +205,9 @@
   const submitted = ref(false)
   const folio = ref<number | null>(null)
   const chatToken = ref<string | null>(null)
+  const outOfHours = ref(false)
+  const acknowledgement = ref('')
+  const supportHours = computed(() => config.value?.support_hours ?? null)
   const error = ref<string | null>(null)
   const known = ref(false)
 
@@ -252,6 +281,8 @@
 
       folio.value = response.folio
       chatToken.value = response.chat_token
+      outOfHours.value = response.out_of_hours
+      acknowledgement.value = response.message
       submitted.value = true
     } catch (error_: any) {
       const data = error_?.response?.data
@@ -266,6 +297,8 @@
     submitted.value = false
     folio.value = null
     chatToken.value = null
+    outOfHours.value = false
+    acknowledgement.value = ''
     known.value = false
     Object.assign(form, {
       first_name: '',
@@ -277,6 +310,16 @@
       request: '',
       terms_accepted: false,
     })
+    loadConfig()
+  }
+
+  /** Canales alternos y horario de atención (se relee al levantar otra solicitud). */
+  async function loadConfig () {
+    try {
+      config.value = await getWidgetConfig()
+    } catch {
+      // los canales alternos simplemente no se muestran
+    }
   }
 
   onMounted(async () => {
@@ -286,11 +329,7 @@
       reportHeight()
     }
 
-    try {
-      config.value = await getWidgetConfig()
-    } catch {
-      // los canales alternos simplemente no se muestran
-    }
+    await loadConfig()
   })
 
   onBeforeUnmount(() => {

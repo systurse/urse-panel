@@ -243,6 +243,33 @@ export interface WidgetConfig {
   whatsapp_number: string | null
   whatsapp_link: string | null
   support_mailbox: string | null
+  support_hours?: {
+    is_open: boolean
+    summary: string
+    attention_starts_at: string | null
+  }
+}
+
+export interface PublicLeadResponse {
+  message: string
+  folio: number
+  chat_token: string
+  out_of_hours: boolean
+  attention_starts_at: string | null
+}
+
+/** Día del horario de atención; `day` en numeración ISO (1 = lunes … 7 = domingo). */
+export interface SupportDay {
+  day: number
+  enabled: boolean
+  opens_at: string | null
+  closes_at: string | null
+}
+
+export interface SupportHours {
+  days: SupportDay[]
+  summary: string
+  timezone: string
 }
 
 export interface DealFilters {

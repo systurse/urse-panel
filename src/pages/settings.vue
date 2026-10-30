@@ -10,6 +10,8 @@
       </p>
     </v-card>
 
+    <SupportHoursCard v-if="authStore.hasRole('administrator')" />
+
     <NotificationPreferencesCard v-if="authStore.hasRole('agent')" />
 
     <v-card class="settings-card" rounded="xl" variant="flat">
@@ -27,6 +29,7 @@
 
 <script lang="ts" setup>
   import NotificationPreferencesCard from '@/modules/crm/components/NotificationPreferencesCard.vue'
+  import SupportHoursCard from '@/modules/crm/components/SupportHoursCard.vue'
   import { useAuthStore } from '@/stores/auth'
 
   const authStore = useAuthStore()
